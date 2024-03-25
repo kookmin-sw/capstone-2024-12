@@ -14,6 +14,8 @@
 
 ### Variables
 **/variables.tf
+**/vpc_variables.tf
+**/k8s_variables.tf
 **/variables.sh
 **/*variables.py
 

@@ -1,0 +1,9 @@
+variable "cluster_name" {
+  type = string
+  default = ""
+}
+
+variable "cluster_version" {
+  type = string
+  default = "1.29"
+}
