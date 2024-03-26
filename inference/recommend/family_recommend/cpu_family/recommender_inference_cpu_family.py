@@ -13,21 +13,15 @@ def get_cheapest_instance_set_per_memory(df):
     return instance_set
 
 # 해당 리전에 대해 Karpenter 가 스케줄링 할 Instance 목록을 제공합니다.
-def get_instance_family_for_inference(region):
+def get_cpu_instance_family_for_inference(region):
     price_df = get_price_df(region)
     price_df = price_df[price_df['SPS'] >= 2]
     instance_df = get_instance_df(region)
 
     df = pd.merge(price_df, instance_df, on=['Region', 'InstanceType'], how='inner')
-    # CPU 모델 혹은 NVIDIA GPU 모델의 경우만 제공합니다. 즉, Radeon 등 다른 제조회사의 GPU 인스턴스는 제외합니다.
-    df = df[df['GPUManufacturer'].isin([None, 'NVIDIA'])].reset_index(drop=True)
+    # CPU 모델만 제공합니다.
+    df = df[df['GPUCount'] == 0].reset_index(drop=True)
     
-    family = set()
-
-    for gpu_memory in df['TotalGPUMemoryGiB'].unique():
-        df_great_equal_gpu_memory = df[df['TotalGPUMemoryGiB'] >= gpu_memory]
-        family_per_gpu_memory = get_cheapest_instance_set_per_memory(df_great_equal_gpu_memory)
-        
-        family |= family_per_gpu_memory
+    family = get_cheapest_instance_set_per_memory(df)
     
     return list(family)

@@ -3,27 +3,16 @@ import botocore
 import gzip
 import pandas as pd
 import math
-import os
 
 from io import BytesIO
 from itertools import chain
 
-from datetime import datetime, timezone
-
-aws_access_key_id = os.getenv('RECOMMEND_ACCESS_KEY')
-aws_secret_access_key = os.getenv('RECOMMEND_SECRET_ACCESS_KEY')
-
-session = boto3.session.Session(
-    aws_access_key_id=aws_access_key_id,
-    aws_secret_access_key=aws_secret_access_key,
-)
+session = boto3.session.Session()
 
 def get_price_df(region_name):
-    
     s3 = session.resource('s3')
-    bucket_name = 'spotlake'
-    current_utc_time = datetime.now(timezone.utc)
-    prefix = f'rawdata/aws/{current_utc_time.strftime("%Y/%m/%d")}'
+    bucket_name = 'skkai-spot-dataset'
+    prefix = "2024/03/26"
     bucket = s3.Bucket(bucket_name)
 
     file = [obj.key for obj in bucket.objects.filter(Prefix=prefix) if obj.key.endswith('.csv.gz')][-1]

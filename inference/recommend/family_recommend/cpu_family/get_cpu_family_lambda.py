@@ -1,9 +1,8 @@
-from recommender_inference_family import get_instance_family_for_inference
+from recommender_inference_cpu_family import get_cpu_instance_family_for_inference
 import json
 
-
 # requestBody : {'region' : string}
-def lambda_handler(event, context):
+def handler(event, context):
     try:
         json_body = json.loads(event['body'])
     except Exception as e:
@@ -15,8 +14,9 @@ def lambda_handler(event, context):
     
     region_name = json_body['region']
     try:
-        family = get_instance_family_for_inference(region_name)
+        family = get_cpu_instance_family_for_inference(region_name)
     except Exception as e:
+        print(e)
         response = {
             'statusCode': 500,
             'errorMessage': "Family for Inference API 오류 발생"
