@@ -35,6 +35,20 @@ module "vpc" {
   cluster_name = var.cluster_name
 }
 
+module "aws_load_balancer_controller_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+
+  role_name             = "${var.cluster_name}-load-balancer-controller"
+  attach_load_balancer_controller_policy = true
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
+    }
+  }
+}
+
 module "efs_csi_irsa_role" {
   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
@@ -73,29 +87,11 @@ module "eks" {
         { namespace = "karpenter" }
       ]
     }
-    # kube-system = {
-    #   selectors = [
-    #     { namespace = "kube-system" }
-    #   ]
-    # }
   }
 
   cluster_addons = {
     coredns = {
       most_recent = true
-      # configuration_values = jsonencode({
-      #   computeType = "Fargate"
-      #   resources = {
-      #     limits = {
-      #       cpu = "0.25"
-      #       memory = "256M"
-      #     }
-      #     requests = {
-      #       cpu = "0.25"
-      #       memory = "256M"
-      #     }
-      #   }
-      # })
     }
     kube-proxy = {
       most_recent = true
@@ -144,6 +140,27 @@ module "karpenter" {
   depends_on = [ module.eks ]
 }
 
+resource "helm_release" "aws-load-balancer-controller" {
+  name = "aws-load-balancer-controller"
+  namespace = "kube-system"
+  repository = "https://aws.github.io/eks-charts"
+  chart = "aws-load-balancer-controller"
+  set {
+    name = "clusterName"
+    value = var.cluster_name
+  }
+
+  set {
+    name = "serviceAccount.name"
+    value = "aws-load-balancer-controller"
+  }
+
+  set {
+    name = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+    value = module.aws_load_balancer_controller_irsa_role.iam_role_arn
+  }
+}
+
 resource "helm_release" "karpenter" {
   namespace           = "karpenter"
   create_namespace    = true
@@ -174,4 +191,57 @@ resource "helm_release" "karpenter" {
   ]
 
   depends_on = [ module.karpenter ]
+}
+
+resource "helm_release" "kube-prometheus-stack" {
+  name = "kube-prometheus-stack"
+  namespace = "monitoring"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart = "kube-prometheus-stack"
+  create_namespace = true
+  set {
+    name  = "grafana.adminPassword"
+    value = "password"
+  }
+
+  set {
+    name  = "grafana.ingress.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "grafana.ingress.ingressClassName"
+    value = "alb"
+  }
+
+  set {
+    name  = "grafana.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/scheme"
+    value = "internet-facing"
+  }
+
+  set {
+    name  = "grafana.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/target-type"
+    value = "ip"
+  }
+  set {
+    name  = "grafana.ingress.paths[0]"
+    value = "/monitor"
+  }
+
+  set {
+    name  = "prometheus-node-exporter.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key"
+    value = "eks.amazonaws.com/compute-type"
+  }
+
+  set {
+    name  = "prometheus-node-exporter.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator"
+    value = "NotIn"
+  }
+
+  set {
+    name  = "prometheus-node-exporter.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]"
+    value = "fargate"
+  }
+  
+  depends_on = [ module.eks ]
 }
