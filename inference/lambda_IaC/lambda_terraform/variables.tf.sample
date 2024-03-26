@@ -15,12 +15,12 @@ variable "prefix" {
 
 variable "container_registry" {
   type    = string
-  default = "	694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+  default = ""
 }
 
 variable "container_repository" {
   type    = string
-  default = "mjh-skkai-user_infrastructure_deploy"
+  default = ""
 }
 
 variable "container_image_tag" {
