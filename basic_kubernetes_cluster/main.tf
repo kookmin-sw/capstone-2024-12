@@ -243,7 +243,7 @@ resource "helm_release" "kube-prometheus-stack" {
     value = "fargate"
   }
   
-  depends_on = [ module.eks ]
+  depends_on = [ module.eks, helm_release.aws-load-balancer-controller ]
 }
 
 resource "null_resource" "update-kubeconfig" {
