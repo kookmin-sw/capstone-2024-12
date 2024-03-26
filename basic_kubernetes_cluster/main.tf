@@ -243,6 +243,18 @@ resource "helm_release" "kube-prometheus-stack" {
     value = "fargate"
   }
   
+  depends_on = [ module.eks, helm_release.aws-load-balancer-controller ]
+}
+
+resource "null_resource" "update-kubeconfig" {
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+  provisioner "local-exec" {
+    when = create
+    command = "aws eks update-kubeconfig --name ${var.cluster_name} --profile ${var.awscli_profile} --region ${var.region}"
+  }
+
   depends_on = [ module.eks ]
 }
 
