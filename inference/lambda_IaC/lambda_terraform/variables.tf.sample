@@ -1,0 +1,34 @@
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "awscli_profile" {
+  type    = string
+  default = ""
+}
+
+variable "prefix" {
+  type    = string
+  default = ""
+}
+
+variable "container_registry" {
+  type    = string
+  default = "	694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+}
+
+variable "container_repository" {
+  type    = string
+  default = "mjh-skkai-user_infrastructure_deploy"
+}
+
+variable "container_image_tag" {
+  type    = string
+  default = "latest"
+}
+
+variable "lambda_ram_size" {
+  type    = number
+  default = 1024
+}
