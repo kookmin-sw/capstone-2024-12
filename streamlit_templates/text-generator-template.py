@@ -1,7 +1,10 @@
+import os
 import time
 import json
 import requests
 import streamlit as st
+
+endpoint = os.environ.get("END_POINT")
 
 def text_generate(endpoint, prompt, max_token = 1024):
   try:
@@ -26,7 +29,6 @@ def text_generate(endpoint, prompt, max_token = 1024):
 st.title("Chatbot with your endpoint");
 
 with st.sidebar:
-  endpoint = st.text_input("Endpoint", placeholder="https://your-endpoint.com")
   max_token = st.slider("Max Token", min_value=64, max_value=4096, value=1024, step=64)
 
 if "messages" not in st.session_state:
@@ -37,6 +39,9 @@ for message in st.session_state.messages:
     st.markdown(message["content"])
 
 prompt = st.chat_input("Write your prompt here", disabled=not endpoint)
+
+if not endpoint:
+  st.error('The endpoint url does not exist. Please try again later.', icon="🚨")
 
 if endpoint and prompt:
   with st.chat_message("user"):
