@@ -245,3 +245,15 @@ resource "helm_release" "kube-prometheus-stack" {
   
   depends_on = [ module.eks ]
 }
+
+resource "null_resource" "update-kubeconfig" {
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+  provisioner "local-exec" {
+    when = create
+    command = "aws eks update-kubeconfig --name ${var.cluster_name} --profile ${var.awscli_profile} --region ${var.region}"
+  }
+
+  depends_on = [ module.eks ]
+}
