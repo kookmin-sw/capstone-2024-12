@@ -3,6 +3,7 @@ import botocore
 import gzip
 import pandas as pd
 import math
+import os
 
 from io import BytesIO
 from itertools import chain
@@ -11,9 +12,13 @@ session = boto3.session.Session()
 
 def get_price_df(region_name):
     s3 = session.resource('s3')
-    bucket_name = 'skkai-spot-dataset'
+    bucket_name = os.getenv('BUCKET_NAME')
     prefix = "2024/03/26"
     bucket = s3.Bucket(bucket_name)
+
+    # 최신 데이터 받아오는 prefix
+    # from datetime import datetime, timezone
+    # prefix = f'{datetime.now(timezone.utc).strftime("%Y/%m/%d")}'
 
     file = [obj.key for obj in bucket.objects.filter(Prefix=prefix) if obj.key.endswith('.csv.gz')][-1]
     with gzip.open(BytesIO(s3.Object(bucket_name, file).get()['Body'].read()), 'rt') as gzipfile:
