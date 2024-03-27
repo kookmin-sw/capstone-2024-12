@@ -34,7 +34,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "sskai-terraform-state"
-    key = "family_recommend/tf.state"
+    key = "serverless_inference_deploy/tf.state"
     region = "ap-northeast-2"
     encrypt = true
   }
