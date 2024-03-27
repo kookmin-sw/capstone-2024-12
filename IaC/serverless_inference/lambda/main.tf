@@ -10,7 +10,8 @@ resource "aws_iam_role" "lambda-role" {
       Principal = {
         Service = "lambda.amazonaws.com"
       }
-    }]
+      }
+    ]
   })
 }
 
@@ -19,38 +20,15 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-// S3 전체 액세스 권한 추가
-resource "aws_iam_role_policy_attachment" "lambda_s3_full_access" {
-  role       = aws_iam_role.lambda-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
-
-// Lambda 전체 액세스 권한 추가
-resource "aws_iam_role_policy_attachment" "lambda_ec2_full_access" {
-  role       = aws_iam_role.lambda-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
-}
-
-// API Gateway 전체 액세스 권한 추가
-resource "aws_iam_role_policy_attachment" "lambda_vpc_full_access" {
-  role       = aws_iam_role.lambda-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess"
-}
-
-// CloudWatch 전체 액세스 권한 추가
-resource "aws_iam_role_policy_attachment" "lambda_vpc_full_access" {
-  role       = aws_iam_role.lambda-role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
-}
-
 resource "aws_lambda_function" "lambda" {
   function_name = "${var.prefix}-aws-lambda"
   package_type  = "Image"
-  architectures = ["arm64"]
+  architectures = ["x86_64"]
   image_uri     = "${var.container_registry}/${var.container_repository}:${var.container_image_tag}"
   memory_size   = var.ram_mib
-  timeout       = 900
+  timeout       = 120
   role          = aws_iam_role.lambda-role.arn
+
 }
 
 resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {

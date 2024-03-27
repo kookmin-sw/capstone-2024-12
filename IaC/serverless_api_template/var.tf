@@ -1,6 +1,6 @@
 variable "region" {
   type    = string
-  default = ""
+  default = "ap-northeast-2"
 }
 
 variable "awscli_profile" {
@@ -30,5 +30,5 @@ variable "container_image_tag" {
 
 variable "lambda_ram_size" {
   type    = number
-  default = 4096
+  default = 2048
 }
