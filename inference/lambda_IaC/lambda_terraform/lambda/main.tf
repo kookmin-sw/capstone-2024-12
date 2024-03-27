@@ -25,16 +25,22 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_full_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
-// EC2 전체 액세스 권한 추가
+// Lambda 전체 액세스 권한 추가
 resource "aws_iam_role_policy_attachment" "lambda_ec2_full_access" {
   role       = aws_iam_role.lambda-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
 }
 
-// VPC 전체 액세스 권한 추가
+// API Gateway 전체 액세스 권한 추가
 resource "aws_iam_role_policy_attachment" "lambda_vpc_full_access" {
   role       = aws_iam_role.lambda-role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonVPCFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess"
+}
+
+// CloudWatch 전체 액세스 권한 추가
+resource "aws_iam_role_policy_attachment" "lambda_vpc_full_access" {
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
 }
 
 resource "aws_lambda_function" "lambda" {
