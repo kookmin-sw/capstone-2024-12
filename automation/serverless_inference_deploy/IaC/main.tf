@@ -1,9 +1,9 @@
 
 module "serverless_inference_deploy" {
   source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
-  prefix = "cpu_family_recommend"
+  prefix = "serverless_inference_deploy"
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
-  container_repository = "recommend-inference-cpu-family"
+  container_repository = "serverless-inference-deploy"
   container_image_tag = "latest"
   lambda_ram_size = 2048
   attach_s3_policy = true
