@@ -266,7 +266,12 @@ resource "helm_release" "kuberay_operator" {
   namespace  = "kuberay"
   create_namespace = true
 
-  depends_on = [module.eks]
+  set {
+    name = "nodeSelector.eks\\.amazonaws\\.com/nodegroup"
+    value = split(":", module.eks.eks_managed_node_groups.addon_node.node_group_id)[1]
+  }
+
+  depends_on = [module.eks]  
 }
 
 resource "helm_release" "raycluster" {
@@ -287,5 +292,10 @@ resource "helm_release" "raycluster" {
   set {
     name  = "head.headService.metadata.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
     value = "internet-facing"
+  }
+
+  set {
+    name = "head.nodeSelector.eks\\.amazonaws\\.com/nodegroup"
+    value = split(":", module.eks.eks_managed_node_groups.addon_node.node_group_id)[1]
   }
 }
