@@ -61,3 +61,8 @@ variable "attach_cloudwatch_policy" {
   type = bool
   default = false
 }
+
+variable "attach_eks_policy" {
+  type = bool
+  default = false
+}

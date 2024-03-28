@@ -21,13 +21,9 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_workernode_policy" {
+  count      = var.attach_eks_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
-
-resource "aws_eks_access_entry" "eks-access-entry" {
-  cluster_name = var.eks_cluster_name
-  principal_arn = aws_iam_role.lambda-role.arn
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatch_policy" {
@@ -84,4 +80,21 @@ resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {
 resource "aws_lambda_function_url" "lambda-url" {
   function_name      = aws_lambda_function.lambda.function_name
   authorization_type = "NONE"
+}
+
+resource "aws_eks_access_entry" "eks-access-entry" {
+  count = var.attach_eks_policy ? 1 : 0
+  cluster_name = var.eks_cluster_name
+  principal_arn = aws_iam_role.lambda-role.arn
+}
+
+resource "aws_eks_access_policy_association" "eks-access-policy" {
+  count = var.attach_eks_policy ? 1 : 0
+  cluster_name = var.eks_cluster_name
+  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = aws_iam_role.lambda-role.arn
+
+  access_scope {
+    type = "cluster"
+  }
 }

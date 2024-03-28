@@ -1,6 +1,6 @@
 
 module "cpu_family_recommend" {
-  source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
+  source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template" #?ref=swjeong
   prefix = "cpu_family_recommend"
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "recommend-inference-cpu-family"
