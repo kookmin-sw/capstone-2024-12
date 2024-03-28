@@ -32,3 +32,8 @@ variable "lambda_ram_size" {
   type    = number
   default = 2048
 }
+
+variable "eks_clsuter_name" {
+  type = string
+  default = ""
+}

@@ -20,6 +20,16 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "eks_workernode_policy" {
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
+
+resource "aws_eks_access_entry" "eks-access-entry" {
+  cluster_name = var.eks_cluster_name
+  principal_arn = aws_iam_role.lambda-role.arn
+}
+
 resource "aws_lambda_function" "lambda" {
   function_name = "${var.prefix}-aws-lambda"
   package_type  = "Image"
@@ -28,7 +38,6 @@ resource "aws_lambda_function" "lambda" {
   memory_size   = var.ram_mib
   timeout       = 120
   role          = aws_iam_role.lambda-role.arn
-
 }
 
 resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {
