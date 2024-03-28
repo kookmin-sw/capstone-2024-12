@@ -37,3 +37,27 @@ variable "eks_clsuter_name" {
   type = string
   default = ""
 }
+variable "attach_ec2_policy" {
+  type = bool
+  default = false
+}
+
+variable "attach_s3_policy" {
+  type = bool
+  default = false
+}
+
+variable "attach_vpc_policy" {
+  type = bool
+  default = false
+}
+
+variable "attach_lambda_policy" {
+  type = bool
+  default = false
+}
+
+variable "attach_cloudwatch_policy" {
+  type = bool
+  default = false
+}
