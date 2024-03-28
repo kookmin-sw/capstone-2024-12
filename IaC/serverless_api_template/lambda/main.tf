@@ -21,37 +21,37 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatch_policy" {
-  count = var.attach_cloudwatch_policy
+  count      = var.attach_cloudwatch_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/CloudWatchFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatchlogs_policy" {
-  count = var.attach_cloudwatch_policy
+  count      = var.attach_cloudwatch_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/CloudWatchLogsFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_policy" {
-  count = var.attach_ec2_policy
+  count      = var.attach_ec2_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2FullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_policy" {
-  count = var.attach_vpc_policy
+  count      = var.attach_vpc_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonVPCFullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "s3_policy" {
-  count = var.attach_s3_policy
+  count      = var.attach_s3_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
-  count = var.attach_lambda_policy
+  count      = var.attach_lambda_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambda_FullAccess"
 }
