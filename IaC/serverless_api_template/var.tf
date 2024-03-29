@@ -33,7 +33,7 @@ variable "lambda_ram_size" {
   default = 2048
 }
 
-variable "eks_clsuter_name" {
+variable "eks_cluster_name" {
   type = string
   default = ""
 }

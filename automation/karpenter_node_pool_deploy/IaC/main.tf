@@ -1,4 +1,3 @@
-
 module "karpenter_nodepool_manager" {
   source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template?ref=swjeong"
   prefix = "karpenter_nodepool_manager"
@@ -11,16 +10,6 @@ module "karpenter_nodepool_manager" {
   attach_eks_policy = true
 
   eks_cluster_name = "swj-eks-test"
-}
-
-variable "region" {
-  type    = string
-  default = "ap-northeast-2"
-}
-
-variable "awscli_profile" {
-  type    = string
-  default = "mhsong-swj"
 }
 
 output "karpenter_nodepool_manager_function_url" {
