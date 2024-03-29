@@ -10,7 +10,7 @@ module "karpenter_nodepool_manager" {
   attach_eks_policy    = true
 
   eks_cluster_name = var.eks_cluster_name
-  lambda_environment_variable = var.lambda_environment_variable
+  lambda_environment_variable = { EKS_CLUSTER_NAME = var.eks_cluster_name }
 }
 
 output "karpenter_nodepool_manager_function_url" {
