@@ -1,4 +1,4 @@
-provider "aws" {
-  region = var.region
-  profile = var.awscli_profile  
-}
+# provider "aws" {
+#   region = var.region
+#   profile = var.awscli_profile  
+# }

@@ -33,6 +33,11 @@ variable "lambda_ram_size" {
   default = 2048
 }
 
+variable "lambda_environment_variable" {
+  type = map(string)
+  default = {}
+}
+
 variable "eks_cluster_name" {
   type = string
   default = ""

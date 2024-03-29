@@ -3,6 +3,7 @@ variable "container_registry" {}
 variable "container_repository" {}
 variable "container_image_tag" {}
 variable "ram_mib" {}
+variable "environment_variable" {}
 variable "eks_cluster_name" {}
 variable "attach_cloudwatch_policy" {}
 variable "attach_ec2_policy" {}

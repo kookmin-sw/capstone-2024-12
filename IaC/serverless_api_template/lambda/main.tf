@@ -70,6 +70,10 @@ resource "aws_lambda_function" "lambda" {
   memory_size   = var.ram_mib
   timeout       = 120
   role          = aws_iam_role.lambda-role.arn
+
+  environment {
+    variables = var.environment_variable
+  }
 }
 
 resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {

@@ -1,4 +1,5 @@
 import subprocess
+import os
 
 def print_err_command(completed_process):
     print(f"error at command : {completed_process.args}")
@@ -18,7 +19,7 @@ def handler(event, context):
             'statusCode': 400,
             'body': f'Unsupported command : {command}'
         }
-    eks_name = params['eksName']
+    eks_name = os.environ.get('EKS_CLUSTER_NAME')
     # TODO : eks 이름이 유효한지 테스트 할 수 있는 코드
 
     kubectl = '/var/task/kubectl'
