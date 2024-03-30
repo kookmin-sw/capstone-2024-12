@@ -1,6 +1,6 @@
 
 module "cpu_family_recommend" {
-  source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template" #?ref=swjeong
+  source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix = "cpu_family_recommend"
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "recommend-inference-cpu-family"
@@ -8,6 +8,7 @@ module "cpu_family_recommend" {
   lambda_ram_size = 2048
   attach_s3_policy = true
   attach_ec2_policy = true
+  recommend_bucket_name = "sskai-spot-dataset"
 }
 
 module "gpu_family_recommend" {
@@ -19,24 +20,23 @@ module "gpu_family_recommend" {
   lambda_ram_size = 2048
   attach_s3_policy = true
   attach_ec2_policy = true
+  recommend_bucket_name = "sskai-spot-dataset"
 }
 
-variable "region" {
-  type    = string
-  default = "ap-northeast-2"
-}
-
-variable "awscli_profile" {
-  type    = string
-  default = "default"
-}
-
-output "cpu_recommend_function_url" {
+resource "aws_ssm_parameter" "param_cpu_recommend_lambda_function_url" {
+  name = "cpu_recommend_lambda_function_url"
+  type = "String"
   value = module.cpu_family_recommend.function_url
+
+  depends_on = [ module.cpu_family_recommend ]
 }
 
-output "gpu_recommend_function_url" {
+resource "aws_ssm_parameter" "param_gpu_recommend_lambda_function_url" {
+  name = "gpu_recommend_lambda_function_url"
+  type = "String"
   value = module.gpu_family_recommend.function_url
+
+  depends_on = [ module.gpu_family_recommend ]
 }
 
 provider "aws" {

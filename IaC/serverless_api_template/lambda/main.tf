@@ -72,7 +72,10 @@ resource "aws_lambda_function" "lambda" {
   role          = aws_iam_role.lambda-role.arn
 
   environment {
-    variables = var.environment_variable
+    variables = {
+      EKS_CLUSTER_NAME = var.eks_cluster_name
+      RECOMMEND_BUCKET_NAME = var.recommend_bucket_name
+    }
   }
 }
 

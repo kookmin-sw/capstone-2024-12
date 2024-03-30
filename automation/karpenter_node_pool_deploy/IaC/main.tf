@@ -1,5 +1,5 @@
 module "karpenter_nodepool_manager" {
-  source               = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
+  source               = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template?ref=swjeong"
   prefix               = "karpenter_nodepool_manager"
   container_registry   = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "k8s-manager"
@@ -10,7 +10,6 @@ module "karpenter_nodepool_manager" {
   attach_eks_policy    = true
 
   eks_cluster_name = var.eks_cluster_name
-  lambda_environment_variable = { EKS_CLUSTER_NAME = var.eks_cluster_name }
 }
 
 output "karpenter_nodepool_manager_function_url" {

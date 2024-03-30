@@ -12,7 +12,7 @@ session = boto3.session.Session()
 
 def get_price_df(region_name):
     s3 = session.resource('s3')
-    bucket_name = os.getenv('BUCKET_NAME')
+    bucket_name = os.getenv('RECOMMEND_BUCKET_NAME')
     prefix = "2024/03/26"
     bucket = s3.Bucket(bucket_name)
 
