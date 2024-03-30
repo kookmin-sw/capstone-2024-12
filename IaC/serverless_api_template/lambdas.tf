@@ -5,7 +5,6 @@ module "lambda" {
   container_repository     = var.container_repository
   container_image_tag      = var.container_image_tag
   ram_mib                  = var.lambda_ram_size
-  environment_variable     = var.lambda_environment_variable
   eks_cluster_name         = var.eks_cluster_name
   attach_ec2_policy        = var.attach_ec2_policy
   attach_cloudwatch_policy = var.attach_cloudwatch_policy
