@@ -1,5 +1,5 @@
 module "karpenter_nodepool_manager" {
-  source               = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template?ref=swjeong"
+  source               = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix               = "karpenter_nodepool_manager"
   container_registry   = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "k8s-manager"
