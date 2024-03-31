@@ -15,12 +15,7 @@ def handler(event, context):
     try:
         family = get_gpu_instance_family_for_inference(region_name)
     except Exception as e:
-        print(e)
-        response = {
-            'statusCode': 500,
-            'errorMessage': "Family for Inference API 오류 발생"
-        }
-        return response
+        raise e
 
     response = {
         'statusCode': 200,

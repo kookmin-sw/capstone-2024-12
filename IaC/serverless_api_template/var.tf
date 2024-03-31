@@ -33,6 +33,16 @@ variable "lambda_ram_size" {
   default = 2048
 }
 
+variable "eks_cluster_name" {
+  type = string
+  default = ""
+}
+
+variable "recommend_bucket_name" {
+  type = string
+  default = ""
+}
+
 variable "attach_ec2_policy" {
   type = bool
   default = false
@@ -54,6 +64,11 @@ variable "attach_lambda_policy" {
 }
 
 variable "attach_cloudwatch_policy" {
+  type = bool
+  default = false
+}
+
+variable "attach_eks_policy" {
   type = bool
   default = false
 }

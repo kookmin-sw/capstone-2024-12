@@ -1,0 +1,17 @@
+FROM public.ecr.aws/lambda/python:3.12
+
+# aws cli 를 LAMBDA_TASK_ROOT 에 설치
+# RUN pip install awscli --no-cache-dir --target "${LAMBDA_TASK_ROOT}"
+
+# aws cli 를 전역으로 설치
+RUN pip install awscli --no-cache-dir
+
+COPY main.py ${LAMBDA_TASK_ROOT}
+
+RUN chmod +x /var/task
+
+# x86_64
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x ./kubectl
+
+CMD ["main.handler"]
