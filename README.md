@@ -2,6 +2,13 @@
 
 ---
 
+### 산학 협력 기업
+<a href="http://aws.amazon.com/what-is-cloud-computing"><img src="./.github/assets/powered_by_aws.png?raw=true" alt="Powered by AWS Cloud Computing"></a>
+
+Amazon Web Service (AWS)는 컴퓨팅, 스토리지, 데이터베이스, 분석, 네트워킹, 모바일, 개발자 도구, 관리 도구, IoT, 보안 및 엔터프라이즈 애플리케이션을 비롯한 광범위한 글로벌 클라우드 기반 제품을 제공합니다.  온디맨드로 몇 초 만에 이용할 수 있으며 요금이 부과됩니다. pay-as-you-go 데이터 웨어하우징에서 배포 도구, 디렉터리, 콘텐츠 전송에 이르기까지 200개 AWS 이상의 서비스를 이용할 수 있습니다. 초기 고정 비용 없이 새 서비스를 신속하게 프로비저닝할 수 있습니다. 이를 통해 공공 부문의 기업, 신생 기업, 중소기업 및 고객이 변화하는 비즈니스 요구 사항에 신속하게 대응하는 데 필요한 구성 요소에 액세스할 수 있습니다.
+
+---
+
 ### 1. 프로잭트 소개
 Team SSKAI(Serverless Spot Kubernetes AI)는 최적의 클라우드 컴퓨팅 환경에서의 AI를 제공한다는 의미로 Sky에서 본따 지어졌습니다.
 
