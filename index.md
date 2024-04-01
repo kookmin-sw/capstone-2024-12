@@ -5,8 +5,7 @@
 ### 산학 협력 기업
 <a href="http://aws.amazon.com/what-is-cloud-computing"><img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/powered_by_aws.png?raw=true" alt="Powered by AWS Cloud Computing"></a>
 
-Amazon Web Service (AWS)는 컴퓨팅, 스토리지, 데이터베이스, 분석, 네트워킹, 모바일, 개발자 도구, 관리 도구, IoT, 보안 및 엔터프라이즈 애플리케이션을 비롯한 광범위한 글로벌 클라우드 기반 제품을 제공합니다. 
-
+Amazon Web Service (AWS)는 컴퓨팅, 스토리지, 데이터베이스, 분석, 네트워킹, 모바일, 개발자 도구, 관리 도구, IoT, 보안 및 엔터프라이즈 애플리케이션을 비롯한 광범위한 글로벌 클라우드 기반 제품을 제공합니다.  온디맨드로 몇 초 만에 이용할 수 있으며 요금이 부과됩니다. pay-as-you-go 데이터 웨어하우징에서 배포 도구, 디렉터리, 콘텐츠 전송에 이르기까지 200개 AWS 이상의 서비스를 이용할 수 있습니다. 초기 고정 비용 없이 새 서비스를 신속하게 프로비저닝할 수 있습니다. 이를 통해 공공 부문의 기업, 신생 기업, 중소기업 및 고객이 변화하는 비즈니스 요구 사항에 신속하게 대응하는 데 필요한 구성 요소에 액세스할 수 있습니다.
 
 ---
 
@@ -29,7 +28,7 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 
 | 송무현 | 김규민 | 김유림 | 문지훈 | 박정명 | 정승우 |
 |--------|--------|--------|--------|--------|--------|
-|<img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/moohyun.jpg?raw=true" width=150px, height=150px, alt="mhsong"/>|<img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/kmkim.png?raw=true" width=150px, height=150px, alt="kmkim"/>|<img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/yrkim.jpg?raw=true" width=150px, height=150px, alt="yrkim"/>|<img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/jhmoon.png?raw=true" width=150px, height=150px, alt="jhmoon"/>|<img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/jmpark.jpg?raw=true" width=150px, height=150px, alt="jmpark"/>|<img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/swjeong.png?raw=true" width=150px, height=150px, alt="swjeong"/>|
+|<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/moohyun.jpg?raw=true' width=150px, height=150px, alt="mhsong"/>|<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/kmkim.png?raw=true' width=150px, height=150px, alt="kmkim"/>|<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/yrkim.jpg?raw=true' width=150px, height=150px, alt="yrkim"/>|<img src='https://github .com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/jhmoon.png?raw=true' width=150px, height=150px, alt="jhmoon"/>|<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/jmpark.jpg?raw=true' width=150px, height=150px, alt="jmpark"/>|<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/people/swjeong.png?raw=true' width=150px, height=150px, alt="swjeong"/>|
 |20203085|20191555|20203043|20213347|20191598|20191664|
 |mhsong@kookmin.ac.kr|okkimok123@kookmin.ac.kr|belbet01@kookmin.ac.kr|answlgns2056@kookmin.ac.kr|jmyeong012@kookmin.ac.kr|seungwoo1124@kookmin.ac.kr|
 |팀장 및 진행 총괄, 추론 아키텍처 설계|분산 학습 아키텍처 설계|스팟 환경에서 안정성 있는 분산 학습 구현|기능 배포 자동화 구현|프론트엔드/백엔드|최적의 비용 아키텍처 선출 알고리즘 제작|
