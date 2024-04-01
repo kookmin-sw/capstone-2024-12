@@ -2,10 +2,19 @@
 
 ---
 
+### 산학 협력 기업
+<a href="http://aws.amazon.com/what-is-cloud-computing"><img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/powered_by_aws.png?raw=true" alt="Powered by AWS Cloud Computing"></a>
+
+Amazon Web Service (AWS)는 컴퓨팅, 스토리지, 데이터베이스, 분석, 네트워킹, 모바일, 개발자 도구, 관리 도구, IoT, 보안 및 엔터프라이즈 애플리케이션을 비롯한 광범위한 글로벌 클라우드 기반 제품을 제공합니다. 
+
+
+---
+
 ### 1. 프로잭트 소개
 Team SSKAI(Serverless Spot Kubernetes AI)는 최적의 클라우드 컴퓨팅 환경에서의 AI를 제공한다는 의미로 Sky에서 본따 지어졌습니다.
 
 SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`은 기존에 존재하는 MLOps/GenAIOps Solution의 단점과 불편한 점을 보완하여 사용자가 손쉽게 머신러닝 모델을 개발하고 배포할 수 있도록 하는 것을 목표로 합니다.
+
 
 #### 주요 기능
 1. 이용이 편리한 GenAIOps Pipeline 제공
