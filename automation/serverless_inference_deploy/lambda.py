@@ -4,6 +4,16 @@ import boto3
 import json
 import uuid
 
+# terraform module 설정
+local_dir = '/tmp'
+os.chdir(local_dir)
+
+subprocess.run(["mkdir","-p",".terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64"])
+os.chdir('.terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64')
+subprocess.run(["ln", "-s", "/var/task/terraform-provider-aws_v5.43.0_x5"])
+os.chdir(local_dir)
+subprocess.run(["ln", "-s", "/var/task/.terraform.lock.hcl"])
+
 def download_s3_folder(bucket_name, s3_folder, local_dir):
     s3 = boto3.client('s3')
     paginator = s3.get_paginator('list_objects_v2')
@@ -43,7 +53,6 @@ def handler(event, context):
 
     bucket_name = 'skkai-lambda-test'
     s3_folder = 'lambda-IaC_test/'
-    local_dir = '/tmp'
 
     download_s3_folder(bucket_name, s3_folder, local_dir)
 
@@ -53,9 +62,6 @@ def handler(event, context):
 
     # Terraform 바이너리의 전체 경로 설정
     terraform_binary = '/var/task/terraform'
-
-    # 작업 디렉토리를 /tmp로 변경
-    os.chdir(local_dir)
 
     # backend 생성
     create_backend(username, model_name, hash)
