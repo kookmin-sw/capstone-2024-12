@@ -29,14 +29,21 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 
 ### 2. 팀 소개
 
-| 송무현 | 김규민 | 김유림 | 문지훈 | 박정명 | 정승우 |
-|--------|--------|--------|--------|--------|--------|
-|<img src="./.github/assets/people/moohyun.jpg" width=150px, height=150px, alt="mhsong"/>|<img src="./.github/assets/people/kmkim.png" width=150px, height=150px, alt="kmkim"/>|<img src="./.github/assets/people/yrkim.jpg" width=150px, height=150px, alt="yrkim"/>|<img src="./.github/assets/people/jhmoon.png" width=150px, height=150px, alt="jhmoon"/>|<img src="./.github/assets/people/jmpark.jpg" width=150px, height=150px, alt="jmpark"/>|<img src="./.github/assets/people/swjeong.png" width=150px, height=150px, alt="swjeong"/>|
-|20203085|20191555|20203043|20213347|20191598|20191664|
-|mhsong@kookmin.ac.kr|okkimok123@kookmin.ac.kr|belbet01@kookmin.ac.kr|answlgns2056@kookmin.ac.kr|jmyeong012@kookmin.ac.kr|seungwoo1124@kookmin.ac.kr|
-|팀장 및 진행 총괄, 추론 아키텍처 설계|분산 학습 아키텍처 설계|스팟 환경에서 안정성 있는 분산 학습 구현|기능 배포 자동화 구현|프론트엔드/백엔드|최적의 비용 아키텍처 선출 알고리즘 제작|
-|[@mh3ong](https://github.com/mh3ong)|[@QueueMin](https://github.com/QueueMin)|[@Kim-Yul](https://github.com/Kim-Yul)|[@jhM00n](https://github.com/jhM00n)|[@j-myeong](https://github.com/j-myeong)|[@seungwoo1124](https://github.com/seungwoo1124)|
+| 송무현 | 김규민 | 김유림 |
+|--------|--------|--------|
+|<img src="./.github/assets/people/moohyun.jpg" width=150px, height=150px, alt="mhsong"/>|<img src="./.github/assets/people/kmkim.png" width=150px, height=150px, alt="kmkim"/>|<img src="./.github/assets/people/yrkim.jpg" width=150px, height=150px, alt="yrkim"/>|
+|20203085|20191555|20203043|
+|mhsong@kookmin.ac.kr|okkimok123@kookmin.ac.kr|belbet01@kookmin.ac.kr|
+|팀장 및 진행 총괄, 추론 아키텍처 설계|분산 학습 아키텍처 설계|스팟 환경에서 안정성 있는 분산 학습 구현|
+|[@mh3ong](https://github.com/mh3ong)|[@QueueMin](https://github.com/QueueMin)|[@Kim-Yul](https://github.com/Kim-Yul)|
 
+| 문지훈 | 박정명 | 정승우 |
+|--------|--------|--------|
+|<img src="./.github/assets/people/jhmoon.png" width=150px, height=150px, alt="jhmoon"/>|<img src="./.github/assets/people/jmpark.jpg" width=150px, height=150px, alt="jmpark"/>|<img src="./.github/assets/people/swjeong.png" width=150px, height=150px, alt="swjeong"/>|
+|20213347|20191598|20191664|
+|answlgns2056@kookmin.ac.kr|jmyeong012@kookmin.ac.kr|seungwoo1124@kookmin.ac.kr|
+|기능 배포 자동화 구현|프론트엔드/백엔드|최적의 비용 아키텍처 선출 알고리즘 제작|
+|[@jhM00n](https://github.com/jhM00n)|[@j-myeong](https://github.com/j-myeong)|[@seungwoo1124](https://github.com/seungwoo1124)|
 
 ### 3. 배포 방법
 
