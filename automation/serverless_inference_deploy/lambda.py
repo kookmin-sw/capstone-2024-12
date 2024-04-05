@@ -11,17 +11,7 @@ os.chdir(local_dir)
 subprocess.run(["mkdir","-p",".terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64"])
 subprocess.run(["ln", "-s", "/var/task/terraform-provider-aws_v5.43.0_x5", ".terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64"])
 subprocess.run(["ln", "-s", "/var/task/.terraform.lock.hcl"])
-
-def download_s3_folder(bucket_name, s3_folder, local_dir):
-    s3 = boto3.client('s3')
-    paginator = s3.get_paginator('list_objects_v2')
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_folder):
-        for obj in page.get('Contents', []):
-            destination_path = os.path.join(
-                local_dir, os.path.relpath(obj['Key'], s3_folder))
-            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
-            s3.download_file(bucket_name, obj['Key'], destination_path)
-
+subprocess.run(["ln", "-s", "/var/task/main.tf", "/tmp"])
 
 def create_backend(username, model, hash):
 # Terraform backend 생성
@@ -48,12 +38,7 @@ def handler(event, context):
     action = event["queryStringParameters"]["ACTION"]
     container_registry = event["queryStringParameters"]["CONTAINER_REGISTRY"]
     model_name = event["queryStringParameters"]["MODEL_NAME"]
-
-    bucket_name = 'skkai-lambda-test'
-    s3_folder = 'lambda-IaC_test/'
-
-    download_s3_folder(bucket_name, s3_folder, local_dir)
-
+    
     # hash 생성
     # hash = str(uuid.uuid4())
     hash = 1234
