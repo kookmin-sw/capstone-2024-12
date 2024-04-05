@@ -9,9 +9,7 @@ local_dir = '/tmp'
 os.chdir(local_dir)
 
 subprocess.run(["mkdir","-p",".terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64"])
-os.chdir('.terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64')
-subprocess.run(["ln", "-s", "/var/task/terraform-provider-aws_v5.43.0_x5"])
-os.chdir(local_dir)
+subprocess.run(["ln", "-s", "/var/task/terraform-provider-aws_v5.43.0_x5", ".terraform/providers/registry.terraform.io/hashicorp/aws/5.43.0/linux_amd64"])
 subprocess.run(["ln", "-s", "/var/task/.terraform.lock.hcl"])
 
 def download_s3_folder(bucket_name, s3_folder, local_dir):
