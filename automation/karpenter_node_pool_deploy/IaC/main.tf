@@ -4,7 +4,7 @@ module "karpenter_nodepool_manager" {
   container_registry   = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "k8s-manager"
   container_image_tag  = "latest"
-  lambda_ram_size      = 128
+  lambda_ram_size      = 256
   attach_s3_policy     = true
   attach_ec2_policy    = true
   attach_eks_policy    = true

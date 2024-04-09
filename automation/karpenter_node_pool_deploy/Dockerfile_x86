@@ -7,6 +7,7 @@ FROM public.ecr.aws/lambda/python:3.12
 RUN pip install awscli --no-cache-dir
 
 COPY main.py ${LAMBDA_TASK_ROOT}
+COPY ./*.yaml ${LAMBDA_TASK_ROOT}
 
 RUN chmod +x /var/task
 
