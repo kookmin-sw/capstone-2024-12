@@ -2,16 +2,21 @@ import boto3
 import requests
 import json
 
+def get_instance_family(lambda_url, region):
+    query_params = {'region':region}
+    response = requests.get(lambda_url, params=query_params)
+    if response.status_code != 200:
+        raise Exception(f"추천 인스턴스 람다 쿼리 실패. status code : {response.status_code}")
+    data = json.loads(response.text)
+    return data['Family']
+
 def generate_cpu_nodepool_yaml(eks_cluster_name, region):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
     param_lambda_url = ssm.get_parameter(Name="cpu_recommend_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']
-    query_params = {'queryStringParameters':region}
+    
+    family_list = get_instance_family(recommend_lambda_url, region)
 
-    response = requests.get(recommend_lambda_url, params=query_params)
-
-    print(f"cpu 추천 람다 함수 statusCode : {response.status_code}")
-    family_list = json.loads(response.json()['body'])['family']
     family_string = ', '.join(f'"{instance_type}"' for instance_type in family_list)
 
     param_role_name = ssm.get_parameter(Name="karpenter_node_role_name", WithDecryption=False)
@@ -74,12 +79,9 @@ def generate_gpu_nodepool_yaml(eks_cluster_name, region):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
     param_lambda_url = ssm.get_parameter(Name="gpu_recommend_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']
-    query_params = {'queryStringParameters':region}
+    
+    family_list = get_instance_family(recommend_lambda_url, region)
 
-    response = requests.get(recommend_lambda_url, params=query_params)
-
-    print(f"gpu 추천 람다 함수 statusCode : {response.status_code}")
-    family_list = json.loads(response.json()['body'])['family']
     family_string = ', '.join(f'"{instance_type}"' for instance_type in family_list)
 
     param_role_name = ssm.get_parameter(Name="karpenter_node_role_name", WithDecryption=False)
