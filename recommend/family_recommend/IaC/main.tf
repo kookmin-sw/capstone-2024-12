@@ -5,7 +5,7 @@ module "cpu_family_recommend" {
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "recommend-inference-cpu-family"
   container_image_tag = "latest"
-  lambda_ram_size = 2048
+  lambda_ram_size = 256
   attach_s3_policy = true
   attach_ec2_policy = true
   recommend_bucket_name = "sskai-spot-dataset"
@@ -17,7 +17,7 @@ module "gpu_family_recommend" {
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "recommend-inference-gpu-family"
   container_image_tag = "latest"
-  lambda_ram_size = 2048
+  lambda_ram_size = 256
   attach_s3_policy = true
   attach_ec2_policy = true
   recommend_bucket_name = "sskai-spot-dataset"
