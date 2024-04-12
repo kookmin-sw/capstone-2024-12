@@ -4,6 +4,7 @@ variable "container_repository" {}
 variable "container_image_tag" {}
 variable "ram_mib" {}
 variable "eks_cluster_name" {}
+variable "attach_ssm_readonly_policy" {}
 variable "attach_cloudwatch_policy" {}
 variable "attach_ec2_policy" {}
 variable "attach_lambda_policy" {}

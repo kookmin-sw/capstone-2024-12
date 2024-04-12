@@ -24,3 +24,8 @@ def handler(event, context):
         })
     }
     return response
+
+# for test
+if __name__ == "__main__":
+    family = get_cpu_instance_family_for_inference("ap-northeast-2")
+    print(family)

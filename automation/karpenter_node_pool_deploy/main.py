@@ -1,25 +1,28 @@
 import subprocess
 import os
+from nodepool_generator import *
 
-def print_err_command(completed_process):
-    print(f"error at command : {completed_process.args}")
-    print(f"stdout : {completed_process.stdout}")
-    print(f"stderr : {completed_process.stderr}")
-
-def print_command(completed_process):
-    print(f"stdout of {completed_process.args} : {completed_process.stdout}")
-    print(f"stderr of {completed_process.args} : {completed_process.stderr}")
+# request 형식 (GET 요청입니다. queryStringParameter 만 존재하기 때문)
+# {
+#     "queryStringParameters" : {
+#         "isGpu" : "true | True | false | False", GPU 패밀리 요청인지 아닌지
+#     }
+# }
+# 이후 region 이라는 값이 추가 될 수 있습니다. 현재는 ap-northeast-2 로 고정입니다
 
 def handler(event, context):
     params = event["queryStringParameters"]
 
-    command = params['command']
-    if command not in ['create', 'delete']:
+    is_gpu = params['isGpu']
+    if is_gpu is not None:
+        is_gpu = is_gpu.lower() == "true"
+    else:
         return {
             'statusCode': 400,
-            'body': f'Unsupported command : {command}'
+            'body': f'Unexcepted parameter value isGpu : {is_gpu}'
         }
-    eks_name = os.environ.get('EKS_CLUSTER_NAME')
+    
+    eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
     # TODO : eks 이름이 유효한지 테스트 할 수 있는 코드
 
     kubectl = '/var/task/kubectl'
@@ -28,46 +31,28 @@ def handler(event, context):
     # get eks cluster kubernetes configuration by aws cli
     result_get_kubeconfig = subprocess.run([
         "aws", "eks", "update-kubeconfig",
-        "--name", eks_name,
+        "--name", eks_cluster_name,
         "--region", "ap-northeast-2",
         "--kubeconfig", kubeconfig
     ])
     if result_get_kubeconfig.returncode != 0:
-        print_err_command(result_get_kubeconfig)
-        return {
-            'statusCode': 500,
-            'body': f"Internel Server Error"
-        }
-    print_command(result_get_kubeconfig)
+        print("kubeconfig 받아오기 returncode != 0")
 
-    # kubectl get nodes
-    result_get_nodes = subprocess.run([
-        kubectl, "get", "nodes",
-        "--kubeconfig", kubeconfig
-    ])
-    if result_get_nodes.returncode != 0:
-        print_err_command(result_get_nodes)
-        return {
-            'statusCode': 500,
-            'body': f"Internal Server Error"
-        }
-    print_command(result_get_nodes)
-
-    # kubectl get pods
-    result_get_pods = subprocess.run([
-        kubectl, "get", "pods", "-A",
-        "--kubeconfig", kubeconfig
-    ])
-    if result_get_pods.returncode != 0:
-        print_err_command(result_get_pods)
-        return {
-            'statusCode': 500,
-            'body': f"Internal Server Error"
-        }
-    print_command(result_get_pods)
+    if not is_gpu:
+        nodepool_filename = generate_cpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
+        result_create_cpu_nodepool = subprocess.run([
+            kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
+        ])
+        if result_create_cpu_nodepool != 0: print("create cpu nodepool returncode != 0")
+    else:
+        nodepool_filename = generate_gpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
+        result_create_gpu_nodepool = subprocess.run([
+            kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
+        ])
+        if result_create_gpu_nodepool != 0: print("create gpu nodepool returncode != 0")
 
     return {
         'statusCode': 200,
-        'body': result_get_pods.stdout
+        'body': "test complete"
     }
     

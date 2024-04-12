@@ -140,6 +140,14 @@ module "karpenter" {
   depends_on = [ module.eks ]
 }
 
+resource "aws_ssm_parameter" "param_karpenter_node_role_name" {
+  name = "karpenter_node_role_name"
+  type = "String"
+  value = module.karpenter.node_iam_role_name
+
+  depends_on = [ module.karpenter ]
+}
+
 resource "helm_release" "aws-load-balancer-controller" {
   name = "aws-load-balancer-controller"
   namespace = "kube-system"

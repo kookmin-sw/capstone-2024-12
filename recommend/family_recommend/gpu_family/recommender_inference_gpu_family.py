@@ -19,6 +19,9 @@ def get_gpu_instance_family_for_inference(region):
     instance_df = get_instance_df(region)
 
     df = pd.merge(price_df, instance_df, on=['Region', 'InstanceType'], how='inner')
+    # architecture 가 x86 인 것만 제공
+    df_exploded = df.explode('SupportedArchitectures')
+    df = df.loc[df_exploded[df_exploded['SupportedArchitectures'].isin(['x86_64'])].index.unique()]
     # NVIDIA GPU 모델의 경우만 제공합니다. 즉, Radeon 등 다른 제조회사의 GPU 인스턴스는 제외합니다.
     df = df[df['GPUManufacturer'] == 'NVIDIA'].reset_index(drop=True)
     
