@@ -246,5 +246,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Frontend
+frontend/*/node_modules/
+frontend/*/.idea/
+frontend/*/.DS_Store/
 # test file
 **/*test*
