@@ -8,7 +8,7 @@ def get_instance_family(lambda_url, region):
     if response.status_code != 200:
         raise Exception(f"추천 인스턴스 람다 쿼리 실패. status code : {response.status_code}")
     data = json.loads(response.text)
-    return data['Family']
+    return data['family']
 
 def generate_cpu_nodepool_yaml(eks_cluster_name, region):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
