@@ -70,7 +70,7 @@ spec:
 
     return filename
 
-def generate_cpu_nodepool_yaml(eks_cluster_name, region):
+def generate_gpu_nodepool_yaml(eks_cluster_name, region):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
     param_lambda_url = ssm.get_parameter(Name="gpu_recommend_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']

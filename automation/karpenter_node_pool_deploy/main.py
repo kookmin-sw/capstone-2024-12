@@ -2,6 +2,14 @@ import subprocess
 import os
 from nodepool_generator import *
 
+# request 형식 (GET 요청입니다. queryStringParameter 만 존재하기 때문)
+# {
+#     "queryStringParameters" : {
+#         "isGpu" : "true | True | false | False", GPU 패밀리 요청인지 아닌지
+#     }
+# }
+# 이후 region 이라는 값이 추가 될 수 있습니다. 현재는 ap-northeast-2 로 고정입니다
+
 def handler(event, context):
     params = event["queryStringParameters"]
 
@@ -13,13 +21,7 @@ def handler(event, context):
             'statusCode': 400,
             'body': f'Unexcepted parameter value isGpu : {is_gpu}'
         }
-
-    command = params['command']
-    if command not in ['create', 'delete']:
-        return {
-            'statusCode': 400,
-            'body': f'Unsupported command : {command}'
-        }
+    
     eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
     # TODO : eks 이름이 유효한지 테스트 할 수 있는 코드
 
@@ -43,19 +45,11 @@ def handler(event, context):
         ])
         if result_create_cpu_nodepool != 0: print("create cpu nodepool returncode != 0")
     else:
-        nodepool_filename = generate_cpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
-        result_create_cpu_nodepool = subprocess.run([
+        nodepool_filename = generate_gpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
+        result_create_gpu_nodepool = subprocess.run([
             kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
         ])
-        if result_create_cpu_nodepool != 0: print("create gpu nodepool returncode != 0")
-
-    # kubectl get nodes
-    # result_get_nodes = subprocess.run([
-    #     kubectl, "get", "nodes",
-    #     "--kubeconfig", kubeconfig
-    # ])
-    # if result_get_nodes.returncode != 0:
-    #     print("get node returncode != 0")
+        if result_create_gpu_nodepool != 0: print("create gpu nodepool returncode != 0")
 
     return {
         'statusCode': 200,
