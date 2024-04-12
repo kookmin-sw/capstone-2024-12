@@ -24,6 +24,7 @@ def generate_cpu_nodepool_yaml(eks_cluster_name, region):
     node_role_name = param_role_name['Parameter']['Value']
 
     filename = "nodepool-cpu"
+    ec2_nodeclass_name = "ec2-cpu"
 
     content = f"""apiVersion: karpenter.sh/v1beta1
 kind: NodePool
@@ -38,7 +39,7 @@ spec:
     metadata: {{}}
     spec:
       nodeClassRef:
-        name: default
+        name: {ec2_nodeclass_name}
       requirements:
       - key: node.kubernetes.io/instance-type
         operator: In
@@ -60,7 +61,7 @@ spec:
 apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass
 metadata:
-  name: default
+  name: {ec2_nodeclass_name}
 spec:
   amiFamily: Bottlerocket
   role: "{node_role_name}"
@@ -90,6 +91,7 @@ def generate_gpu_nodepool_yaml(eks_cluster_name, region):
     node_role_name = param_role_name['Parameter']['Value']
 
     filename = "nodepool-gpu"
+    ec2_nodeclass_name = "ec2-gpu"
 
     content = f"""apiVersion: karpenter.sh/v1beta1
 kind: NodePool
@@ -104,7 +106,7 @@ spec:
     metadata: {{}}
     spec:
       nodeClassRef:
-        name: default
+        name: {ec2_nodeclass_name}
       requirements:
       - key: node.kubernetes.io/instance-type
         operator: In
@@ -130,7 +132,7 @@ spec:
 apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass
 metadata:
-  name: default
+  name: {ec2_nodeclass_name}
 spec:
   amiFamily: Bottlerocket
   role: "{node_role_name}"
