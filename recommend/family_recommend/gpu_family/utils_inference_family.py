@@ -42,7 +42,7 @@ def get_instance_df(region_name):
     dict_data = {
         'InstanceType': [],
         'Region': [],
-        'Architecture': [],
+        'SupportedArchitectures': [],
         'vCPU': [],
         'MemoryGiB': [],
         'GPUModel': [],
@@ -53,7 +53,7 @@ def get_instance_df(region_name):
 
     for instance_info in instance_types:
         instance_type = instance_info['InstanceType']
-        arch = instance_info['Architecture']
+        supported_archs = instance_info['SupportedArchitectures']
         vcpu = instance_info['VCpuInfo']['DefaultVCpus']
         memory = instance_info['MemoryInfo']['SizeInMiB'] / 1024
         gpu_model = None
@@ -70,7 +70,7 @@ def get_instance_df(region_name):
         
         dict_data['InstanceType'].append(instance_type)
         dict_data['Region'].append(region_name)
-        dict_data['Architecture'].append(arch)
+        dict_data['SupportedArchitectures'].append(supported_archs)
         dict_data['vCPU'].append(vcpu)
         dict_data['MemoryGiB'].append(memory)
         dict_data['GPUModel'].append(gpu_model)
