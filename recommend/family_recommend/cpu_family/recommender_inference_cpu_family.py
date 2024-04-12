@@ -19,6 +19,8 @@ def get_cpu_instance_family_for_inference(region):
     instance_df = get_instance_df(region)
 
     df = pd.merge(price_df, instance_df, on=['Region', 'InstanceType'], how='inner')
+    # architecture 가 x86 인 것만 제공
+    df = df[df['Architecture'] == 'x86_64'].reset_index(drop=True)
     # CPU 모델만 제공합니다.
     df = df[df['GPUCount'] == 0].reset_index(drop=True)
     
