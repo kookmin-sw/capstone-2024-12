@@ -1,6 +1,7 @@
 import boto3
 import requests
 import json
+import os
 
 def get_instance_family(lambda_url, region):
     query_params = {'region':region}
@@ -70,10 +71,11 @@ spec:
     - tags:
         karpenter.sh/discovery: "{eks_cluster_name}"
 """
-    with open("cpu_nodepool.yaml", 'w') as f:
+    filepath = f"/tmp/{filename}.yaml"
+    with open(filepath, 'w') as f:
         f.write(content)
 
-    return filename
+    return filepath
 
 def generate_gpu_nodepool_yaml(eks_cluster_name, region):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
@@ -151,7 +153,8 @@ spec:
     #   value: "true"
     #   effect: "NoSchedule"
 
-    with open(f"{filename}.yaml", 'w') as f:
+    filepath = f"/tmp/{filename}.yaml"
+    with open(filepath, 'w') as f:
         f.write(content)
 
-    return f"{filename}.yaml"
+    return filepath
