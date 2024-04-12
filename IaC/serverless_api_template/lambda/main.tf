@@ -32,6 +32,12 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "ssm_readonly_policy" {
+  count      = var.attach_ssm_readonly_policy ? 1 : 0
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "cloudwatchlogs_policy" {
   count      = var.attach_cloudwatch_policy ? 1 : 0
   role       = aws_iam_role.lambda-role.name
@@ -73,7 +79,7 @@ resource "aws_lambda_function" "lambda" {
 
   environment {
     variables = {
-      EKS_CLUSTER_NAME = var.eks_cluster_name
+      EKS_CLUSTER_NAME      = var.eks_cluster_name
       RECOMMEND_BUCKET_NAME = var.recommend_bucket_name
     }
   }
@@ -90,15 +96,15 @@ resource "aws_lambda_function_url" "lambda-url" {
 }
 
 resource "aws_eks_access_entry" "eks-access-entry" {
-  count = var.attach_eks_policy ? 1 : 0
-  cluster_name = var.eks_cluster_name
+  count         = var.attach_eks_policy ? 1 : 0
+  cluster_name  = var.eks_cluster_name
   principal_arn = aws_iam_role.lambda-role.arn
 }
 
 resource "aws_eks_access_policy_association" "eks-access-policy" {
-  count = var.attach_eks_policy ? 1 : 0
-  cluster_name = var.eks_cluster_name
-  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  count         = var.attach_eks_policy ? 1 : 0
+  cluster_name  = var.eks_cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   principal_arn = aws_iam_role.lambda-role.arn
 
   access_scope {
