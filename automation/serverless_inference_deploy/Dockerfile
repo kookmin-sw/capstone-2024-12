@@ -9,5 +9,6 @@ COPY ./main.tf ${LAMBDA_TASK_ROOT}
 RUN chmod +x /var/task
 RUN dnf install git -y
 RUN dnf clean all
+RUN pip install requests
 
 CMD ["lambda.handler"]
