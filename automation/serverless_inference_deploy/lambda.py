@@ -50,7 +50,7 @@ def handler(event, context):
         if action == 'destroy':
             subprocess.run([terraform_binary, "destroy", "-auto-approve"])
             
-            delete_inference_url = "https://wpcwvjlvkl.execute-api.ap-northeast-2.amazonaws.com/sskai-api-dev/inferences/"+inference_uid
+            delete_inference_url = "[실제 url 입력]"+inference_uid
             response = requests.delete(delete_inference_url)
 
             return {
@@ -87,7 +87,7 @@ def handler(event, context):
                 "endpoint": endpoint_url
             }
 
-            add_inference_url="https://wpcwvjlvkl.execute-api.ap-northeast-2.amazonaws.com/sskai-api-dev/inferences"
+            add_inference_url="[실제 url 입력]"
             response = requests.post(add_inference_url, json=add_inferences)
 
             return {
