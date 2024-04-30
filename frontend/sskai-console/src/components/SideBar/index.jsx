@@ -22,7 +22,12 @@ export default function SideBar(props) {
         selectedKeys={[location.pathname.split('/').pop()]}
         defaultSelectedKeys={['dashboard']}
         mode={'inline'}
-        style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          border: 'none'
+        }}
         onClick={handleMenuClicked}
       >
         <Menu.Item key="dashboard" icon={<DashboardOutlined />}>

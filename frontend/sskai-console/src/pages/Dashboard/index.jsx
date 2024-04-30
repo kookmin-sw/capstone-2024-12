@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
+import CountUp from 'react-countup';
 
 const Title = styled.div`
   display: flex;
@@ -193,7 +194,10 @@ export default function Dashboard(props) {
                 style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
               />
             </Flex>
-            <Cost>$ 999.99</Cost>
+            <Cost>
+              $ <CountUp end={999} duration={1} />.
+              <CountUp end={99} duration={2} />
+            </Cost>
             <ResponsiveContainer height={280}>
               <BarChart data={EXAMPLE_COST} margin={{ top: 30 }}>
                 <XAxis dataKey="month" />

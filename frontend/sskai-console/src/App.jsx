@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard/index.jsx';
 import Index from './pages/index.jsx';
 import Train from './pages/Train/index.jsx';
 import Inference from './pages/Inference/index.jsx';
+import NewModel from './pages/NewModel/index.jsx';
 
 const settings = {
   components: {
@@ -24,22 +25,6 @@ const Container = styled.div`
   height: 100vh;
 `;
 
-const MainLayout = () => (
-  <Container>
-    <ConfigProvider theme={settings}>
-      <Layout>
-        <Header />
-        <Layout>
-          <SideBar />
-          <Layout.Content style={{ height: 'calc(100vh - 64px)' }}>
-            <Outlet />
-          </Layout.Content>
-        </Layout>
-      </Layout>
-    </ConfigProvider>
-  </Container>
-);
-
 function App() {
   return (
     <Container>
@@ -55,6 +40,7 @@ function App() {
                 <Route path={'/dashboard'} element={<Dashboard />} />
                 <Route path={'/train'} element={<Train />} />
                 <Route path={'/inference'} element={<Inference />} />
+                <Route path={'/new-model'} element={<NewModel />} />
               </Routes>
             </Layout.Content>
           </Layout>
