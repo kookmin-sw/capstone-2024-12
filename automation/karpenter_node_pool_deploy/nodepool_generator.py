@@ -138,7 +138,7 @@ kind: EC2NodeClass
 metadata:
   name: {ec2_nodeclass_name}
 spec:
-  amiFamily: Bottlerocket
+  amiFamily: AL2
   role: "{node_role_name}"
   subnetSelectorTerms:
     - tags:
