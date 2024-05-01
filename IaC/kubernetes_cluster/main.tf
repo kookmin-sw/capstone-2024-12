@@ -277,6 +277,18 @@ resource "null_resource" "update-kubeconfig" {
   depends_on = [ module.eks ]
 }
 
+resource "null_resource" "install-nvidia-plugin" {
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+  provisioner "local-exec" {
+    when = create
+    command = "kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.15.0/deployments/static/nvidia-device-plugin.yml"
+  }
+
+  depends_on = [ module.eks ]
+}
+
 resource "helm_release" "kuberay_operator" {
   name       = "kuberay-operator"
   chart      = "kuberay-operator"
