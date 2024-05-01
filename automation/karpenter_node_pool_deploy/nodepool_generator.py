@@ -155,17 +155,6 @@ spec:
         deleteOnTermination: true
         throughput: 1000
 """
-    
-    # 추후에 gpu 를 사용하는 파드가 배치된다면 해당 파드 배치 정의에
-    # 아래와 같은 toleration 이 포함되어야 합니다
-    # 이유는 gpu nodepool 의 정의 부분의 taints 때문인데
-    # 해당 taints 에서는 gpu가 필요하지 않는 Pod가
-    # gpu 가 달린 노드에 배치되지 않도록 합니다.
-    # tolerations:
-    # - key: "nvidia.com/gpu"
-    #   operator: "Equal"
-    #   value: "true"
-    #   effect: "NoSchedule"
 
     filepath = f"/tmp/{filename}.yaml"
     with open(filepath, 'w') as f:
