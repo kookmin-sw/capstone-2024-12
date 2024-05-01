@@ -63,7 +63,7 @@ kind: EC2NodeClass
 metadata:
   name: {ec2_nodeclass_name}
 spec:
-  amiFamily: Bottlerocket
+  amiFamily: AL2
   role: "{node_role_name}"
   subnetSelectorTerms:
     - tags:
@@ -71,6 +71,14 @@ spec:
   securityGroupSelectorTerms:
     - tags:
         karpenter.sh/discovery: "{eks_cluster_name}"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 300Gi
+        volumeType: gp3
+        iops: 5000
+        deleteOnTermination: true
+        throughput: 1000
 """
     filepath = f"/tmp/{filename}.yaml"
     with open(filepath, 'w') as f:
@@ -121,10 +129,6 @@ spec:
         operator: In
         values:
         - spot
-      taints:
-      - effect: NoSchedule
-        key: nvidia.com/gpu
-        value: "true"
   limits:
     cpu: 100
     memory: 100Gi
@@ -134,7 +138,7 @@ kind: EC2NodeClass
 metadata:
   name: {ec2_nodeclass_name}
 spec:
-  amiFamily: Bottlerocket
+  amiFamily: AL2
   role: "{node_role_name}"
   subnetSelectorTerms:
     - tags:
@@ -142,18 +146,15 @@ spec:
   securityGroupSelectorTerms:
     - tags:
         karpenter.sh/discovery: "{eks_cluster_name}"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 300Gi
+        volumeType: gp3
+        iops: 5000
+        deleteOnTermination: true
+        throughput: 1000
 """
-    
-    # 추후에 gpu 를 사용하는 파드가 배치된다면 해당 파드 배치 정의에
-    # 아래와 같은 toleration 이 포함되어야 합니다
-    # 이유는 gpu nodepool 의 정의 부분의 taints 때문인데
-    # 해당 taints 에서는 gpu가 필요하지 않는 Pod가
-    # gpu 가 달린 노드에 배치되지 않도록 합니다.
-    # tolerations:
-    # - key: "nvidia.com/gpu"
-    #   operator: "Equal"
-    #   value: "true"
-    #   effect: "NoSchedule"
 
     filepath = f"/tmp/{filename}.yaml"
     with open(filepath, 'w') as f:
