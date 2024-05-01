@@ -1,12 +1,11 @@
-import torch, os, tempfile
+import torch, os
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 import ray.train.torch as ray_torch
 from ray import train
-from ray.train import Checkpoint, ScalingConfig
-import ray
+import ray, pyarrow
 import time
 
 import sskai_checkpoint
@@ -41,9 +40,14 @@ class NeuralNetwork(nn.Module):
 
 user_id = "user-1234-5678"
 model_name = "test_model"
-s3_path = "db_stop_checkpoint_path" # 처음에는 None 값이길 바람. 다시 실행할 때 쓰는 용도이기 때문에.
 
 run_config = sskai_checkpoint.create_runconfig(user_id, model_name)
+
+s3_path = None
+# s3_path = Checkpoint(
+#     path=f"{run_config.storage_path}/{run_config.name}", 
+#     filesystem = pyarrow.fs.S3FileSystem(),
+# )
 
 
 def train_func(config):
@@ -61,24 +65,10 @@ def train_func(config):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
 
-    # 이 부분부터 모듈로 넘기고 싶었는데 안되서 우선 올립니다.
-    start_epoch = 0
-    checkpoint = train.get_checkpoint()
-    if checkpoint:
-        with checkpoint.as_directory() as checkpoint_dir:
-            model_state_dict = torch.load(
-                os.path.join(checkpoint_dir, "model.pt"),
-                # map_location=...,  # Load onto a different device if needed.
-            )
-            model.module.load_state_dict(model_state_dict)
-            optimizer.load_state_dict(
-                torch.load(os.path.join(checkpoint_dir, "optimizer.pt"))
-            )
-            start_epoch = (
-                torch.load(os.path.join(checkpoint_dir, "extra_state.pt"))["epoch"] + 1
-            )
+    start_epoch, model, optimizer = sskai_checkpoint.load_train_logs(model, optimizer) # model과 optimizer를 로드해와야 하기 때문에 반드시 제대로 넣어주어야 함
 
 
+    # range(start_epoch, config["num_epochs"])를 유지해야 자동화 포맷 유지 가능
     for epoch in range(start_epoch, config["num_epochs"]):
         if train.get_context().get_world_size() > 1:
             dataloader.sampler.set_epoch(epoch)
@@ -89,52 +79,18 @@ def train_func(config):
                 loss = criterion(pred, labels)
                 loss.backward()
                 optimizer.step()
-            # print(f"epoch: {epoch}, loss: {loss.item()}")
 
-
-
-        with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-            checkpoint = None
-            if train.get_context().get_world_rank() == 0:
-                torch.save(
-                    model.module.state_dict(),  # NOTE: Unwrap the model.
-                    os.path.join(temp_checkpoint_dir, f"model.pt"),
-                )
-                torch.save(
-                    optimizer.state_dict(),
-                    os.path.join(temp_checkpoint_dir, "optimizer.pt"),
-                )
-                torch.save(
-                    {"epoch": epoch},
-                    os.path.join(temp_checkpoint_dir, "extra_state.pt"),
-                )
-                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
-
-            train.report({"epoch":epoch, "loss": loss.item()}, checkpoint=checkpoint)
+            # 저장하고 싶은 성능지표는 반드시 dic type으로 저장
+            matrixs = {"epoch":epoch, "loss": loss.item()}
+            sskai_checkpoint.save_train_report(matrixs, model, optimizer)
 
         if epoch == 1:
             raise RuntimeError("Intentional error to showcase restoration!")
 
 
-if s3_path == None:
-    trainer = ray_torch.TorchTrainer(
-        train_loop_per_worker=train_func,
-        train_loop_config={"num_epochs": 5},
-        scaling_config=ScalingConfig(num_workers=4, use_gpu=False),
-        run_config=run_config,
-    )
-    result = trainer.fit()
-    s3_path = result.checkpoint # 사실상 db에 result.checkpoint 저장이 필요함.
-    
-else:
-    restored_trainer = ray_torch.TorchTrainer.restore(
-        path=os.path.expanduser(s3_path),
-        train_loop_per_worker=train_func,
-        train_loop_config={"num_epochs": 5},
-    )
-    restored_result = restored_trainer.fit()
+result, best_result = sskai_checkpoint.run_train(s3_path, train_func, 5, 4, run_config, "loss")
 
 
 print("------------------------------------------------------")
 print(f"{result}")
-print(f"best checkpoint : {result.best_checkpoints}")
+print(f"best checkpoint : {best_result}")
