@@ -292,29 +292,3 @@ resource "helm_release" "kuberay_operator" {
 
   depends_on = [module.eks]  
 }
-
-resource "helm_release" "raycluster" {
-  name       = "raycluster"
-  chart      = "ray-cluster"
-  version    = "1.1.0"
-  repository = "https://ray-project.github.io/kuberay-helm/"
-  namespace  = "kuberay"
-  create_namespace = true
-
-  depends_on = [resource.helm_release.kuberay_operator]
-
-  set {
-    name  = "service.type"
-    value = "LoadBalancer"
-  }
-
-  set {
-    name  = "head.headService.metadata.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-    value = "internet-facing"
-  }
-
-  set {
-    name = "head.nodeSelector.eks\\.amazonaws\\.com/nodegroup"
-    value = split(":", module.eks.eks_managed_node_groups.addon_node.node_group_id)[1]
-  }
-}
