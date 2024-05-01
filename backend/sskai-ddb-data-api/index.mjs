@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
+  QueryCommand,
   PutCommand,
   GetCommand,
   DeleteCommand,
@@ -42,6 +43,21 @@ export const handler = async (event) => {
         };
         await dynamo.send(new PutCommand(command));
         body = { message: "Data created", data: command.Item };
+        break;
+      
+      case "GET /data":
+        body = await dynamo.send(new QueryCommand({
+          TableName,
+          IndexName: "user-index",
+          KeyConditionExpression: "#user = :user",
+          ExpressionAttributeNames: {
+            "#user": "user"
+          },
+          ExpressionAttributeValues: {
+            ":user": event.headers.user,
+          },
+        }));
+        body = body.Items;
         break;
 
       case "GET /data/{id}":

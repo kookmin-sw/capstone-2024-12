@@ -8,6 +8,7 @@ import Index from './pages/index.jsx';
 import Train from './pages/Train/index.jsx';
 import Inference from './pages/Inference/index.jsx';
 import NewModel from './pages/NewModel/index.jsx';
+import Models from './pages/Models/index.jsx';
 
 const settings = {
   components: {
@@ -38,6 +39,7 @@ function App() {
               <Routes>
                 <Route index element={<Index />} />
                 <Route path={'/dashboard'} element={<Dashboard />} />
+                <Route path={'/models'} element={<Models />} />
                 <Route path={'/train'} element={<Train />} />
                 <Route path={'/inference'} element={<Inference />} />
                 <Route path={'/new-model'} element={<NewModel />} />

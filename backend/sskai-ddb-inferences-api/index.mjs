@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
-  ScanCommand,
+  QueryCommand,
   PutCommand,
   GetCommand,
   DeleteCommand,
@@ -47,13 +47,19 @@ export const handler = async (event) => {
         break;
 
         case "GET /inferences":
-          command = { 
-            TableName,
-          };
-          await dynamo.send(new ScanCommand(command));
-          body = await dynamo.send(new ScanCommand(command));
-          body = body.Items;
-          break;
+        body = await dynamo.send(new QueryCommand({
+          TableName,
+          IndexName: "user-index",
+          KeyConditionExpression: "#user = :user",
+          ExpressionAttributeNames: {
+            "#user": "user"
+          },
+          ExpressionAttributeValues: {
+            ":user": event.headers.user,
+          },
+        }));
+        body = body.Items;
+        break;
 
       case "GET /inferences/{id}":
         body = await dynamo.send(new GetCommand({

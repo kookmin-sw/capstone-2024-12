@@ -78,7 +78,8 @@ export default function NewModel(props) {
   };
 
   const handleCreateModel = async () => {
-    const user = '5d9b890e-1316-4e25-8f67-829702a24331';
+    // TODO: User UID Value Storing in Storage (browser's)
+    const user = import.meta.env.VITE_TMP_USER_UID;
 
     if (!modelFile.length)
       return messageApi.open({

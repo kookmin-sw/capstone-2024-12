@@ -13,6 +13,17 @@ export const updateModel = async (uid, args) => {
   return res?.data?.model;
 };
 
+export const getModels = async (user_uid) => {
+  const res = await axios
+    .get(`${url}/models`, {
+      headers: {
+        user: user_uid
+      }
+    })
+    .catch((err) => err);
+  return res?.data;
+};
+
 export const uploadModel = async (user_uid, uid, file) => {
   const res = await axios
     .post(`${url}/upload`, {

@@ -4,6 +4,7 @@ import {
   PutCommand,
   GetCommand,
   DeleteCommand,
+  QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from 'crypto';
 
@@ -44,6 +45,21 @@ export const handler = async (event) => {
         };
         await dynamo.send(new PutCommand(command));
         body = { message: "Model created", model: command.Item };
+        break;
+
+      case "GET /models":
+        body = await dynamo.send(new QueryCommand({
+          TableName,
+          IndexName: "user-index",
+          KeyConditionExpression: "#user = :user",
+          ExpressionAttributeNames: {
+            "#user": "user"
+          },
+          ExpressionAttributeValues: {
+            ":user": event.headers.user,
+          },
+        }));
+        body = body.Items;
         break;
 
       case "GET /models/{id}":
