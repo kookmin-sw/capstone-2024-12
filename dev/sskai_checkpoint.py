@@ -56,7 +56,7 @@ def save_train_report(matrixs, model, optimizer):
 
         train.report(matrixs, checkpoint=checkpoint)
 
-
+# 훈련 진행
 def run_train(s3_path, train_func, epoch, workers, run_config, valid):
     if s3_path == None:
         trainer = ray_torch.TorchTrainer(
