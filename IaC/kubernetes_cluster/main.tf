@@ -286,7 +286,7 @@ resource "null_resource" "install-nvidia-plugin" {
     command = "kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.15.0/deployments/static/nvidia-device-plugin.yml"
   }
 
-  depends_on = [ module.eks ]
+  depends_on = [ null_resource.update-kubeconfig ]
 }
 
 resource "helm_release" "kuberay_operator" {
