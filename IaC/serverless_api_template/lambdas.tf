@@ -14,4 +14,5 @@ module "lambda" {
   attach_vpc_policy          = var.attach_vpc_policy
   attach_eks_policy          = var.attach_eks_policy
   recommend_bucket_name      = var.recommend_bucket_name
+  state_bucket_name          = var.state_bucket_name
 }
