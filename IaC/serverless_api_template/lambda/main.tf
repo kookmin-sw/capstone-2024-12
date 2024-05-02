@@ -83,6 +83,7 @@ resource "aws_lambda_function" "lambda" {
       RECOMMEND_BUCKET_NAME = var.recommend_bucket_name
       DB_API_URL = var.db_api_url
       STATE_BUCKET_NAME = var.state_bucket_name
+      KARPENTER_NODE_ROLE = var.karpenter_node_iam_node_name
     }
   }
 }

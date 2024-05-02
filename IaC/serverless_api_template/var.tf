@@ -53,6 +53,11 @@ variable "db_api_url" {
   default = ""
 }
 
+variable "karpenter_node_iam_node_name" {
+  type = string
+  default = ""
+}
+
 variable "attach_ssm_readonly_policy" {
   type    = bool
   default = false
@@ -87,3 +92,4 @@ variable "attach_eks_policy" {
   type    = bool
   default = false
 }
+
