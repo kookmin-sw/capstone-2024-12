@@ -304,3 +304,4 @@ resource "helm_release" "kuberay_operator" {
 
   depends_on = [module.eks]  
 }
+
