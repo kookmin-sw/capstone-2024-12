@@ -53,7 +53,7 @@ def handler(event, context):
         if action == 'destroy':
             subprocess.run([terraform_binary, "destroy", "-auto-approve"])
             
-            delete_inference_url = os.getenv("INFERENCE_URL")+"/"+inference_uid
+            delete_inference_url = "https://"+os.getenv("DB_API_URL")+"/"+inference_uid
             response = requests.delete(delete_inference_url)
 
             return {

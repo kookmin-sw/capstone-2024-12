@@ -75,7 +75,7 @@ resource "aws_lambda_function" "lambda" {
     variables = {
       EKS_CLUSTER_NAME = var.eks_cluster_name
       RECOMMEND_BUCKET_NAME = var.recommend_bucket_name
-      INFERENCE_URL = var.inference_url
+      INFERENCE_URL = var.db_api_url
     }
   }
 }
