@@ -15,4 +15,5 @@ module "lambda" {
   attach_eks_policy          = var.attach_eks_policy
   recommend_bucket_name      = var.recommend_bucket_name
   state_bucket_name          = var.state_bucket_name
+  db_api_url                 = var.db_api_url
 }
