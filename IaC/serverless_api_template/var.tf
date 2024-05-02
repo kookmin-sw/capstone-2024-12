@@ -48,6 +48,11 @@ variable "state_bucket_name" {
   default = ""
 }
 
+variable "db_api_url" {
+  type    = string
+  default = ""
+}
+
 variable "attach_ssm_readonly_policy" {
   type    = bool
   default = false
