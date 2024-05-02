@@ -17,10 +17,11 @@ subprocess.run(["ln", "-s", "/var/task/main.tf", "/tmp"])
 
 def create_backend(user_uid, type, model_uid, endpoint_name):
 # Terraform backend 생성
+    bucket_name = os.getenv("TERRAFORM_STATE_BUCKET_NAME")
     terraform_backend = f"""
     terraform {{
     backend "s3" {{
-        bucket = "sskai-terraform-state"
+        bucket = "{bucket_name}"
         key = "{user_uid}/{model_uid}/{type}/{endpoint_name}/terraform.state"
         region = "ap-northeast-2"
         encrypt = true

@@ -12,3 +12,4 @@ variable "attach_vpc_policy" {}
 variable "attach_eks_policy" {}
 variable "recommend_bucket_name" {}
 variable "db_api_url" {}
+variable "terraform_state_bucket_name" {}
