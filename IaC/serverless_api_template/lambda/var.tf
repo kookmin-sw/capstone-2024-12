@@ -11,7 +11,4 @@ variable "attach_s3_policy" {}
 variable "attach_vpc_policy" {}
 variable "attach_eks_policy" {}
 variable "recommend_bucket_name" {}
-variable "inference_url" {
-    type = string
-    default = "https://wpcwvjlvkl.execute-api.ap-northeast-2.amazonaws.com/sskai-api-dev/inferences"
-}
+variable "inference_url" {}
