@@ -17,7 +17,7 @@ subprocess.run(["ln", "-s", "/var/task/main.tf", "/tmp"])
 
 def create_backend(user_uid, type, model_uid, endpoint_name):
 # Terraform backend 생성
-    bucket_name = os.getenv("TERRAFORM_STATE_BUCKET_NAME")
+    bucket_name = os.getenv("STATE_BUCKET_NAME")
     terraform_backend = f"""
     terraform {{
     backend "s3" {{
@@ -54,7 +54,7 @@ def handler(event, context):
         if action == 'destroy':
             subprocess.run([terraform_binary, "destroy", "-auto-approve"])
             
-            delete_inference_url = "https://"+os.getenv("DB_API_URL")+"/"+inference_uid
+            delete_inference_url = "https://"+os.getenv("DB_API_URL")+"/sskai-api-dev/inferences/"+inference_uid
             response = requests.delete(delete_inference_url)
 
             return {
@@ -88,7 +88,7 @@ def handler(event, context):
                 "endpoint": endpoint_url
             }
 
-            add_inference_url= "https://"+os.getenv("DB_API_URL")
+            add_inference_url= "https://"+os.getenv("DB_API_URL")+"/sskai-api-dev/inferences"
             response = requests.post(add_inference_url, json=add_inferences)
 
             return {
