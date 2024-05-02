@@ -8,3 +8,12 @@ export const formatTimestamp = (timestamp) => {
   const seconds = date.getSeconds().toString().padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
+
+export const calculateDuration = (startTime, endTime) => {
+  console.log(startTime, endTime);
+  let duration = new Date(endTime - startTime);
+  let hours = duration.getUTCHours().toString().padStart(2, '0');
+  let minutes = duration.getUTCMinutes().toString().padStart(2, '0');
+  let seconds = duration.getUTCSeconds().toString().padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+};

@@ -11,7 +11,7 @@ import { randomUUID } from 'crypto';
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-data";
-const REQUIRED_FIELDS = ["name", "s3_url", "format"];
+const REQUIRED_FIELDS = ["name", "user"];
 
 export const handler = async (event) => {
   let body, command, statusCode = 200;

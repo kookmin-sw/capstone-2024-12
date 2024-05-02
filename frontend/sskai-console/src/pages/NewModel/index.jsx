@@ -4,7 +4,12 @@ import { InboxOutlined, CheckCircleTwoTone } from '@ant-design/icons';
 import { Button, Flex, Input, message, Radio, Steps, Upload } from 'antd';
 import { useState } from 'react';
 import styled from 'styled-components';
-import { createModel, updateModel, uploadModel } from '../../api/index.jsx';
+import {
+  createModel,
+  deleteModel,
+  updateModel,
+  uploadS3
+} from '../../api/index.jsx';
 import { useNavigate } from 'react-router-dom';
 
 const ErrorMessage = styled.div`
@@ -53,7 +58,7 @@ export default function NewModel(props) {
       if (!isModel) {
         messageApi.open({
           type: 'error',
-          content: 'Model files can only be uploaded as .zip or .tar.gz.'
+          content: 'Model file can only be uploaded as .zip or .tar.gz.'
         });
         return Upload.LIST_IGNORE;
       }
@@ -108,9 +113,11 @@ export default function NewModel(props) {
 
     if (!createdModel) setCreatedModel(model);
 
-    const uploaded = await uploadModel(user, model.uid, modelFile[0]);
+    const uploaded = await uploadS3('model', user, model.uid, modelFile[0]);
 
     if (!uploaded) {
+      await deleteModel(model.uid);
+      setCreatedModel(null);
       setLoading(false);
       return messageApi.open({
         type: 'error',
@@ -124,6 +131,8 @@ export default function NewModel(props) {
     });
 
     if (!isUpdated) {
+      await deleteModel(model.uid);
+      setCreatedModel(null);
       setLoading(false);
       return messageApi.open({
         type: 'error',

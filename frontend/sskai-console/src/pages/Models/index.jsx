@@ -41,12 +41,14 @@ export default function Models(props) {
   const [selected, setSelected] = useState('');
   const [filterInput, setFilterInput] = useState('');
   const [filteredModel, setFilteredModel] = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(false);
 
   const fetchData = async () => {
+    setFetchLoading(true);
     // TODO: User UID Value Storing in Storage (browser's)
     const models = await getModels(import.meta.env.VITE_TMP_USER_UID);
     setModels(models.map((model) => ({ ...model, key: model.uid })));
-    console.log(models);
+    setFetchLoading(false);
   };
 
   useEffect(() => {
@@ -101,6 +103,7 @@ export default function Models(props) {
           </TableToolbox>
         </Flex>
         <Table
+          loading={fetchLoading}
           columns={MODEL_TABLE_COLUMNS}
           dataSource={filterInput ? filteredModel : models}
           rowSelection={{
