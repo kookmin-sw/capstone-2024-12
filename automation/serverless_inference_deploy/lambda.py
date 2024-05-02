@@ -87,7 +87,7 @@ def handler(event, context):
                 "endpoint": endpoint_url
             }
 
-            add_inference_url= os.getenv("INFERENCE_URL")
+            add_inference_url= "https://"+os.getenv("INFERENCE_URL")
             response = requests.post(add_inference_url, json=add_inferences)
 
             return {
