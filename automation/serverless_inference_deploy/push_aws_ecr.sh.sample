@@ -1,0 +1,5 @@
+#!/bin/sh
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin [ecr uri]
+docker build -t serverless-inference-deploy .
+docker tag serverless-inference-deploy:latest [ecr uri]/serverless-inference-deploy:latest
+docker push [ecr uri]/serverless-inference-deploy:latest
