@@ -11,3 +11,4 @@ variable "attach_s3_policy" {}
 variable "attach_vpc_policy" {}
 variable "attach_eks_policy" {}
 variable "recommend_bucket_name" {}
+variable "ecr_uri_name" {}

@@ -53,7 +53,7 @@ def handler(event, context):
         if action == 'destroy':
             subprocess.run([terraform_binary, "destroy", "-auto-approve"])
             
-            delete_inference_url = "[실제 url 입력]"+inference_uid
+            delete_inference_url = os.getenv("DELETE_INFERENCE_URL")+inference_uid
             response = requests.delete(delete_inference_url)
 
             return {
@@ -87,7 +87,7 @@ def handler(event, context):
                 "endpoint": endpoint_url
             }
 
-            add_inference_url="[실제 url 입력]"
+            add_inference_url= os.getenv("ADD_INFERENCE_URL")
             response = requests.post(add_inference_url, json=add_inferences)
 
             return {
