@@ -33,17 +33,20 @@ def create_backend(user_uid, type, model_uid, endpoint_name):
         f.write(terraform_backend)
 
 def handler(event, context):
-    params = event.get("queryStringParameters", {})
-    user_uid = params.get("USER_UID")
-    endpoint_name = params.get("ENDPOINT_NAME")
-    model_uid = params.get("MODEL_UID")
-    type = params.get("TYPE")
-    action = params.get("ACTION")
+    body = json.loads(event.get("body", "{}"))
+    user_uid = body.get("USER_UID")
+    endpoint_name = body.get("ENDPOINT_NAME")
+    model_uid = body.get("MODEL_UID")
+    type = body.get("TYPE")
+    action = body.get("ACTION")
 
     # backend 생성
     create_backend(user_uid, type, model_uid, endpoint_name)
+    # Terraform init
+    subprocess.run([terraform_binary, "init", "-reconfigure"])
 
-    inference_uid = params.get("INFERENCE_UID")
+    inference_uid = body.get("INFERENCE_UID")
+
 
     if inference_uid:        
         # Terraform destroy
@@ -60,14 +63,11 @@ def handler(event, context):
         
         else:
             return{
-                'statusCode': 201,
+                'statusCode': 501,
                 'body': 'Please check the action'
             }
         
     else:        
-        # Terraform init
-        subprocess.run([terraform_binary, "init", "-reconfigure"])
-
         # Terraform apply
         if action == 'create':
             subprocess.run([terraform_binary, "apply", "-auto-approve"])
@@ -97,6 +97,6 @@ def handler(event, context):
         
         else:
             return {
-                'statusCode': 201,
+                'statusCode': 500,
                 'body': 'Please check the action'
             }
