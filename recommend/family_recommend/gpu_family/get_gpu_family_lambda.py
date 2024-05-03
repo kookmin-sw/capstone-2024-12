@@ -3,7 +3,7 @@ import json
 
 def handler(event, context):
     try:
-        param = json.loads(event[body])
+        param = json.loads(event["body"])
     except Exception as e:
         response = {
             'statusCode': 500,
