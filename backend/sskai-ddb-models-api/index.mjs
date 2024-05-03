@@ -6,9 +6,11 @@ import {
   DeleteCommand,
   QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
+import { DeleteObjectCommand, DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from 'crypto';
 
 const client = new DynamoDBClient({});
+const clientS3 = new S3Client({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-models";
 const REQUIRED_FIELDS = ["name", "type", "user"];
@@ -105,12 +107,37 @@ export const handler = async (event) => {
         break;
 
       case "DELETE /models/{id}":
-        await dynamo.send(new DeleteCommand({
+        const deleted = await dynamo.send(new DeleteCommand({
           TableName,
           Key: {
             uid: event.pathParameters.id,
           },
+          ReturnValues: "ALL_OLD",
         }));
+
+        if (!deleted.Attributes) {
+          statusCode = 404;
+          body = { message: "Not Found" };
+          break;
+        }
+
+        const model_url = `${deleted.Attributes.user}/model/${deleted.Attributes.uid}`
+
+        const deleteFileCommand = new DeleteObjectsCommand({
+          Bucket: "sskai-model-storage",
+          Delete: {
+            Objects: [{ Key: `${model_url}/model.zip` }, { Key: `${model_url}/model.tar.gz` }]
+          }
+        });
+
+        const deletedDirCommand = new DeleteObjectCommand({
+          Bucket: "sskai-model-storage",
+          Key: `${model_url}/`,
+        });
+
+        await clientS3.send(deleteFileCommand);
+        await clientS3.send(deletedDirCommand);
+
         body = { message: "Model deleted", uid: event.pathParameters.id };
         break;
     }
