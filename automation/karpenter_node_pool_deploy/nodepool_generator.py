@@ -4,12 +4,23 @@ import json
 import os
 
 def get_instance_family(lambda_url, region):
-    query_params = {'region':region}
-    response = requests.get(lambda_url, params=query_params)
+    query_params = {'region': region}
+    
+    # JSON으로 데이터를 인코딩하고 헤더 설정
+    headers = {'Content-Type': 'application/json'}
+    # POST 요청 보내기
+    response = requests.post(lambda_url, json=query_params, headers=headers)
+    # 응답 상태 확인
     if response.status_code != 200:
-        raise Exception(f"추천 인스턴스 람다 쿼리 실패. status code : {response.status_code}")
-    data = json.loads(response.text)
+        raise Exception(f"추천 인스턴스 람다 쿼리 실패. status code: {response.status_code}")
+    # 응답 데이터 처리
+    data = response.json()
     return data['family']
+    # response = requests.get(lambda_url, params=query_params)
+    # if response.status_code != 200:
+    #     raise Exception(f"추천 인스턴스 람다 쿼리 실패. status code : {response.status_code}")
+    # data = json.loads(response.text)
+    # return data['family']
 
 def generate_cpu_nodepool_yaml(eks_cluster_name, region):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
