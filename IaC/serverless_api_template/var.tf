@@ -43,6 +43,21 @@ variable "recommend_bucket_name" {
   default = ""
 }
 
+variable "state_bucket_name" {
+  type    = string
+  default = ""
+}
+
+variable "db_api_url" {
+  type    = string
+  default = ""
+}
+
+variable "karpenter_node_iam_node_name" {
+  type = string
+  default = ""
+}
+
 variable "attach_ssm_readonly_policy" {
   type    = bool
   default = false
@@ -77,3 +92,4 @@ variable "attach_eks_policy" {
   type    = bool
   default = false
 }
+

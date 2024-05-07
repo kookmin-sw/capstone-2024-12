@@ -277,6 +277,18 @@ resource "null_resource" "update-kubeconfig" {
   depends_on = [ module.eks ]
 }
 
+resource "null_resource" "install-nvidia-plugin" {
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+  provisioner "local-exec" {
+    when = create
+    command = "kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.15.0/deployments/static/nvidia-device-plugin.yml"
+  }
+
+  depends_on = [ null_resource.update-kubeconfig ]
+}
+
 resource "helm_release" "kuberay_operator" {
   name       = "kuberay-operator"
   chart      = "kuberay-operator"
@@ -293,28 +305,3 @@ resource "helm_release" "kuberay_operator" {
   depends_on = [module.eks]  
 }
 
-resource "helm_release" "raycluster" {
-  name       = "raycluster"
-  chart      = "ray-cluster"
-  version    = "1.1.0"
-  repository = "https://ray-project.github.io/kuberay-helm/"
-  namespace  = "kuberay"
-  create_namespace = true
-
-  depends_on = [resource.helm_release.kuberay_operator]
-
-  set {
-    name  = "service.type"
-    value = "LoadBalancer"
-  }
-
-  set {
-    name  = "head.headService.metadata.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
-    value = "internet-facing"
-  }
-
-  set {
-    name = "head.nodeSelector.eks\\.amazonaws\\.com/nodegroup"
-    value = split(":", module.eks.eks_managed_node_groups.addon_node.node_group_id)[1]
-  }
-}

@@ -1,90 +1,53 @@
 import { PageLayout, TableToolbox } from '../styles.jsx';
 import { Section } from '../../components/Section/index.jsx';
-import { Badge, Button, Dropdown, Flex, Input, Space, Table } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Button, Dropdown, Flex, Input, Table, Tag } from 'antd';
 import { useEffect, useState } from 'react';
-import { getTrains } from '../../api/index.jsx';
-import {
-  PlusOutlined,
-  SearchOutlined,
-  SyncOutlined,
-  QuestionCircleOutlined
-} from '@ant-design/icons';
-import { calculateDuration } from '../../utils/index.jsx';
+import { getModels } from '../../api/index.jsx';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { formatTimestamp } from '../../utils/index.jsx';
+import { useNavigate } from 'react-router-dom';
 
-const STATUS_BADGE_MAPPER = {
-  Processing: 'processing',
-  Pause: 'warning',
-  Stopped: 'error'
-};
-
-const TRAIN_TABLE_COLUMNS = (now) => [
+const MODEL_TABLE_COLUMNS = [
   {
     title: 'Name',
     dataIndex: 'name',
-    key: 'name',
     width: 300
   },
   {
-    title: 'Status',
-    dataIndex: 'status',
-    key: 'status',
-    render: (item) => (
-      <Badge status={STATUS_BADGE_MAPPER[item] || 'default'} text={item} />
-    ),
-    width: 150
-  },
-  {
-    title: 'Cost',
-    dataIndex: 'cost',
-    key: 'cost',
-    render: (item) => `$ ${item}`,
-    width: 150
-  },
-  {
-    title: (
-      <Space>
-        Estimated Savings <QuestionCircleOutlined />
-      </Space>
-    ),
-    dataIndex: 'savings',
-    key: 'savings',
-    width: 200,
-    render: () => '0%'
-  },
-  {
-    title: 'Elapsed Time',
-    dataIndex: 'created_at',
-    key: 'time',
+    title: 'Type',
+    dataIndex: 'type',
     width: 300,
-    render: (time) => calculateDuration(time, now)
+    render: (type) => {
+      const color = type === 'user' ? 'green' : 'geekblue';
+      return (
+        <Tag color={color} key={type}>
+          {type.toUpperCase()}
+        </Tag>
+      );
+    }
+  },
+  {
+    title: 'Creation Time',
+    dataIndex: 'created_at',
+    width: 300,
+    render: (timestamp) => formatTimestamp(timestamp)
   }
 ];
 
-export default function Train(props) {
+export default function Models(props) {
   const navigate = useNavigate();
 
-  const [now, setNow] = useState(Date.now());
-  const [trains, setTrains] = useState([]);
+  const [models, setModels] = useState([]);
   const [selected, setSelected] = useState('');
   const [filterInput, setFilterInput] = useState('');
-  const [filteredTrains, setFilteredTrains] = useState([]);
+  const [filteredModel, setFilteredModel] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(false);
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setNow(Date.now());
-  //   }, 1000);
-  //
-  //   return () => clearInterval(interval);
-  // }, []);
 
   const fetchData = async () => {
     setFetchLoading(true);
     // TODO: User UID Value Storing in Storage (browser's)
-    setNow(Date.now());
-    const models = await getTrains(import.meta.env.VITE_TMP_USER_UID);
-    setTrains(models.map((model) => ({ ...model, key: model.uid })));
+    const models = await getModels(import.meta.env.VITE_TMP_USER_UID);
+    setModels(models.map((model) => ({ ...model, key: model.uid })));
     setFetchLoading(false);
   };
 
@@ -93,8 +56,8 @@ export default function Train(props) {
   }, []);
 
   useEffect(() => {
-    setFilteredTrains(
-      trains.filter((model) => model.name.toLowerCase().includes(filterInput))
+    setFilteredModel(
+      models.filter((model) => model.name.toLowerCase().includes(filterInput))
     );
   }, [filterInput]);
 
@@ -106,11 +69,8 @@ export default function Train(props) {
           justify={'space-between'}
           align={'center'}
         >
-          <div className={'section-title'}>Trains</div>
+          <div className={'section-title'}>Models</div>
           <TableToolbox>
-            <Button onClick={fetchData}>
-              <SyncOutlined />
-            </Button>
             <Input
               addonBefore={<SearchOutlined />}
               onChange={(e) => {
@@ -136,7 +96,7 @@ export default function Train(props) {
             >
               <Button>Actions</Button>
             </Dropdown>
-            <Button type={'primary'}>
+            <Button type={'primary'} onClick={() => navigate('/new-model')}>
               <PlusOutlined />
               Add New
             </Button>
@@ -144,8 +104,8 @@ export default function Train(props) {
         </Flex>
         <Table
           loading={fetchLoading}
-          columns={TRAIN_TABLE_COLUMNS(now)}
-          dataSource={filterInput ? filteredTrains : trains}
+          columns={MODEL_TABLE_COLUMNS}
+          dataSource={filterInput ? filteredModel : models}
           rowSelection={{
             type: 'checkbox',
             onChange: (selectedRowKeys) => {

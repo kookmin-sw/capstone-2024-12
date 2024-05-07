@@ -7,4 +7,10 @@ export const PageLayout = styled.div`
   width: 100%;
   height: 100%;
   padding: 20px 24px;
+  overflow: auto;
+`;
+
+export const TableToolbox = styled.div`
+  display: flex;
+  gap: 10px;
 `;
