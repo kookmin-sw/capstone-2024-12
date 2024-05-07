@@ -2,18 +2,16 @@ import subprocess
 import os
 from nodepool_generator import *
 
-# request 형식 (GET 요청입니다. queryStringParameter 만 존재하기 때문)
+# request 형식 (POST 요청)
 # {
-#     "queryStringParameters" : {
-#         "isGpu" : "true | True | false | False", GPU 패밀리 요청인지 아닌지
-#     }
+#   "body": "{\"isGpu\": \"true | True | false | False\"}"   GPU 패밀리 요청인지 아닌지
 # }
 # 이후 region 이라는 값이 추가 될 수 있습니다. 현재는 ap-northeast-2 로 고정입니다
 
 def handler(event, context):
-    params = event["queryStringParameters"]
-
-    is_gpu = params['isGpu']
+    params = json.loads(event["body"])
+    
+    is_gpu = params.get('isGpu')
     if is_gpu is not None:
         is_gpu = is_gpu.lower() == "true"
     else:
@@ -55,4 +53,3 @@ def handler(event, context):
         'statusCode': 200,
         'body': "test complete"
     }
-    

@@ -3,7 +3,7 @@ import json
 
 def handler(event, context):
     try:
-        param = event['queryStringParameters']
+        param = json.loads(event["body"])
     except Exception as e:
         response = {
             'statusCode': 500,
@@ -11,7 +11,7 @@ def handler(event, context):
         }
         return response
     
-    region_name = param['region']
+    region_name = param.get('region')
     try:
         family = get_gpu_instance_family_for_inference(region_name)
     except Exception as e:

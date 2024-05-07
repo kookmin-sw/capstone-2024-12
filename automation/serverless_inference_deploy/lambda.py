@@ -58,7 +58,7 @@ def handler(event, context):
             response = requests.delete(delete_inference_url)
 
             return {
-            'statusCode': 200,
+            'statusCode': 201,
             'body': 'Terraform Destroyed Successfully'
             }
         
@@ -72,7 +72,7 @@ def handler(event, context):
         # Terraform apply
         if action == 'create':
             subprocess.run([terraform_binary, "apply", "-auto-approve"])
-            
+
             # Terraform 출력값 가져오기
             output = subprocess.check_output([terraform_binary, "output", "-json"])
             outputs = json.loads(output.decode('utf-8'))
@@ -92,8 +92,8 @@ def handler(event, context):
             response = requests.post(add_inference_url, json=add_inferences)
 
             return {
-            'statusCode': 200,
-            'body': f'Endpoint URL: {endpoint_url}'
+                'statusCode': 200,
+                'body': f'Endpoint URL: {endpoint_url}'
             }
         
         else:
