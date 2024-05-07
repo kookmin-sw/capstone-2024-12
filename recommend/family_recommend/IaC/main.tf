@@ -8,7 +8,6 @@ module "cpu_family_recommend" {
   lambda_ram_size = 256
   attach_s3_policy = true
   attach_ec2_policy = true
-  recommend_bucket_name = "sskai-spot-dataset"
 }
 
 module "gpu_family_recommend" {
@@ -20,7 +19,6 @@ module "gpu_family_recommend" {
   lambda_ram_size = 256
   attach_s3_policy = true
   attach_ec2_policy = true
-  recommend_bucket_name = "sskai-spot-dataset"
 }
 
 resource "aws_ssm_parameter" "param_cpu_recommend_lambda_function_url" {
