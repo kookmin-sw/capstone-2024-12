@@ -1,4 +1,4 @@
-from recommender_inference_gpu_family import get_gpu_instance_family_for_inference
+from family_1 import get_gpu_instance_family_for_inference
 import json
 
 def handler(event, context):
