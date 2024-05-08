@@ -2,6 +2,19 @@ import subprocess
 import os
 from nodepool_generator import *
 
+eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
+
+kubectl = '/var/task/kubectl'
+kubeconfig = '/tmp/kubeconfig'
+
+# get eks cluster kubernetes configuration by aws cli
+result_get_kubeconfig = subprocess.run([
+    "aws", "eks", "update-kubeconfig",
+    "--name", eks_cluster_name,
+    "--region", "ap-northeast-2",
+    "--kubeconfig", kubeconfig
+])
+
 # request 형식 (POST 요청)
 # {
 #   "body": "{\"isGpu\": \"true | True | false | False\"}"   GPU 패밀리 요청인지 아닌지
@@ -19,22 +32,6 @@ def handler(event, context):
             'statusCode': 400,
             'body': f'Unexcepted parameter value isGpu : {is_gpu}'
         }
-    
-    eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
-    # TODO : eks 이름이 유효한지 테스트 할 수 있는 코드
-
-    kubectl = '/var/task/kubectl'
-    kubeconfig = '/tmp/kubeconfig'
-
-    # get eks cluster kubernetes configuration by aws cli
-    result_get_kubeconfig = subprocess.run([
-        "aws", "eks", "update-kubeconfig",
-        "--name", eks_cluster_name,
-        "--region", "ap-northeast-2",
-        "--kubeconfig", kubeconfig
-    ])
-    if result_get_kubeconfig.returncode != 0:
-        print("kubeconfig 받아오기 returncode != 0")
 
     if not is_gpu:
         nodepool_filename = generate_cpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
