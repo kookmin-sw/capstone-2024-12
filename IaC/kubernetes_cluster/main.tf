@@ -147,6 +147,14 @@ module "eks" {
   ]
 }
 
+resource "aws_ssm_parameter" "param_karpenter_node_role_name" {
+  name = "karpenter_node_role_name_${var.main_suffix}"
+  type = "String"
+  value = module.karpenter.node_iam_role_name
+
+  depends_on = [ module.karpenter ]
+}
+
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
   cluster_name = module.eks.cluster_name
