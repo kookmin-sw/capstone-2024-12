@@ -38,11 +38,6 @@ variable "eks_cluster_name" {
   default = ""
 }
 
-variable "recommend_bucket_name" {
-  type    = string
-  default = ""
-}
-
 variable "state_bucket_name" {
   type    = string
   default = ""
