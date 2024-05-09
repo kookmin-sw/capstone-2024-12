@@ -37,7 +37,7 @@ def filtering_df_by_family(df, family : list):
     return df
 
 # 해당 리전에 대해 Karpenter 가 스케줄링 할 Instance 목록을 제공합니다.
-def get_gpu_instance_family_for_inference(region):
+def get_family_1_for_inference(region):
     price_df = get_spot_price_df(region)
     instance_df = get_instance_df(region)
 
@@ -82,5 +82,5 @@ def get_gpu_instance_family_for_inference(region):
     return family_list
 
 if __name__ == "__main__":
-    family_list = get_gpu_instance_family_for_inference("us-east-1")
+    family_list = get_family_1_for_inference("us-east-1")
     print(family_list)

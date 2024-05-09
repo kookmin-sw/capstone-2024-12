@@ -10,14 +10,13 @@
 #   attach_ec2_policy = true
 # }
 
-module "gpu_family_recommend" {
+module "recommend_family_1" {
   source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
-  prefix = "gpu_family_recommend"
+  prefix = "recommend_family_1"
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
-  container_repository = "recommend-inference-gpu-family"
+  container_repository = "recommend-family-1"
   container_image_tag = "latest"
   lambda_ram_size = 256
-  attach_s3_policy = true
   attach_ec2_policy = true
 }
 
@@ -29,12 +28,12 @@ module "gpu_family_recommend" {
 #   depends_on = [ module.cpu_family_recommend ]
 # }
 
-resource "aws_ssm_parameter" "param_gpu_recommend_lambda_function_url" {
-  name = "gpu_recommend_lambda_function_url"
+resource "aws_ssm_parameter" "param_recommend_family_1_lambda_function_url" {
+  name = "recocommend_family_1_lambda_function_url"
   type = "String"
-  value = module.gpu_family_recommend.function_url
+  value = module.recommend_family_1.function_url
 
-  depends_on = [ module.gpu_family_recommend ]
+  depends_on = [ module.recommend_family_1 ]
 }
 
 provider "aws" {
