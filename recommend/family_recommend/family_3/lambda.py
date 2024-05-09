@@ -1,4 +1,4 @@
-from family_1 import get_family_1_for_inference
+from family_3 import get_family_3_for_inference
 import json
 
 def handler(event, context):
@@ -13,7 +13,7 @@ def handler(event, context):
     
     region_name = body.get('region')
     try:
-        family = get_family_1_for_inference(region_name)
+        family = get_family_3_for_inference(region_name)
     except Exception as e:
         raise e
 
@@ -27,5 +27,5 @@ def handler(event, context):
 
 # for test
 if __name__ == "__main__":
-    family = get_family_1_for_inference("ap-northeast-2")
+    family = get_family_3_for_inference("us-east-1")
     print(family)
