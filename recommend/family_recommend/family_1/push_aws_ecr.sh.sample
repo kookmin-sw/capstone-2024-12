@@ -10,3 +10,4 @@ docker tag ${IMAGE_NAME}:latest $ECR_URI/${IMAGE_NAME}:latest
 docker push $ECR_URI/${IMAGE_NAME}:latest
 
 docker rmi -f ${IMAGE_NAME}
+docker rmi -f $ECR_URI/${IMAGE_NAME}:latest
