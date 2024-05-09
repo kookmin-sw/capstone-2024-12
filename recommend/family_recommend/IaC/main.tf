@@ -18,9 +18,9 @@
 #   depends_on = [ module.cpu_family_recommend ]
 # }
 
-module "recommend_family_1" {
+module "recommend_family" {
   source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
-  prefix = "recommend_family_1"
+  prefix = "recommend_family"
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
   container_repository = "recommend-family-1"
   container_image_tag = "latest"
@@ -28,12 +28,12 @@ module "recommend_family_1" {
   attach_ec2_policy = true
 }
 
-resource "aws_ssm_parameter" "param_recommend_family_1_lambda_function_url" {
-  name = "recocommend_family_1_lambda_function_url"
+resource "aws_ssm_parameter" "param_recommend_family_lambda_function_url" {
+  name = "recocommend_family_lambda_function_url"
   type = "String"
-  value = module.recommend_family_1.function_url
+  value = module.recommend_family.function_url
 
-  depends_on = [ module.recommend_family_1 ]
+  depends_on = [ module.recommend_family ]
 }
 
 provider "aws" {
