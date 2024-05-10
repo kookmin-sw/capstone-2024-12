@@ -109,8 +109,8 @@ def apply_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_s
     result = subprocess.run([
         kubectl, "apply", "-f", filename, "--kubeconfig", kubeconfig
     ])
-    if result != 0: print("create resource returncode != 0")
-    return result
+    if result.returncode != 0: print("create resource returncode != 0")
+    return result.returncode
 
 def delete_resource(user_namespace, endpoint_uid):
     deployment_name = f"deployment-{endpoint_uid}"
@@ -126,7 +126,7 @@ def delete_resource(user_namespace, endpoint_uid):
         kubectl, "-n", user_namespace, "delete",  "deployment", deployment_name, "--kubeconfig", kubeconfig
     ])
     result = 0
-    if ingress_result != 0 or service_result != 0 or deployment_result != 0:
+    if ingress_result.returncode != 0 or service_result.returncode != 0 or deployment_result.returncode != 0:
         result = 1
         print("delete resource returncode != 0")
     return result
