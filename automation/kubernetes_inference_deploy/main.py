@@ -134,8 +134,8 @@ def delete_resource(user_namespace, endpoint_uid):
 def handler(event, context):
     body = json.loads(event.get("body", "{}"))
     # 사용자 지정 값을 어디까지 받아올 것인지?
-    user_uid = body.get("USER_UID")
-    endpoint_uid = body.get("ENDPOINT_NAME")
+    user_uid = body.get("USER_UID").lower()
+    endpoint_uid = body.get("ENDPOINT_NAME").lower()
     action = body.get("ACTION")
 
     if action == "create":
@@ -143,7 +143,11 @@ def handler(event, context):
         node_pool_name = body['model']['deployment_type']
         ram_size = body['model']['max_used_ram']
         result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
-        requests.put()
+        endpoint_url = subprocess.run(f"kubectl get ingress -A | grep ingress-{endpoint_uid} | awk {'print $5'}", capture_output=True, text=True, shell=True).stdout.strip()
+        update_data = {
+            "endpiont": endpoint_url
+        }
+        requests.put(url=f"{db_api_url}/inferences/{endpoint_uid}", json=update_data)
         if result == 0:
             return {
                 'statusCode': 200,
@@ -172,6 +176,3 @@ def handler(event, context):
             'statusCode': 500,
             'body': "invalid action"
         }
-
-if __name__ == '__main__':
-    generate_yaml("5d9b890e-1316-4e25-8f67-829702a24331","828873F0-7F7D-4B5A-9ACE-BFA7B5A3D55A","https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/5d9b890e-1316-4e25-8f67-829702a24331/model/e45ac127-fb43-44de-9ea2-8091a43a700f/model.zip","nodepool-1",2048)
