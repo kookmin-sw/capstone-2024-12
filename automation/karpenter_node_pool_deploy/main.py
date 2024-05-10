@@ -37,6 +37,15 @@ def handler(event, context):
         nodeclass_name = 'ec2-gpu'
         result = apply_nodepool_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list)
 
+    streamlit_cpu_nodepool_name = 'streamlit-cpu-nodepool'
+    streamlit_cpu_nodepool_family_list = [
+        't3.nano', 't3.micro', 't3.small', 't3.medium', 't3.large', 't3.xlarge',
+        'm5.large', 'm5.xlarge'
+    ]
+    streamlit_nodeclass_name = 'ec2-cpu'
+
+    result = apply_nodepool_yaml(eks_cluster_name, streamlit_cpu_nodepool_name, streamlit_nodeclass_name, streamlit_cpu_nodepool_family_list)
+
     return {
         'statusCode': 200,
         'body': "complete update nodepool"
