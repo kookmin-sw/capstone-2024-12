@@ -59,28 +59,33 @@ def get_family_for_inference(region):
     max_benchmark = df['Benchmark'].max()
     df['TotalScore'] = df.apply(get_total_instance_score, args=(max_price, max_benchmark), axis=1)
 
-    df = filtering_df_by_family(df, 
-                                ['g3', 'p2',            # group 1
-                                 'g4dn', 'g5g', 'p3',   # group 2
-                                 'g6', 'gr6', 'g5',     # group 3
-                                 'p3dn', 'p4d',         # group 4
-                                 'p5'])                 # group 5
+    groups = [
+        ['g3', 'p2'],            # group 1
+        ['g4dn', 'g5g', 'p3'],   # group 2
+        ['g6', 'gr6', 'g5'],     # group 3
+        ['p3dn', 'p4d'],         # group 4
+        ['p5']                   # group 5
+    ]
+
+    recommended_family = {}
+
+    for i in range(len(groups)):
+        instance_families = []
+        for group in groups[i:]:
+            instance_families += group
+        filtered_df = filtering_df_by_family(df, instance_families).copy()
+        filtered_df['MaxTotalScore'] = filtered_df.groupby(['InstanceType', 'Region'])['TotalScore'].transform('max')
+        sorted_df_by_total_score = filtered_df[filtered_df['TotalScore'] == filtered_df['MaxTotalScore']].sort_values(by='TotalScore', ascending=False).reset_index(drop=True)
+
+        family_name = f"family_{i+1}"
+        family_list = []
+        for i in range(min(10, len(sorted_df_by_total_score))):
+            family_list.append(sorted_df_by_total_score.iloc[i]['InstanceType'])
+        recommended_family[family_name] = family_list
     
-    df['MaxTotalScore'] = df.groupby(['InstanceType', 'Region'])['TotalScore'].transform('max')
-    # 최종 점수 기준 내림차순 정렬
-    sorted_df_by_total_score = df[df['TotalScore'] == df['MaxTotalScore']].sort_values(by='TotalScore', ascending=False).reset_index(drop=True)
-
-    family_list = []
-    print(sorted_df_by_total_score[['InstanceType', 'vCPU', 'MemoryGiB', 'SpotPrice', 'SpotPricePerGPU', 'GPUModel', 'GPUManufacturer',
-               'TotalGPUMemoryGiB', 'Benchmark', 'TotalScore']])
-
-    iterration_count = min(10, len(sorted_df_by_total_score))
-
-    for i in range(iterration_count):
-        family_list.append(sorted_df_by_total_score.iloc[i]['InstanceType'])
-
-    return family_list
+    return recommended_family
 
 if __name__ == "__main__":
-    family_list = get_family_for_inference("us-east-1")
-    print(family_list)
+    family_list = get_family_for_inference("ap-northeast-2")
+    for k, v in family_list.items():
+        print(f"{k}: {v}")
