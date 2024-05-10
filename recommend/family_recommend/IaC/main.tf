@@ -25,6 +25,7 @@ module "recommend_family" {
   container_repository = "recommend-family"
   container_image_tag = "latest"
   lambda_ram_size = 256
+  lambda_timeout = 240
   attach_ec2_policy = true
 }
 
