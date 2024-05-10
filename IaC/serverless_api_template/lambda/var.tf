@@ -15,3 +15,4 @@ variable "attach_eks_policy" {}
 variable "db_api_url" {}
 variable "state_bucket_name" {}
 variable "karpenter_node_iam_node_name" {}
+variable "region_name" {}
