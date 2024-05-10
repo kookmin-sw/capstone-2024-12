@@ -77,7 +77,7 @@ def get_family_for_inference(region):
         filtered_df['MaxTotalScore'] = filtered_df.groupby(['InstanceType', 'Region'])['TotalScore'].transform('max')
         sorted_df_by_total_score = filtered_df[filtered_df['TotalScore'] == filtered_df['MaxTotalScore']].sort_values(by='TotalScore', ascending=False).reset_index(drop=True)
 
-        family_name = f"nodepool_{i+1}"
+        family_name = f"nodepool-{i+1}"
         family_list = []
         for i in range(min(10, len(sorted_df_by_total_score))):
             family_list.append(sorted_df_by_total_score.iloc[i]['InstanceType'])

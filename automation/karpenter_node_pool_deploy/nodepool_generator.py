@@ -19,12 +19,14 @@ def get_instance_family(lambda_url, region):
 
 def generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
+    if len(family_list) == 0:
+        family_list = ['t2.micro']
     family_string = ', '.join(f'"{instance_type}"' for instance_type in family_list)
 
-    param_role_name = ssm.get_parameter(Name="karpenter_node_role_name", WithDecryption=False)
+    parameter_name = f"karpenter_node_role_name_swj-suffix"
+    param_role_name = ssm.get_parameter(Name=parameter_name, WithDecryption=False)
     node_role_name = param_role_name['Parameter']['Value']
 
-    nodepool_name = "nodepool-gpu"
     nodeclass_name = "ec2-gpu"
 
     content = f"""apiVersion: karpenter.sh/v1beta1

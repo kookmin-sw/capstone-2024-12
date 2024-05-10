@@ -1,8 +1,8 @@
 #!/bin/sh
 
 ECR_URI=""
-DOCKER_FILENAME="Dockerfile"
-IMAGE_NAME="recommend-family"
+DOCKER_FILENAME="Dockerfile_x86"
+IMAGE_NAME="deploy-karpenter-node-pool"
 
 aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
 docker build -t ${IMAGE_NAME} -f ${DOCKER_FILENAME} .
