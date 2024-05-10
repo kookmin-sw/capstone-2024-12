@@ -145,7 +145,7 @@ def handler(event, context):
         result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
         endpoint_url = subprocess.run(f"{kubectl} get ingress -A | grep ingress-{endpoint_uid} | awk {'print $5'}", capture_output=True, text=True, shell=True).stdout.strip()
         update_data = {
-            "endpiont": endpoint_url
+            "endpoint": endpoint_url
         }
         requests.put(url=f"{db_api_url}/inferences/{endpoint_uid}", json=update_data)
         if result == 0:
