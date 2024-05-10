@@ -58,6 +58,11 @@ variable "karpenter_node_iam_node_name" {
   default = ""
 }
 
+variable "region_name" {
+  type = string
+  default = ""
+}
+
 variable "attach_ssm_readonly_policy" {
   type    = bool
   default = false
