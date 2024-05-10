@@ -6,6 +6,7 @@ module "lambda" {
   container_repository         = var.container_repository
   container_image_tag          = var.container_image_tag
   ram_mib                      = var.lambda_ram_size
+  timeout_s                    = var.lambda_timeout
   eks_cluster_name             = var.eks_cluster_name
   attach_ssm_readonly_policy   = var.attach_ssm_readonly_policy
   attach_ec2_policy            = var.attach_ec2_policy

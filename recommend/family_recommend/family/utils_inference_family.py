@@ -55,10 +55,16 @@ def get_instance_df(region_name):
         dict_data['SupportedArchitectures'].append(supported_archs)
         dict_data['vCPU'].append(vcpu)
         dict_data['MemoryGiB'].append(memory)
-        dict_data['GPUModel'].append(gpu_model)
         dict_data['GPUManufacturer'].append(gpu_manufacturer)
         dict_data['GPUCount'].append(gpu_count)
-        dict_data['TotalGPUMemoryGiB'].append(total_gpu_memory)
+
+        if gpu_model is not None and gpu_model.split()[0] == 'L4':
+            dict_data['TotalGPUMemoryGiB'].append(24)
+            dict_data['GPUModel'].append("L4 24GB")
+        else:
+            dict_data['TotalGPUMemoryGiB'].append(total_gpu_memory)
+            dict_data['GPUModel'].append(gpu_model)
+
     
     df = pd.DataFrame(dict_data)
     return df
@@ -71,17 +77,20 @@ def get_gpu_benchmark(model_name, gpu_count):
         'T4g 16GB': 52.1,
         'T4 16GB': 52.1,
         'V100 16GB': 100.0,
-        'V100 32GB': 111.4,
+        'V100 32GB': 100.0,
         'K80 12GB': 25.2,
-        'A100 40GB': 357,
-        'A100 80GB': 441,
+        'A100 40GB': 234.9,
+        'A100 80GB': 234.9,
+        'L4 24GB': 108.5,
+        'H100 80GB': 426.8
     }
-    e_rate = 1.9
+    #e_rate = 1.9
 
     if model_name not in benchmark.keys():
         return 0.0
     
-    ret = e_rate ** math.log2(gpu_count) * benchmark[model_name]
+    #ret = e_rate ** math.log2(gpu_count) * benchmark[model_name]
+    ret = benchmark[model_name]
     return ret
 
 def get_spot_price(region_name, start=None, end=None) -> tuple:

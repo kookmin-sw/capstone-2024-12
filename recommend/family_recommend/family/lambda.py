@@ -1,9 +1,9 @@
-from recommender_inference_gpu_family import get_gpu_instance_family_for_inference
+from family import get_family_for_inference
 import json
 
 def handler(event, context):
     try:
-        param = json.loads(event["body"])
+        body = json.loads(event["body"])
     except Exception as e:
         response = {
             'statusCode': 500,
@@ -11,9 +11,9 @@ def handler(event, context):
         }
         return response
     
-    region_name = param.get('region')
+    region_name = body.get('region')
     try:
-        family = get_gpu_instance_family_for_inference(region_name)
+        family = get_family_for_inference(region_name)
     except Exception as e:
         raise e
 
@@ -27,5 +27,5 @@ def handler(event, context):
 
 # for test
 if __name__ == "__main__":
-    family = get_gpu_instance_family_for_inference("ap-northeast-2")
+    family = get_family_for_inference("ap-northeast-2")
     print(family)

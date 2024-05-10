@@ -2,54 +2,51 @@ import subprocess
 import os
 from nodepool_generator import *
 
-# request 형식 (POST 요청)
-# {
-#   "body": "{\"isGpu\": \"true | True | false | False\"}"   GPU 패밀리 요청인지 아닌지
-# }
-# 이후 region 이라는 값이 추가 될 수 있습니다. 현재는 ap-northeast-2 로 고정입니다
+eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
+
+kubectl = '/var/task/kubectl'
+kubeconfig = '/tmp/kubeconfig'
+
+# get eks cluster kubernetes configuration by aws cli
+result_get_kubeconfig = subprocess.run([
+    "aws", "eks", "update-kubeconfig",
+    "--name", eks_cluster_name,
+    "--region", "ap-northeast-2",
+    "--kubeconfig", kubeconfig
+])
+
+def apply_nodepool_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list):
+    nodepool_filename = generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list)
+    result_create_nodepool = subprocess.run([
+        kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
+    ])
+    if result_create_nodepool != 0: print("create nodepool returncode != 0")
+
+    return result_create_nodepool
 
 def handler(event, context):
-    params = json.loads(event["body"])
-    
-    is_gpu = params.get('isGpu')
-    if is_gpu is not None:
-        is_gpu = is_gpu.lower() == "true"
-    else:
-        return {
-            'statusCode': 400,
-            'body': f'Unexcepted parameter value isGpu : {is_gpu}'
-        }
-    
-    eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
-    # TODO : eks 이름이 유효한지 테스트 할 수 있는 코드
+    ssm = boto3.client('ssm', region_name='ap-northeast-2')
+    param_lambda_url = ssm.get_parameter(Name="recocommend_family_lambda_function_url", WithDecryption=False)
+    recommend_lambda_url = param_lambda_url['Parameter']['Value']
 
-    kubectl = '/var/task/kubectl'
-    kubeconfig = '/tmp/kubeconfig'
+    region = 'ap-northeast-2'
 
-    # get eks cluster kubernetes configuration by aws cli
-    result_get_kubeconfig = subprocess.run([
-        "aws", "eks", "update-kubeconfig",
-        "--name", eks_cluster_name,
-        "--region", "ap-northeast-2",
-        "--kubeconfig", kubeconfig
-    ])
-    if result_get_kubeconfig.returncode != 0:
-        print("kubeconfig 받아오기 returncode != 0")
+    family_dict = get_instance_family(recommend_lambda_url, region)
 
-    if not is_gpu:
-        nodepool_filename = generate_cpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
-        result_create_cpu_nodepool = subprocess.run([
-            kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
-        ])
-        if result_create_cpu_nodepool != 0: print("create cpu nodepool returncode != 0")
-    else:
-        nodepool_filename = generate_gpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
-        result_create_gpu_nodepool = subprocess.run([
-            kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
-        ])
-        if result_create_gpu_nodepool != 0: print("create gpu nodepool returncode != 0")
+    for nodepool_name, family_list in family_dict.items():
+        nodeclass_name = 'ec2-gpu'
+        result = apply_nodepool_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list)
+
+    streamlit_cpu_nodepool_name = 'streamlit-cpu-nodepool'
+    streamlit_cpu_nodepool_family_list = [
+        't3.nano', 't3.micro', 't3.small', 't3.medium', 't3.large', 't3.xlarge',
+        'm5.large', 'm5.xlarge'
+    ]
+    streamlit_nodeclass_name = 'ec2-cpu'
+
+    result = apply_nodepool_yaml(eks_cluster_name, streamlit_cpu_nodepool_name, streamlit_nodeclass_name, streamlit_cpu_nodepool_family_list)
 
     return {
         'statusCode': 200,
-        'body': "test complete"
+        'body': "complete update nodepool"
     }

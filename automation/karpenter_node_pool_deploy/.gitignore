@@ -1,3 +1,4 @@
 push_image.sh
 ecr_login.sh
+get_kubeconfig.sh
 *test*

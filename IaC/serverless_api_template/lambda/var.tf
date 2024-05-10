@@ -3,6 +3,7 @@ variable "container_registry" {}
 variable "container_repository" {}
 variable "container_image_tag" {}
 variable "ram_mib" {}
+variable "timeout_s" {}
 variable "eks_cluster_name" {}
 variable "attach_ssm_readonly_policy" {}
 variable "attach_cloudwatch_policy" {}

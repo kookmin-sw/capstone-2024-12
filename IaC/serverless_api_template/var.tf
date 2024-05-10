@@ -33,6 +33,11 @@ variable "lambda_ram_size" {
   default = 2048
 }
 
+variable "lambda_timeout" {
+  type    = number
+  default = 120
+}
+
 variable "eks_cluster_name" {
   type    = string
   default = ""
