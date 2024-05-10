@@ -51,7 +51,7 @@ async def healthcheck():
         "body": "healthy"
     }
 
-@app.post("/")
+@app.post("/{full_path:path}")
 async def inference(data: dict):
     try:
         print(data)
