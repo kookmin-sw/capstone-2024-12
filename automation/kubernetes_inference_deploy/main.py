@@ -143,7 +143,7 @@ def handler(event, context):
         node_pool_name = body['model']['deployment_type']
         ram_size = body['model']['max_used_ram']
         result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
-        endpoint_url = subprocess.run(f"{kubectl} get ingress -A | grep ingress-{endpoint_uid} | awk {'print $5'}", capture_output=True, text=True, shell=True).stdout.strip()
+        endpoint_url = subprocess.run(f"{kubectl} get ingress -A --kubeconfig {kubeconfig} | grep ingress-{endpoint_uid} | awk {'print $5'}", capture_output=True, text=True, shell=True).stdout.strip()
         update_data = {
             "endpoint": f"http://{endpoint_url}/{endpoint_uid}"
         }
