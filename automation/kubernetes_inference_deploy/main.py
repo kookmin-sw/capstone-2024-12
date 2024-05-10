@@ -134,9 +134,9 @@ def delete_resource(user_namespace, endpoint_uid):
 def handler(event, context):
     body = json.loads(event.get("body", "{}"))
     # 사용자 지정 값을 어디까지 받아올 것인지?
-    user_uid = body.get("USER_UID").lower()
-    endpoint_uid = body.get("ENDPOINT_NAME").lower()
-    action = body.get("ACTION")
+    user_uid = body.get("user").lower()
+    endpoint_uid = body.get("uid").lower()
+    action = body.get("action")
 
     if action == "create":
         model_s3_url = body['model']['s3_url']
