@@ -105,9 +105,9 @@ spec:
     return filepath
 
 def apply_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_size):
-    nodepool_filename = generate_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_size)
+    filename = generate_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_size)
     result = subprocess.run([
-        kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
+        kubectl, "apply", "-f", filename, "--kubeconfig", kubeconfig
     ])
     if result != 0: print("create resource returncode != 0")
     return result
