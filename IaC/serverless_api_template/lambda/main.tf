@@ -74,7 +74,7 @@ resource "aws_lambda_function" "lambda" {
   architectures = ["x86_64"]
   image_uri     = "${var.container_registry}/${var.container_repository}:${var.container_image_tag}"
   memory_size   = var.ram_mib
-  timeout       = 120
+  timeout       = var.timeout_s
   role          = aws_iam_role.lambda-role.arn
 
   environment {

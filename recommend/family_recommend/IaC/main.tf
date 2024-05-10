@@ -22,7 +22,7 @@ module "recommend_family" {
   source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix = "recommend_family"
   container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
-  container_repository = "recommend-family-1"
+  container_repository = "recommend-family"
   container_image_tag = "latest"
   lambda_ram_size = 256
   attach_ec2_policy = true
