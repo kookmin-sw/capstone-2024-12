@@ -2,7 +2,7 @@ module "kubernetes_model_profiler_deploy" {
   source                     = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix                     = "kubernetes_model_profiler_deploy"
   container_registry         = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
-  container_repository       = "kubernetes-inference-deploy"
+  container_repository       = "job-model-profile-deploy"
   container_image_tag        = "latest"
   lambda_ram_size            = 256
   attach_s3_policy           = true

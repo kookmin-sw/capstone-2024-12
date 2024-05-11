@@ -1,8 +1,5 @@
 import os
-import sys
-import torch
 import requests
-import shutil
 import json
 import subprocess
 
