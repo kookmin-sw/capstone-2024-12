@@ -1,3 +1,4 @@
+print(f"start measure API")
 import os
 import torch
 import requests
@@ -6,16 +7,24 @@ import zipfile
 import json
 
 MODEL_API_URL = os.getenv('MODEL_API_URL')
+print(f"MODEL_API_URL : {MODEL_API_URL}")
 response = requests.get(MODEL_API_URL)
 if response.status_code != 200:
     print(f"Model API Response Error: {response.status_code}")
     os._exit(1)
 db_data = json.loads(response.text)
+print(f"DB Data : {db_data}")
 try:
     model_s3_url = db_data['s3_url']
+    print(f"model_s3_url : {model_s3_url}")
     model_input_shape = db_data['input_shape']
+    print(f"model_input_shape : {model_input_shape}")
     model_value_type = db_data['value_type']
+    print(f"model_value_type : {model_value_type}")
     model_value_range = db_data.get('value_range', None)
+    print(f"model_value_range : {model_value_range}")
+    model_name = db_data.get('name', None)
+    print(f"model_name : {model_name}")
 except Exception as e:
     print(f"Model API Response Error: {e}")
     os._exit(1)
@@ -39,11 +48,15 @@ os.remove(model_temp_path)
 shutil.rmtree('temp')
 ### END OF INITIALIZATION ###
 
-from model.model import ModelClass
-from time import time
-import psutil
-import ast
-import math
+try:
+    from model.model import ModelClass
+    from time import time
+    import psutil
+    import ast
+    import math
+except Exception as e:
+    print(f"Import Error: {e}")
+    os._exit(1)
 
 try:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,7 +70,6 @@ try:
     if os.path.exists('./model/torch.pt'):
         model.load_state_dict(torch.load("./model/torch.pt"))
     model.to(device)
-    print(f"model : {model}")
 except Exception as e:
     print(f"Model load failed: {e}")
     os._exit(1)
@@ -99,7 +111,7 @@ if __name__ == "__main__":
         value_type = torch.int64
     elif value_type == "bool":
         value_type = torch.bool
-    if model_value_range is None:
+    if model_value_range == "":
         input_data = torch.rand(size=ast.literal_eval(model_input_shape),
                                 dtype=value_type)
     else:
@@ -122,13 +134,27 @@ if __name__ == "__main__":
 
     ######## DB 에 저장할 내용들
     # max_used_gpu_memory, final_memory_usage, inference_time_s
-    max_used_gpu_memory = math.ceil(max_used_gpu_memory * 1.2)
-    final_memory_usage = math.ceil(final_memory_usage * 1.2)
+    max_used_gpu_memory = math.ceil(max_used_gpu_memory * 1.4)
+    final_memory_usage = math.ceil(final_memory_usage * 1.4)
+    deploy_platform = "Serverless"
+
+    if max_used_gpu_memory < 8:
+        if inference_time_s > 3:
+            deploy_platform = "nodepool-1"
+    elif max_used_gpu_memory < 16:
+        deploy_platform = "nodepool-2"
+    elif max_used_gpu_memory < 24:
+        deploy_platform = "nodepool-3"
+    elif max_used_gpu_memory < 32:
+        deploy_platform = "nodepool-4"
+    elif max_used_gpu_memory < 80:
+        deploy_platform = "nodepool-5"
     
     will_upload_data = {
         'max_used_ram': final_memory_usage,
         'max_used_gpu_mem': max_used_gpu_memory,
-        'inference_time': inference_time_s
+        'inference_time': inference_time_s,
+        'deploy_platform': deploy_platform
     }
 
     response = requests.put(MODEL_API_URL, json=will_upload_data)
