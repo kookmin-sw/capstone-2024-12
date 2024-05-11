@@ -32,6 +32,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import RadioIcon from '../../components/RadioIcon/index.jsx';
+import { copyToClipBoard } from '../../utils/index.jsx';
 
 const INFERENCE_TABLE_COLUMNS = [
   {
@@ -74,11 +75,10 @@ const INFERENCE_TABLE_COLUMNS = [
         <CopyOutlined
           style={{ cursor: 'pointer', color: 'rgba(0, 0, 0, 0.45)' }}
           onClick={() => {
-            window.navigator.clipboard.writeText(url).then(() => {
-              message.open({
-                type: 'success',
-                content: 'Successfully copied to clipboard.'
-              });
+            copyToClipBoard(url);
+            message.open({
+              type: 'success',
+              content: 'Successfully copied to clipboard.'
             });
           }}
         />
