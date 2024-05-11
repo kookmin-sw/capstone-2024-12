@@ -27,8 +27,6 @@ def generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list, 
     param_role_name = ssm.get_parameter(Name=parameter_name, WithDecryption=False)
     node_role_name = param_role_name['Parameter']['Value']
 
-    nodeclass_name = "ec2-gpu"
-
     content = f"""apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:
