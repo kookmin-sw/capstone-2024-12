@@ -103,3 +103,7 @@ variable "attach_eks_policy" {
   default = false
 }
 
+variable "attach_iam_policy" {
+  type    = bool
+  default = false
+}
