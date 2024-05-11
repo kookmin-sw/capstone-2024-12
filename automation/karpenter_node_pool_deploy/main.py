@@ -20,7 +20,7 @@ def apply_nodepool_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_
     result_create_nodepool = subprocess.run([
         kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
     ])
-    if result_create_nodepool != 0: print("create nodepool returncode != 0")
+    if result_create_nodepool.returncode != 0: print("create nodepool returncode != 0")
 
     return result_create_nodepool
 

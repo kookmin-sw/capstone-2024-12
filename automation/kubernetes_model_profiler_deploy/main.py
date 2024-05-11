@@ -65,7 +65,7 @@ def apply_job_yaml(job_filename):
     result_create_job = subprocess.run([
         kubectl, "apply", "-f", job_filename, "--kubeconfig", kubeconfig
     ])
-    if result_create_job != 0: print("create job returncode != 0")
+    if result_create_job.returncode != 0: print("create job returncode != 0")
     return result_create_job
 
 def handler(event, context):
