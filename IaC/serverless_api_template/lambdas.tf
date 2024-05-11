@@ -19,4 +19,5 @@ module "lambda" {
   db_api_url                   = var.db_api_url
   karpenter_node_iam_node_name = var.karpenter_node_iam_node_name
   region_name                  = var.region_name
+  model_s3_url                 = var.model_s3_url
 }
