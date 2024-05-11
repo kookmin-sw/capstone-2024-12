@@ -29,6 +29,11 @@ resource "aws_lambda_function" "lambda" {
   timeout       = 120
   role          = aws_iam_role.lambda-role.arn
 
+  environment {
+    variables = {
+      MODEL_S3_URL = var.model_s3_url
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {
