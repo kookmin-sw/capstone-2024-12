@@ -23,7 +23,7 @@ def generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list, 
         family_list = ['t2.micro']
     family_string = ', '.join(f'"{instance_type}"' for instance_type in family_list)
 
-    parameter_name = f"karpenter_node_role_name_swj-suffix"
+    parameter_name = f"karpenter_node_role_name_swj"
     param_role_name = ssm.get_parameter(Name=parameter_name, WithDecryption=False)
     node_role_name = param_role_name['Parameter']['Value']
 
