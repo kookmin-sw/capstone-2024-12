@@ -45,7 +45,13 @@ except Exception as e:
 
 app = FastAPI()
 
-@app.post("/")
+@app.get("/")
+async def healthcheck():
+    return {
+        "body": "healthy"
+    }
+
+@app.post("/{full_path:path}")
 async def inference(data: dict):
     try:
         print(data)
