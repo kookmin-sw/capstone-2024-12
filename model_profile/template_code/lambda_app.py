@@ -22,12 +22,12 @@ result_get_kubeconfig = subprocess.run([
 def handler(event, context):
     body = json.loads(event['body'])
     uid = body.get('uid')
-    url = f"https://wpcwvjlvkl.execute-api.ap-northeast-2.amazonaws.com/sskai-api-dev/models/{uid}"
-    response = requests.get(url)
+    model_api_url = f"https://wpcwvjlvkl.execute-api.ap-northeast-2.amazonaws.com/sskai-api-dev/models/"
+    model_api_url = f"{model_api_url}{uid}"
+    response = requests.get(model_api_url)
     if response.status_code != 200:
         return {
             'statusCode': response.status_code,
             'errorMessage': f"{uid} 가 존재하지 않습니다."
         }
-    
     

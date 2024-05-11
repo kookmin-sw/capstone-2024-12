@@ -3,11 +3,24 @@ import torch
 import requests
 import shutil
 import zipfile
+import json
 
-MODEL_DB_URL = os.getenv('MODEL_DB_URL')
+MODEL_API_URL = os.getenv('MODEL_API_URL')
+response = requests.get(MODEL_API_URL)
+if response.status_code != 200:
+    print(f"Model API Response Error: {response.status_code}")
+    os._exit(1)
+db_data = json.loads(response.text)
+try:
+    model_s3_url = db_data['s3_url']
+    model_input_shape = db_data['input_shape']
+    model_value_type = db_data['value_type']
+    model_value_range = db_data.get('value_range', None)
+except Exception as e:
+    print(f"Model API Response Error: {e}")
+    os._exit(1)
 
-model_s3_url = os.getenv('MODEL_S3_URL')
-
+### INITIALIZATION ###
 model_download = requests.get(model_s3_url)
 model_filename = model_s3_url.split('/')[-1]
 model_temp_path = os.path.join('temp', model_filename)
@@ -24,6 +37,7 @@ with zipfile.ZipFile(model_temp_path, 'r') as zip_ref:
 
 os.remove(model_temp_path)
 shutil.rmtree('temp')
+### END OF INITIALIZATION ###
 
 from model.model import ModelClass
 from time import time
@@ -68,10 +82,30 @@ print(f"Initial RAM usage: {initial_memory_usage:.2f} GB")
 
 if __name__ == "__main__":
     ######## DB 에서 INPUT Shape, Type, range 를 불러왔어야 함.
-    value_range = ast.literal_eval("(0, 1)")
     value_type = None
-    input_data = torch.randn(size=ast.literal_eval("(1, 3, 224, 224)"),
-                            dtype=value_type)
+    if value_type == "float16":
+        value_type = torch.float16
+    elif value_type == "float32":
+        value_type = torch.float32
+    elif value_type == "float64":
+        value_type = torch.float64
+    elif value_type == "int8":
+        value_type = torch.int8
+    elif value_type == "int16":
+        value_type = torch.int16
+    elif value_type == "int32":
+        value_type = torch.int32
+    elif value_type == "int64":
+        value_type = torch.int64
+    elif value_type == "bool":
+        value_type = torch.bool
+    if model_value_range is None:
+        input_data = torch.rand(size=ast.literal_eval(model_input_shape),
+                                dtype=value_type)
+    else:
+        value_range = ast.literal_eval(model_value_range)
+        input_data = torch.randint(low=value_range[0], high=value_range[1],
+                                   size=ast.literal_eval(model_input_shape))
     
     torch.cuda.reset_max_memory_allocated(device)
     start_time = time()
@@ -90,3 +124,17 @@ if __name__ == "__main__":
     # max_used_gpu_memory, final_memory_usage, inference_time_s
     max_used_gpu_memory = math.ceil(max_used_gpu_memory * 1.2)
     final_memory_usage = math.ceil(final_memory_usage * 1.2)
+    
+    will_upload_data = {
+        'max_used_ram': final_memory_usage,
+        'max_used_gpu_mem': max_used_gpu_memory,
+        'inference_time': inference_time_s
+    }
+
+    response = requests.put(MODEL_API_URL, json=will_upload_data)
+
+    if response.status_code != 200:
+        print(f"DB Update Error: {response.status_code}")
+        os._exit(1)
+    print("DB Update Success")
+    print("Response Body :", response.text)
