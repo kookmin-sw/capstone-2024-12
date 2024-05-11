@@ -29,12 +29,14 @@ const MODEL_TABLE_COLUMNS = [
   {
     title: 'Creation Time',
     dataIndex: 'created_at',
+    defaultSortOrder: 'descend',
+    sorter: (a, b) => a.created_at - b.created_at,
     width: 300,
     render: (timestamp) => formatTimestamp(timestamp)
   }
 ];
 
-export default function Models(props) {
+export default function Model(props) {
   const navigate = useNavigate();
 
   const [models, setModels] = useState([]);
@@ -69,7 +71,7 @@ export default function Models(props) {
           justify={'space-between'}
           align={'center'}
         >
-          <div className={'section-title'}>Models</div>
+          <div className={'section-title'}>Model</div>
           <TableToolbox>
             <Input
               addonBefore={<SearchOutlined />}

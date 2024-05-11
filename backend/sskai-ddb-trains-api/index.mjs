@@ -11,7 +11,7 @@ import { randomUUID } from 'crypto';
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-trains";
-const REQUIRED_FIELDS = ["name", "data"];
+const REQUIRED_FIELDS = ["name", "data", "checkpoint_path", "desired_epoch", "user"];
 
 export const handler = async (event) => {
   let body, command, statusCode = 200;
@@ -39,6 +39,9 @@ export const handler = async (event) => {
             data: data.data,
             status: "Pending",
             cost: 0,
+            checkpoint_path: "",
+            desired_epoch: data.desired_epoch,
+            code_path: data.code_path,
             created_at: new Date().getTime(),
           }
         };
@@ -96,6 +99,7 @@ export const handler = async (event) => {
             data: data.data || Item.data,
             status: data.status || Item.status,
             cost: data.cost || Item.cost,
+            checkpoint_path: data.checkpoint_path || Item.checkpoint_path,
             updated_at: new Date().getTime(),
           }
         };

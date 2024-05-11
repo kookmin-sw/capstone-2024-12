@@ -1,9 +1,17 @@
-import { PageLayout } from '../styles.jsx';
+import { ErrorMessage, InputTitle, PageLayout, Title } from '../styles.jsx';
 import { Section } from '../../components/Section/index.jsx';
 import { InboxOutlined, CheckCircleTwoTone } from '@ant-design/icons';
-import { Button, Flex, Input, message, Radio, Steps, Upload } from 'antd';
+import {
+  Button,
+  Flex,
+  Input,
+  message,
+  Radio,
+  Select,
+  Steps,
+  Upload
+} from 'antd';
 import { useState } from 'react';
-import styled from 'styled-components';
 import {
   createModel,
   deleteModel,
@@ -11,20 +19,6 @@ import {
   uploadS3
 } from '../../api/index.jsx';
 import { useNavigate } from 'react-router-dom';
-
-const ErrorMessage = styled.div`
-  color: #ff4d4f;
-`;
-
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-`;
-
-const InputTitle = styled(Title)`
-  margin-top: 12px;
-  margin-bottom: 4px;
-`;
 
 const STEP_ITEM = [
   {
@@ -47,18 +41,18 @@ export default function NewModel(props) {
   const [modelType, setModelType] = useState('');
   const [modelFile, setModelFile] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [createdModel, setCreatedModel] = useState(null);
+  const [inputShape, setInputShape] = useState('');
+  const [valueType, setValueType] = useState('');
+  const [valueRange, setValueRange] = useState('');
 
   const uploadSettings = {
     maxCount: 1,
     beforeUpload: (file) => {
-      const isModel = ['application/zip', 'application/tar+gzip'].includes(
-        file.type
-      );
+      const isModel = ['application/zip'].includes(file.type);
       if (!isModel) {
         messageApi.open({
           type: 'error',
-          content: 'Model file can only be uploaded as .zip or .tar.gz.'
+          content: 'Model file can only be uploaded as .zip.'
         });
         return Upload.LIST_IGNORE;
       }
@@ -86,6 +80,18 @@ export default function NewModel(props) {
     // TODO: User UID Value Storing in Storage (browser's)
     const user = import.meta.env.VITE_TMP_USER_UID;
 
+    if (
+      !inputShape ||
+      !valueType ||
+      !/^\(-?\d+(?:,\s*-?\d+)*\)$/.test(inputShape) ||
+      (valueRange && !/^\(-?\d+,\s*-?\d+\)$/.test(valueRange))
+    )
+      return messageApi.open({
+        type: 'error',
+        content:
+          'Please check that you have entered all items according to the entry conditions.'
+      });
+
     if (!modelFile.length)
       return messageApi.open({
         type: 'error',
@@ -94,13 +100,14 @@ export default function NewModel(props) {
 
     setLoading(true);
 
-    const model =
-      createdModel ||
-      (await createModel({
-        user,
-        name: modelName,
-        type: modelType
-      }));
+    const model = await createModel({
+      user,
+      name: modelName,
+      type: modelType,
+      input_shape: inputShape,
+      value_type: valueType,
+      value_range: valueRange
+    });
 
     if (!model) {
       setLoading(false);
@@ -111,13 +118,10 @@ export default function NewModel(props) {
       });
     }
 
-    if (!createdModel) setCreatedModel(model);
-
     const uploaded = await uploadS3('model', user, model.uid, modelFile[0]);
 
     if (!uploaded) {
       await deleteModel(model.uid);
-      setCreatedModel(null);
       setLoading(false);
       return messageApi.open({
         type: 'error',
@@ -132,7 +136,6 @@ export default function NewModel(props) {
 
     if (!isUpdated) {
       await deleteModel(model.uid);
-      setCreatedModel(null);
       setLoading(false);
       return messageApi.open({
         type: 'error',
@@ -141,7 +144,6 @@ export default function NewModel(props) {
       });
     }
 
-    setCreatedModel(null);
     setLoading(false);
     setStepPos(2);
   };
@@ -211,7 +213,105 @@ export default function NewModel(props) {
           )}
           {stepPos === 1 && modelType === 'user' && (
             <>
-              <Flex vertical>
+              <Flex vertical gap={5}>
+                <InputTitle>Input shape of your model</InputTitle>
+                <Input
+                  value={inputShape}
+                  onChange={(e) => setInputShape(e.target.value)}
+                  onBlur={() => setInputShape((str) => str.replace(/ /gi, ''))}
+                  placeholder={
+                    '(batchsize, width), (batchsize, channel, height, width) or ...'
+                  }
+                  status={
+                    inputShape &&
+                    !/^\(-?\d+(?:,\s*-?\d+)*\)$/.test(
+                      inputShape.replace(/ /gi, '')
+                    ) &&
+                    'error'
+                  }
+                />
+                {inputShape &&
+                  !/^\(-?\d+(?:,\s*-?\d+)*\)$/.test(
+                    inputShape.replace(/ /gi, '')
+                  ) && (
+                    <>
+                      <ErrorMessage>
+                        The shape of the model must be written in the correct
+                        format
+                      </ErrorMessage>
+                      <ErrorMessage>
+                        with numbers in parentheses separated by commas.
+                      </ErrorMessage>
+                    </>
+                  )}
+                <InputTitle>Input type of your model</InputTitle>
+                <Select
+                  showSearch
+                  labelInValue
+                  optionFilterProp={'label'}
+                  placeholder={'Type'}
+                  onChange={({ value }) => setValueType(value)}
+                  options={[
+                    {
+                      value: 'float16',
+                      label: 'float16'
+                    },
+                    {
+                      value: 'float32',
+                      label: 'float32'
+                    },
+                    {
+                      value: 'float64',
+                      label: 'float64'
+                    },
+                    {
+                      value: 'int8',
+                      label: 'int8'
+                    },
+                    {
+                      value: 'int16',
+                      label: 'int16'
+                    },
+                    {
+                      value: 'int32',
+                      label: 'int32'
+                    },
+                    {
+                      value: 'int64',
+                      label: 'int64'
+                    },
+                    {
+                      value: 'bool',
+                      label: 'bool'
+                    }
+                  ]}
+                ></Select>
+                <InputTitle>Input range of your model (optional)</InputTitle>
+                <Input
+                  placeholder={'(min, max)'}
+                  value={valueRange}
+                  onChange={(e) => setValueRange(e.target.value)}
+                  onBlur={() => setValueRange((str) => str.replace(/ /gi, ''))}
+                  status={
+                    valueRange &&
+                    !/^\(-?\d+,\s*-?\d+\)$/.test(
+                      valueRange.replace(/ /gi, '')
+                    ) &&
+                    'error'
+                  }
+                />
+                {valueRange &&
+                  !/^\(-?\d+,\s*-?\d+\)$/.test(
+                    valueRange.replace(/ /gi, '')
+                  ) && (
+                    <>
+                      <ErrorMessage>
+                        The model's range must be written in parentheses as two
+                        numbers separated by a comma.
+                      </ErrorMessage>
+                    </>
+                  )}
+
                 <InputTitle>Upload your model</InputTitle>
                 <Upload.Dragger {...uploadSettings} disabled={loading}>
                   <p className="ant-upload-drag-icon">
@@ -267,7 +367,7 @@ export default function NewModel(props) {
                 <Button
                   type={'primary'}
                   onClick={() => {
-                    navigate('/models');
+                    navigate('/model');
                   }}
                 >
                   Show Model

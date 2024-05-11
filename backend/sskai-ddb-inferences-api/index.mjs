@@ -11,7 +11,7 @@ import { randomUUID } from 'crypto';
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-inferences";
-const REQUIRED_FIELDS = ["name", "model", "type", "endpoint"];
+const REQUIRED_FIELDS = ["name", "model", "type"];
 
 export const handler = async (event) => {
   let body, command, statusCode = 200;
@@ -36,8 +36,10 @@ export const handler = async (event) => {
             user: data.user,
             name: data.name,
             model: data.model,
+            model_type: data.model_type,
             type: data.type,
             endpoint: data.endpoint,
+            streamlit_url: data.streamlit_url,
             cost: 0,
             created_at: new Date().getTime(),
           }
@@ -91,6 +93,7 @@ export const handler = async (event) => {
             model: data.model || Item.model,
             type: data.type || Item.type,
             endpoint: data.endpoint || Item.endpoint,
+            streamlit_url: data.streamlit_url || Item.streamlit_url,
             cost: data.cost || Item.cost,
             updated_at: new Date().getTime(),
           }

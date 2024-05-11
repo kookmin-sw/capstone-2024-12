@@ -1,4 +1,10 @@
-import { PageLayout, TableToolbox } from '../styles.jsx';
+import {
+  ErrorMessage,
+  InputTitle,
+  PageLayout,
+  TableToolbox,
+  Title
+} from '../styles.jsx';
 import { Section } from '../../components/Section/index.jsx';
 import {
   Button,
@@ -7,22 +13,25 @@ import {
   Input,
   message,
   Modal,
+  Select,
   Space,
+  Spin,
   Table,
   Tag
 } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getInferences } from '../../api/index.jsx';
+import { getInferences, getModels } from '../../api/index.jsx';
 import {
   PlusOutlined,
   SearchOutlined,
   SyncOutlined,
   CopyOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
+  CloudOutlined,
+  CloudServerOutlined
 } from '@ant-design/icons';
-import styled from 'styled-components';
 import axios from 'axios';
+import RadioIcon from '../../components/RadioIcon/index.jsx';
 
 const INFERENCE_TABLE_COLUMNS = [
   {
@@ -96,29 +105,18 @@ const INFERENCE_TABLE_COLUMNS = [
   }
 ];
 
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-`;
-
-const InputTitle = styled(Title)`
-  margin-top: 20px;
-  margin-bottom: 8px;
-`;
-
-const ErrorMessage = styled.div`
-  color: #ff4d4f;
-`;
-
 export default function Inference(props) {
-  const navigate = useNavigate();
-
-  const [now, setNow] = useState(Date.now());
+  const [, setNow] = useState(Date.now());
   const [inferences, setInferences] = useState([]);
   const [selected, setSelected] = useState('');
   const [filterInput, setFilterInput] = useState('');
   const [filteredInferences, setFilteredInferences] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
+  const [inferenceName, setInferenceName] = useState('');
+  const [modelList, setModelList] = useState([]);
+  const [fetchModelLoading, setFetchModelLoading] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // TODO: DELETE START (Only For Testing)
   const [isTestOpen, setIsTestOpen] = useState(false);
@@ -172,20 +170,40 @@ export default function Inference(props) {
   };
   // TODO: DELETE END
 
+  const fetchModelList = async () => {
+    if (modelList.length) return;
+    // TODO: User UID Value Storing in Storage (browser's)
+    setFetchModelLoading(true);
+    const models = await getModels(import.meta.env.VITE_TMP_USER_UID);
+    if (!models)
+      return messageApi.open({
+        type: 'error',
+        content: 'Model not found.'
+      });
+    setModelList(
+      models.map((model) => ({
+        label: `${model.name} (${model.uid})`,
+        value: model.uid
+      }))
+    );
+    setFetchModelLoading(false);
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
     setFilteredInferences(
-      inferences.filter((model) =>
-        model.name.toLowerCase().includes(filterInput)
+      inferences.filter((inference) =>
+        inference.name.toLowerCase().includes(filterInput)
       )
     );
   }, [filterInput]);
 
   return (
     <>
+      {contextHolder}
       <PageLayout>
         <Section>
           <Flex
@@ -193,7 +211,7 @@ export default function Inference(props) {
             justify={'space-between'}
             align={'center'}
           >
-            <div className={'section-title'}>Inferences</div>
+            <div className={'section-title'}>Inference</div>
             <TableToolbox>
               <Button onClick={fetchData}>
                 <SyncOutlined />
@@ -227,7 +245,7 @@ export default function Inference(props) {
                 <PlusOutlined />
                 Test
               </Button>
-              <Button type={'primary'}>
+              <Button type={'primary'} onClick={() => setIsModalOpen(true)}>
                 <PlusOutlined />
                 Add New
               </Button>
@@ -291,6 +309,61 @@ export default function Inference(props) {
               color: '#333',
               overflowX: 'auto'
             }}
+          />
+        </Flex>
+      </Modal>
+      <Modal
+        title={<Title style={{ fontWeight: 600 }}>New inference</Title>}
+        open={isModalOpen}
+      >
+        <Flex vertical style={{ marginBottom: '20px' }}>
+          <InputTitle>Input your endpoint name</InputTitle>
+          <Input
+            placeholder={'Name'}
+            value={inferenceName}
+            onChange={(e) => setInferenceName(e.target.value)}
+            status={
+              inferenceName &&
+              !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName) &&
+              'error'
+            }
+          />
+          {inferenceName && !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName) && (
+            <>
+              <ErrorMessage>
+                The train name can be up to 20 characters long.
+              </ErrorMessage>
+              <ErrorMessage>
+                Only English and special characters (-, _) can be entered.
+              </ErrorMessage>
+            </>
+          )}
+          <InputTitle>Select your model</InputTitle>
+          <Select
+            showSearch
+            notFoundContent={
+              fetchModelLoading ? <Spin size={'small'} /> : undefined
+            }
+            optionFilterProp={'label'}
+            placeholder={'Model'}
+            onFocus={fetchModelList}
+            options={modelList}
+          />
+          <InputTitle>Select inference type</InputTitle>
+          <RadioIcon
+            recommend={'spot'}
+            options={[
+              {
+                key: 'serverless',
+                label: 'serverless',
+                icon: CloudOutlined
+              },
+              {
+                key: 'spot',
+                label: 'spot',
+                icon: CloudServerOutlined
+              }
+            ]}
           />
         </Flex>
       </Modal>
