@@ -83,6 +83,8 @@ resource "aws_lambda_function" "lambda" {
       DB_API_URL = var.db_api_url
       STATE_BUCKET_NAME = var.state_bucket_name
       KARPENTER_NODE_ROLE = var.karpenter_node_iam_node_name
+      REGION = var.region_name
+      ECR_URI = var.container_registry
     }
   }
 }
