@@ -138,16 +138,16 @@ if __name__ == "__main__":
     final_memory_usage = math.ceil(final_memory_usage * 1.4)
     deploy_platform = "Serverless"
 
-    if max_used_gpu_memory < 8:
+    if max_used_gpu_memory / 1024 < 8:
         if inference_time_s > 3:
             deploy_platform = "nodepool-1"
-    elif max_used_gpu_memory < 16:
+    elif max_used_gpu_memory / 1024 < 16:
         deploy_platform = "nodepool-2"
-    elif max_used_gpu_memory < 24:
+    elif max_used_gpu_memory / 1024 < 24:
         deploy_platform = "nodepool-3"
-    elif max_used_gpu_memory < 32:
+    elif max_used_gpu_memory / 1024 < 32:
         deploy_platform = "nodepool-4"
-    elif max_used_gpu_memory < 80:
+    elif max_used_gpu_memory / 1024 < 80:
         deploy_platform = "nodepool-5"
 
     print(f"depoly platform : {deploy_platform}")
