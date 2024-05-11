@@ -5,6 +5,7 @@ module "karpenter_nodepool_manager" {
   container_repository       = "deploy-karpenter-node-pool"
   container_image_tag        = "latest"
   lambda_ram_size            = 256
+  lambda_timeout             = 600
   attach_s3_policy           = true
   attach_ec2_policy          = true
   attach_eks_policy          = true

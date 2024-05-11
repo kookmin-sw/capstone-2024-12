@@ -15,8 +15,8 @@ result_get_kubeconfig = subprocess.run([
     "--kubeconfig", kubeconfig
 ])
 
-def apply_nodepool_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list):
-    nodepool_filename = generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list)
+def apply_nodepool_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list, capacity_type='spot'):
+    nodepool_filename = generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list, capacity_type)
     result_create_nodepool = subprocess.run([
         kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
     ])
