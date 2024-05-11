@@ -54,12 +54,17 @@ variable "db_api_url" {
 }
 
 variable "karpenter_node_iam_node_name" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "region_name" {
-  type = string
+  type    = string
+  default = ""
+}
+
+variable "model_s3_url" {
+  type    = string
   default = ""
 }
 
