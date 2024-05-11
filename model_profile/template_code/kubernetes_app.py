@@ -149,12 +149,14 @@ if __name__ == "__main__":
         deploy_platform = "nodepool-4"
     elif max_used_gpu_memory < 80:
         deploy_platform = "nodepool-5"
+
+    print(f"depoly platform : {deploy_platform}")
     
     will_upload_data = {
+        'deploy_platform': deploy_platform,
         'max_used_ram': final_memory_usage,
         'max_used_gpu_mem': max_used_gpu_memory,
         'inference_time': inference_time_s,
-        'deploy_platform': deploy_platform
     }
 
     response = requests.put(MODEL_API_URL, json=will_upload_data)
