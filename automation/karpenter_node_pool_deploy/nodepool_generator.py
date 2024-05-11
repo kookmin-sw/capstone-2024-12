@@ -17,7 +17,7 @@ def get_instance_family(lambda_url, region):
     data = response.json()
     return data['family']
 
-def generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list):
+def generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list, price_type='spot'):
     ssm = boto3.client('ssm', region_name='ap-northeast-2')
     if len(family_list) == 0:
         family_list = ['t2.micro']
@@ -56,7 +56,7 @@ spec:
       - key: karpenter.sh/capacity-type
         operator: In
         values:
-        - spot
+        - {price_type}
   limits:
     cpu: 1000
     memory: 1000Gi

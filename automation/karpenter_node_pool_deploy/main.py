@@ -43,8 +43,15 @@ def handler(event, context):
         'm5.large', 'm5.xlarge'
     ]
     streamlit_nodeclass_name = 'ec2-cpu'
-
     result = apply_nodepool_yaml(eks_cluster_name, streamlit_cpu_nodepool_name, streamlit_nodeclass_name, streamlit_cpu_nodepool_family_list)
+
+    profiler_nodepool_name = 'profiler-gpu-nodepool'
+    profiler_nodepool_family_list = [
+        'g6.2xlarge', 'g5.2xlarge'
+    ]
+    profiler_nodeclass_name = 'ec2-gpu'
+    capacity_type = 'on-demand'
+    result = apply_nodepool_yaml(eks_cluster_name, profiler_nodepool_name, profiler_nodeclass_name, profiler_nodepool_family_list, capacity_type)
 
     return {
         'statusCode': 200,
