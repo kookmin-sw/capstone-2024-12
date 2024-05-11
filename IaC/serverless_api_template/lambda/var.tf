@@ -15,3 +15,5 @@ variable "recommend_bucket_name" {}
 variable "db_api_url" {}
 variable "state_bucket_name" {}
 variable "karpenter_node_iam_node_name" {}
+variable "region_name" {}
+variable "model_s3_url" {}
