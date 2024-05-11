@@ -13,6 +13,7 @@ const client = new DynamoDBClient({});
 const clientS3 = new S3Client({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-models";
+const Bucket = "sskai-model-storage";
 const REQUIRED_FIELDS = ["name", "type", "user", "input_shape", "value_type"];
 
 export const handler = async (event) => {
@@ -130,14 +131,14 @@ export const handler = async (event) => {
         const model_url = `${deleted.Attributes.user}/model/${deleted.Attributes.uid}`
 
         const deleteFileCommand = new DeleteObjectsCommand({
-          Bucket: "sskai-model-storage",
+          Bucket,
           Delete: {
             Objects: [{ Key: `${model_url}/model.zip` }, { Key: `${model_url}/model.tar.gz` }]
           }
         });
 
         const deletedDirCommand = new DeleteObjectCommand({
-          Bucket: "sskai-model-storage",
+          Bucket,
           Key: `${model_url}/`,
         });
 
