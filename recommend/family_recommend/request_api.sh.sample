@@ -1,0 +1,6 @@
+#!/bin/sh
+
+FUNCTION_URL=""
+REGION=""
+
+curl -X POST -H "Content-Type: application/json" -d "{\"region\": \"$REGION\"}" $FUNCTION_URL

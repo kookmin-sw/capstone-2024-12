@@ -250,5 +250,8 @@ cython_debug/
 frontend/*/node_modules/
 frontend/*/.idea/
 frontend/*/.DS_Store/
+frontend/*/dist/
+frontend/*/.env
+frontend/*/.vite/
 # test file
 **/*test*

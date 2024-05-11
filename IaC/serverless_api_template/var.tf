@@ -33,12 +33,12 @@ variable "lambda_ram_size" {
   default = 2048
 }
 
-variable "eks_cluster_name" {
-  type    = string
-  default = ""
+variable "lambda_timeout" {
+  type    = number
+  default = 120
 }
 
-variable "recommend_bucket_name" {
+variable "eks_cluster_name" {
   type    = string
   default = ""
 }
@@ -65,6 +65,11 @@ variable "region_name" {
 
 variable "model_s3_url" {
   type    = string
+  default = ""
+}
+
+variable "region_name" {
+  type = string
   default = ""
 }
 

@@ -3,6 +3,7 @@ variable "container_registry" {}
 variable "container_repository" {}
 variable "container_image_tag" {}
 variable "ram_mib" {}
+variable "timeout_s" {}
 variable "eks_cluster_name" {}
 variable "attach_ssm_readonly_policy" {}
 variable "attach_cloudwatch_policy" {}
@@ -11,7 +12,6 @@ variable "attach_lambda_policy" {}
 variable "attach_s3_policy" {}
 variable "attach_vpc_policy" {}
 variable "attach_eks_policy" {}
-variable "recommend_bucket_name" {}
 variable "db_api_url" {}
 variable "state_bucket_name" {}
 variable "karpenter_node_iam_node_name" {}
