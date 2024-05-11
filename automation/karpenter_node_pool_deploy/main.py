@@ -47,7 +47,7 @@ def handler(event, context):
 
     profiler_nodepool_name = 'profiler-gpu-nodepool'
     profiler_nodepool_family_list = [
-        'g6.2xlarge', 'g5.2xlarge'
+        'g6.2xlarge', 'g5.2xlarge', 'g4dn.2xlarge'
     ]
     profiler_nodeclass_name = 'ec2-gpu'
     capacity_type = 'on-demand'
