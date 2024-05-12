@@ -148,7 +148,7 @@ module "eks" {
 }
 
 resource "aws_ssm_parameter" "param_karpenter_node_role_name" {
-  name = "karpenter_node_role_name_${var.main_suffix}"
+  name = "karpenter_node_role_name_${var.cluster_name}"
   type = "String"
   value = module.karpenter.node_iam_role_name
 

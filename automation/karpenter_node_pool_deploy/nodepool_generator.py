@@ -1,7 +1,8 @@
 import boto3
 import requests
-import json
 import os
+
+karpenter_node_role_parameter_name = os.environ.get('KARPENTER_NODE_ROLE_PARAMETER_NAME')
 
 def get_instance_family(lambda_url, region):
     query_params = {'region': region}
@@ -23,8 +24,7 @@ def generate_yaml(eks_cluster_name, region_name, nodepool_name, nodeclass_name, 
         family_list = ['t2.micro']
     family_string = ', '.join(f'"{instance_type}"' for instance_type in family_list)
 
-    parameter_name = f"karpenter_node_role_name_swj"
-    param_role_name = ssm.get_parameter(Name=parameter_name, WithDecryption=False)
+    param_role_name = ssm.get_parameter(Name=karpenter_node_role_parameter_name, WithDecryption=False)
     node_role_name = param_role_name['Parameter']['Value']
 
     content = f"""apiVersion: karpenter.sh/v1beta1

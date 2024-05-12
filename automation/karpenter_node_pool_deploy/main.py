@@ -4,8 +4,6 @@ from nodepool_generator import *
 
 eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
 eks_region = os.environ.get('REGION')
-# 추후 terraform 통합 시 사용될 예정, 현재는 ssm 으로 node role name 을 가져옴
-karpenter_node_role_name = os.environ.get('KARPENTER_NODE_ROLE')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
