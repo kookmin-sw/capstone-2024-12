@@ -104,6 +104,12 @@ resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {
 resource "aws_lambda_function_url" "lambda-url" {
   function_name      = aws_lambda_function.lambda.function_name
   authorization_type = "NONE"
+
+  cors {
+    allow_origins = [ "*" ]
+    allow_methods = [ "*" ]
+    allow_headers = [ "*" ]
+  }
 }
 
 resource "aws_eks_access_entry" "eks-access-entry" {
