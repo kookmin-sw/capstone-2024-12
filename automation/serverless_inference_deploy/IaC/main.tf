@@ -6,6 +6,7 @@ module "serverless_inference_deploy" {
   container_repository = "serverless-inference-deploy"
   container_image_tag = "latest"
   lambda_ram_size = 2048
+  lambda_timeout = 600
   attach_iam_policy = true
   attach_s3_policy = true
   attach_ec2_policy = true
