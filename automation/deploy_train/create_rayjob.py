@@ -58,7 +58,7 @@ def get_load_data_py():
       line_list.append(line.rstrip()+"\n")
   return line_list
 
-def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, data_load_s3_url, worker_num, epoch_num, optim_str, loss_str, batch_size, learning_rate, train_split_size):
+def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, data_load_s3_url, worker_num, epoch_num, optim_str, loss_str, batch_size, learning_rate, train_split_size, ram_size):
     filename = "rayjob"
 
     content = f"""---
@@ -416,6 +416,7 @@ def handler(event, context):
     batch_size = body.get("batch_size")
     learning_rate = body.get("learning_rate")
     train_split_size = body.get("train_split_size")
+    ram_size = body.get("ram_size")
 
     download_and_unzip(data_load_s3_url, '/tmp/data_load')
 
@@ -431,7 +432,8 @@ def handler(event, context):
                                   loss_str,
                                   batch_size,
                                   learning_rate,
-                                  train_split_size)
+                                  train_split_size,
+                                  ram_size)
     
     result_create_rayjob = subprocess.run([
             kubectl, "apply", "-f", rayjob_filename, "--kubeconfig", kubeconfig
