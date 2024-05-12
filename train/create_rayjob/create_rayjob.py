@@ -75,13 +75,13 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "4"
-                  memory: "16Gi"
+                  cpu: "3500M"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
                   nvidia.com/gpu: 1
                 requests:
-                  cpu: "4"
-                  memory: "16Gi"
+                  cpu: "3500M"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
                   nvidia.com/gpu: 1
 
@@ -119,13 +119,13 @@ spec:
                       command: [ "/bin/sh","-c","ray stop" ]
                 resources:
                   limits:
-                    cpu: "4"
-                    memory: "16Gi"
+                    cpu: "3500m"
+                    memory: "12288m"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
                   requests:
-                    cpu: "4"
-                    memory: "16Gi"
+                    cpu: "3500m"
+                    memory: "12288m"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
 
