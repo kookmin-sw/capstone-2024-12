@@ -68,6 +68,12 @@ resource "aws_iam_role_policy_attachment" "lambda_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "iam_policy" {
+  count      = var.attach_iam_policy ? 1 : 0
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"
+}
+
 resource "aws_lambda_function" "lambda" {
   function_name = "${var.prefix}-aws-lambda"
   package_type  = "Image"

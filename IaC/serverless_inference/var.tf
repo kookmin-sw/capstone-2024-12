@@ -27,3 +27,8 @@ variable "lambda_ram_size" {
   type    = number
   default = 4096
 }
+
+variable "model_s3_url" {
+  type    = string
+  default = ""
+}
