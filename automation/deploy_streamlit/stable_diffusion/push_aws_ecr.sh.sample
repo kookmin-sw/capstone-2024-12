@@ -1,0 +1,8 @@
+#!/bin/sh
+
+ECR_URI=""
+
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
+docker build -t sdxl1-streamlit .
+docker tag sdxl1-streamlit:latest $ECR_URI/sdxl1-streamlit:latest
+docker push $ECR_URI/sdxl1-streamlit:latest
