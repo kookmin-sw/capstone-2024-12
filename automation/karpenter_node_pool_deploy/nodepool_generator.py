@@ -17,8 +17,8 @@ def get_instance_family(lambda_url, region):
     data = response.json()
     return data['family']
 
-def generate_yaml(eks_cluster_name, nodepool_name, nodeclass_name, family_list, price_type='spot'):
-    ssm = boto3.client('ssm', region_name='ap-northeast-2')
+def generate_yaml(eks_cluster_name, region_name, nodepool_name, nodeclass_name, family_list, price_type='spot'):
+    ssm = boto3.client('ssm', region_name=region_name)
     if len(family_list) == 0:
         family_list = ['t2.micro']
     family_string = ', '.join(f'"{instance_type}"' for instance_type in family_list)
@@ -89,15 +89,14 @@ spec:
     return filepath
 
 if __name__ == "__main__":
-    ssm = boto3.client('ssm', region_name='ap-northeast-2')
+    region = 'ap-northeast-2'
+    ssm = boto3.client('ssm', region_name=region)
     param_lambda_url = ssm.get_parameter(Name="recocommend_family_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']
-
-    region = 'ap-northeast-2'
 
     family_dict = get_instance_family(recommend_lambda_url, region)
 
     for nodepool_name, family_list in family_dict.items():
         nodeclass_name = 'ec2-gpu'
-        nodepool_filename = generate_yaml('swj-eks-test', nodepool_name, nodeclass_name, family_list)
+        nodepool_filename = generate_yaml('swj-eks-test', region, nodepool_name, nodeclass_name, family_list)
         print(nodepool_filename)
