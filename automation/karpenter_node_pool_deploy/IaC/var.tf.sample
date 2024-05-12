@@ -1,14 +1,14 @@
 variable "region" {
   type    = string
-  default = "ap-northeast-2"
+  default = ""
 }
 
 variable "awscli_profile" {
   type    = string
-  default = "mhsong-swj"
+  default = ""
 }
 
 variable "eks_cluster_name" {
     type = string
-    default = "swj-eks-test"
+    default = ""
 }
