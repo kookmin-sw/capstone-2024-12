@@ -53,7 +53,7 @@ variable "db_api_url" {
   default = ""
 }
 
-variable "karpenter_node_iam_node_name" {
+variable "karpenter_node_role_parameter_name" {
   type = string
   default = ""
 }

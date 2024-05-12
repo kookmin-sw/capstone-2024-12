@@ -6,12 +6,15 @@ import {
   DeleteCommand,
   QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
+import { DeleteObjectCommand, DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from 'crypto';
 
 const client = new DynamoDBClient({});
+const clientS3 = new S3Client({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-models";
-const REQUIRED_FIELDS = ["name", "type", "user"];
+const Bucket = "sskai-model-storage";
+const REQUIRED_FIELDS = ["name", "type", "user", "input_shape", "value_type"];
 
 export const handler = async (event) => {
   let body, command, statusCode = 200;
@@ -38,8 +41,9 @@ export const handler = async (event) => {
             type: data.type,
             inferences: [],
             s3_url: data.s3_url,
-            input_format: data.input_format,
-            output_format: data.output_format,
+            input_shape: data.input_shape,
+            value_type: data.value_type,
+            value_range: data.value_range,
             created_at: new Date().getTime(),
           }
         };
@@ -95,8 +99,13 @@ export const handler = async (event) => {
             name: data.name || Item.name,
             inferences: data.inferences || Item.inferences,
             s3_url: data.s3_url || Item.s3_url,
-            input_format: data.input_format || Item.input_format,
-            output_format: data.output_format || Item.output_format,
+            deploy_platform: data.deploy_platform || Item.deploy_platform,
+            max_used_ram: data.max_used_ram || Item.max_used_ram,
+            max_used_gpu_mem: data.max_used_gpu_mem || Item.max_used_gpu_mem,
+            inference_time: data.inference_time || Item.inference_time,
+            input_shape: data.input_shape || Item.input_shape,
+            value_type: data.value_type || Item.value_type,
+            value_range: data.value_range || Item.value_range,
             updated_at: new Date().getTime(),
           }
         };
@@ -105,12 +114,37 @@ export const handler = async (event) => {
         break;
 
       case "DELETE /models/{id}":
-        await dynamo.send(new DeleteCommand({
+        const deleted = await dynamo.send(new DeleteCommand({
           TableName,
           Key: {
             uid: event.pathParameters.id,
           },
+          ReturnValues: "ALL_OLD",
         }));
+
+        if (!deleted.Attributes) {
+          statusCode = 404;
+          body = { message: "Not Found" };
+          break;
+        }
+
+        const model_url = `${deleted.Attributes.user}/model/${deleted.Attributes.uid}`
+
+        const deleteFileCommand = new DeleteObjectsCommand({
+          Bucket,
+          Delete: {
+            Objects: [{ Key: `${model_url}/model.zip` }, { Key: `${model_url}/model.tar.gz` }]
+          }
+        });
+
+        const deletedDirCommand = new DeleteObjectCommand({
+          Bucket,
+          Key: `${model_url}/`,
+        });
+
+        await clientS3.send(deleteFileCommand);
+        await clientS3.send(deletedDirCommand);
+
         body = { message: "Model deleted", uid: event.pathParameters.id };
         break;
     }

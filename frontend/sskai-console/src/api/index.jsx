@@ -1,9 +1,8 @@
 import axios from 'axios';
-import Data from '../pages/Data/index.jsx';
 
 const url = import.meta.env.VITE_DB_API_URL;
 
-// Models
+// Model
 export const createModel = async (args) => {
   const res = await axios.post(`${url}/models`, args).catch((err) => err);
   return res?.data?.model;
