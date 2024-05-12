@@ -16,18 +16,30 @@ export const handler = async (event) => {
       }),
       headers
     };
-    
-  if (!['model', 'data'].includes(upload_type))
+
+  const isZip = /\.zip$/.test(filename);
+  const isPython = /\.py$/.test(filename);
+
+  if (!isZip && !isPython)
     return {
-      statusCode: 401,
+      statusCode: 400,
       body: JSON.stringify({
-        message: 'Invalid upload_type (model or data)',
+        message: 'Invalid File Extension (need .zip or .py)'
+      }),
+      headers
+    };
+    
+  if (!['model', 'data', 'code'].includes(upload_type))
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: 'Invalid upload_type (model, data or code)',
       }),
       headers
     };
   
   const client = new S3Client({ region: 'ap-northeast-2' });
-  const command = new PutObjectCommand({ Bucket: 'sskai-model-storage', Key: `${user_uid}/${upload_type}/${uid}/${filename}` });
+  const command = new PutObjectCommand({ Bucket: 'sskai-model-storage', Key: `${user_uid}/${upload_type}/${uid}/${upload_type}${isZip ? '.zip' : '.py'}` });
   const url = await getSignedUrl(client, command, { expiresIn: 3600 });
   
   return {

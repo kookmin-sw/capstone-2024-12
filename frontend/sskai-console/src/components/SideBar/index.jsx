@@ -36,14 +36,14 @@ export default function SideBar(props) {
         <Menu.Item key="data" icon={<DatabaseOutlined />}>
           Data
         </Menu.Item>
-        <Menu.Item key="models" icon={<ApartmentOutlined />}>
-          Models
+        <Menu.Item key="model" icon={<ApartmentOutlined />}>
+          Model
         </Menu.Item>
         <Menu.Item key="train" icon={<ExperimentOutlined />}>
-          Trains
+          Train
         </Menu.Item>
         <Menu.Item key="inference" icon={<CloudDownloadOutlined />}>
-          Inferences
+          Inference
         </Menu.Item>
         <div style={{ flex: '1' }} />
         <Menu.Item key="new-model" icon={<BulbFilled />}>
