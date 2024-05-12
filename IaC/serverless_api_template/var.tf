@@ -68,6 +68,11 @@ variable "model_s3_url" {
   default = ""
 }
 
+variable "upload_s3_url" {
+  type    = string
+  default = ""
+}
+
 variable "attach_ssm_readonly_policy" {
   type    = bool
   default = false

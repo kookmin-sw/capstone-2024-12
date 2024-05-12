@@ -92,6 +92,7 @@ resource "aws_lambda_function" "lambda" {
       REGION                             = var.region_name
       ECR_URI                            = var.container_registry
       MODEL_S3_URL                       = var.model_s3_url
+      UPLOAD_S3_URL                      = var.upload_s3_url
     }
   }
 }
