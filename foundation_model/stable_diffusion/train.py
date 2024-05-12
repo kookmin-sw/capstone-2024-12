@@ -24,13 +24,15 @@ from diffusers.models.attention_processor import (
 
 # LoRA related imports end ##
 from diffusers.utils.import_utils import is_xformers_available
-from ray.train import ScalingConfig
+from ray.train import ScalingConfig, Checkpoint
 from ray import train
 from ray.train.torch import TorchTrainer
 import torch
 import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
 from transformers import CLIPTextModel
+
+import tempfile, os
 
 from dataset import collate, get_train_dataset
 from flags import train_arguments
@@ -215,12 +217,12 @@ def train_fn(config):
     print(f"Running {num_train_epochs} epochs.")
 
     global_step = 0
-    for _ in range(num_train_epochs):
+    for epoch in range(num_train_epochs):
         if global_step >= config["max_train_steps"]:
             print(f"Stopping training after reaching {global_step} steps...")
             break
 
-        for _, batch in enumerate(
+        for epoch, batch in enumerate(
             train_dataset.iter_torch_batches(
                 batch_size=config["train_batch_size"],
                 device=train.torch.get_device(),
@@ -278,7 +280,23 @@ def train_fn(config):
                 "step": global_step,
                 "loss": loss.detach().item(),
             }
-            train.report(results)
+
+            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                checkpoint = None
+                path = os.path.join(temp_checkpoint_dir, "checkpoint")
+                if global_step//10 == 0:
+                    if not config["use_lora"]:
+                        pipeline = DiffusionPipeline.from_pretrained(
+                            config["model_dir"],
+                            text_encoder=text_encoder,
+                            unet=unet, 
+                        )
+                        pipeline.save_pretrained(path)
+                    else:
+                        save_lora_weights(unet, text_encoder, path)
+                    
+                    checkpoint = Checkpoint.from_directory(path)
+                train.report(results, checkpoint=checkpoint)
 
             if global_step >= config["max_train_steps"]:
                 break

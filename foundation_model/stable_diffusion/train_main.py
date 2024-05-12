@@ -67,7 +67,7 @@ if __name__ == '__main__':
     # --------------------------------
 
     # 훈련을 위한 변수
-    model_path = "/tmp/trained_model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots/b95be7d6f134c3a9e62ee616f310733567f069ce"
+    model_path = "/tmp/model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots/b95be7d6f134c3a9e62ee616f310733567f069ce"
     class_data_path = "/tmp/data/stable_diffusion/class_data"
     data_class = "dog"
 

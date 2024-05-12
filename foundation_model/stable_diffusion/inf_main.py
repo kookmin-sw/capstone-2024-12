@@ -12,8 +12,8 @@ def create_regularization_images(model_path, output_path, prompts):
 
 
 if __name__ == '__main__':
-    
-    model_path = "/tmp/trained_model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots/b95be7d6f134c3a9e62ee616f310733567f069ce"
+
+    model_path = "/tmp/trained_model/stable_diffusion"
     output_path = "/tmp/data/stable_diffusion/generate_data"
     prompts = "A photo of a dog sitting on a bench."
 
