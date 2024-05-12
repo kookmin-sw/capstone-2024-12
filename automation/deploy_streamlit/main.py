@@ -52,6 +52,12 @@ spec:
         env:
         - name: ENDPOINT_URL
           value: {endpoint_url}
+        resources:
+          requests:
+          cpu: 1000M
+          memory: 2048M
+      nodeSelector:
+        karpenter.sh/nodepool: streamlit-cpu-nodepool
 ---
 apiVersion: v1
 kind: Service
