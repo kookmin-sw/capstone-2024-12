@@ -5,13 +5,13 @@ import train as t
 import dataset as d
 
 
-def set_args(model_path, model_tmp_path, data_path, data_tmp_path, data_class):
+def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class):
     cmd_args = [
         f"--model_dir={model_path}",
-        f"--output_dir={model_tmp_path}",
-        f"--instance_images_dir={data_path}",
+        f"--output_dir={trained_model_path}",
+        f"--instance_images_dir={user_data_path}",
         f"--instance_prompt=photo of the {data_class}",
-        f"--class_images_dir={data_tmp_path}",
+        f"--class_images_dir={class_data_path}",
         f"--class_prompt=photo of a {data_class}",
         "--train_batch_size=2",
         "--lr=5e-6",
