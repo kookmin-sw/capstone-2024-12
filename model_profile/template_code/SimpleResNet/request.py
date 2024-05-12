@@ -8,7 +8,7 @@ x = torch.rand(size=(1, 3, 224, 224), dtype=None)
 print(f"X Value is : {x}")
 serialized_tensor = pickle.dumps(x)
 
-url = 'http://localhost:8080/'
+url = 'https://uw5meqbwwfb2cavkepqqmonhcy0pedsr.lambda-url.ap-northeast-2.on.aws/'
 
 request_body = {
     "body": base64.b64encode(serialized_tensor).decode('utf-8')
