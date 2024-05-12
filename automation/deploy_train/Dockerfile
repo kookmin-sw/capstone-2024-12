@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/python:3.8
 
-RUN pip install awscli --no-cache-dir
+RUN pip install awscli requests==2.31.0 --no-cache-dir
 
 RUN chmod +x /var/task
 
