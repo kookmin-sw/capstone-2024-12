@@ -155,12 +155,12 @@ spec:
                 resources:
                   limits:
                     cpu: "3500m"
-                    memory: "12288m"
+                    memory: "12288M"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
                   requests:
                     cpu: "3500m"
-                    memory: "12288m"
+                    memory: "12288M"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
 
