@@ -37,7 +37,8 @@ except Exception as e:
 
 try:
     model = ModelClass()
-    model.load_state_dict(torch.load("./model/torch.pt"))
+    if os.path.exists('./model/torch.pt'):
+        model.load_state_dict(torch.load("./model/torch.pt"))
     model.to(device)
 except Exception as e:
     print(f"Model load failed: {e}")
