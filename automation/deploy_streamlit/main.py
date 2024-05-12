@@ -53,11 +53,11 @@ spec:
         - name: ENDPOINT_URL
           value: {endpoint_url}
         resources:
-            requests:
-            cpu: 1000M
+          requests:
+            cpu: 1000m
             memory: 2048M
-        limits:
-            cpu: 1000M
+          limits:
+            cpu: 1000m
             memory: 2048M
       nodeSelector:
         karpenter.sh/nodepool: streamlit-cpu-nodepool
@@ -141,7 +141,7 @@ def handler(event, context):
 
     if model_type == "llama":
       image_name = "llama2-streamlit"
-      image_py_name = "text-generator-llama2-13B.py"
+      image_py_name = "text-generator-llama2.py"
     elif model_type == "diffusion":
       image_name = "sdxl1-streamlit"
       image_py_name = "image-generator-SDXL1.py"
