@@ -81,6 +81,7 @@ spec:
       - torch==2.3.0
       - torchvision==0.18.0
       - datasets==2.19.1
+      - sklearn==1.4.2
 {''.join(get_requirements_txt())}
       
     env_vars:
