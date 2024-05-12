@@ -21,4 +21,5 @@ module "lambda" {
   karpenter_node_role_parameter_name = var.karpenter_node_role_parameter_name
   region_name                  = var.region_name
   model_s3_url                 = var.model_s3_url
+  upload_s3_url                = var.upload_s3_url
 }

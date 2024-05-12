@@ -18,3 +18,4 @@ variable "state_bucket_name" {}
 variable "karpenter_node_role_parameter_name" {}
 variable "region_name" {}
 variable "model_s3_url" {}
+variable "upload_s3_url" {}
