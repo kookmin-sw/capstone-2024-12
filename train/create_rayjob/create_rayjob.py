@@ -15,9 +15,18 @@ result_get_kubeconfig = subprocess.run([
 if result_get_kubeconfig.returncode != 0:
     print("kubeconfig 받아오기 returncode != 0")
 
+def get_requirements_txt():
+    added_list = ["requests", "pendulum", "transformers", "torch", "torchvision", "datasets"]
+    add_list = []
+    with open("requirements.txt", "r") as f:
+        for line in f:
+            package_name = line.split("==")[0]
+            if package_name not in added_list:
+                add_list.append("      - "+line.strip()+"\n")
+    return add_list
 
-def init_rayjob(TRAIN_NAME):
-    filename = "raycluster"
+def create_yaml(TRAIN_NAME):
+    filename = "rayjob"
 
     content = f"""---
 apiVersion: ray.io/v1
@@ -28,41 +37,30 @@ metadata:
 spec:
   entrypoint: python /home/ray/samples/train-code.py
 
-  # shutdownAfterJobFinishes specifies whether the RayCluster should be deleted after the RayJob finishes. Default is false.
   shutdownAfterJobFinishes: true
-
-  # ttlSecondsAfterFinished specifies the number of seconds after which the RayCluster will be deleted after the RayJob finishes.
   ttlSecondsAfterFinished: 10
 
-  # RuntimeEnvYAML represents the runtime environment configuration provided as a multi-line YAML string.
-  # See https://docs.ray.io/en/latest/ray-core/handling-dependencies.html for details.
-  # (New in KubeRay version 1.0.)
   runtimeEnvYAML: |
     pip:
-      - transformer==4.40.2
+      - requests==2.26.0
+      - pendulum==2.1.2
+      - transformers==4.19.1
       - torch==2.3.0
+      - torchvision==0.18.0
       - datasets==2.19.1
-
+{''.join(get_requirements_txt())}
+      
     env_vars:
       counter_name: "test_counter"
-
-  # Suspend specifies whether the RayJob controller should create a RayCluster instance.
-  # If a job is applied with the suspend field set to true, the RayCluster will not be created and we will wait for the transition to false.
-  # If the RayCluster is already created, it will be deleted. In the case of transition to false, a new RayCluster will be created.
-  # suspend: false
 
   # rayClusterSpec specifies the RayCluster instance to be created by the RayJob controller.
   rayClusterSpec:
     rayVersion: '2.12.0' # should match the Ray version in the image of the containers
     # Ray head pod template
     headGroupSpec:
-      # The `rayStartParams` are used to configure the `ray start` command.
-      # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
-      # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
       serviceType: NodePort
       rayStartParams:
         dashboard-host: '0.0.0.0'
-      #pod template
       template:
         spec:
           containers:
@@ -77,13 +75,13 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "4"
-                  memory: "16Gi"
+                  cpu: "3500M"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
                   nvidia.com/gpu: 1
                 requests:
-                  cpu: "4"
-                  memory: "16Gi"
+                  cpu: "3500M"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
                   nvidia.com/gpu: 1
 
@@ -91,10 +89,8 @@ spec:
                 - mountPath: /home/ray/samples
                   name: train-code
           volumes:
-            # You set volumes at the Pod level, then mount them into containers inside that Pod
             - name: train-code
               configMap:
-                # Provide the name of the ConfigMap you want to mount.
                 name: ray-job-code
                 # An array of keys from the ConfigMap to create as files
                 items:
@@ -123,13 +119,13 @@ spec:
                       command: [ "/bin/sh","-c","ray stop" ]
                 resources:
                   limits:
-                    cpu: "4"
-                    memory: "16Gi"
+                    cpu: "3500m"
+                    memory: "12288m"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
                   requests:
-                    cpu: "4"
-                    memory: "16Gi"
+                    cpu: "3500m"
+                    memory: "12288m"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
 
@@ -142,13 +138,81 @@ metadata:
   name: ray-job-code
 data:
   train-code.py: |
-    import ray
-    import os
-    import requests
-    import transformer
     import torch
+    import torch.nn as nn
+    import torch.optim as optim
 
-    ray.init()
+    #### added
+    import ray
+    from ray import train
+    from ray.train.torch import TorchTrainer, TorchConfig
+    ####
+
+
+    #### model
+
+    class ModelClass(torch.nn.Module):
+        def __init__(self):
+            super(ModelClass, self).__init__()
+            self.linear = torch.nn.Linear(1, 1)
+
+        def forward(self, x):
+            return self.linear(x)
+        
+
+    ####
+
+    #### data
+    # data 받아오는 아이들
+    def getData():
+      x = torch.randn(100, 1) * 10
+      y = x + 3 * torch.randn(100,1)
+      return x, y
+    #### 
+
+    #### 학습 설정들
+    # 여기에서 인자 받아서 loss함수, optimizer 선택할 수 있도록.
+    # def getTrainInfo(loss, optimtype, lr):
+    def getTrainInfo(lr):
+      model = ModelClass()
+      criterion = nn.MSELoss() # "loss" 기반으로 dict에서 찾아서 지정
+      optimizer = optim.SGD(model.parameters(), lr=lr)
+      return model, criterion, optimizer
+    ####
+
+    #### train loop
+    def train_func(epochs):
+      x, y = getData()
+
+      model, criterion, optimizer = getTrainInfo(lr=0.01)
+      epochs = 100
+
+      for epoch in range(epochs):
+          model.train()
+          optimizer.zero_grad()
+          outputs = model(x)
+          loss = criterion(outputs, y)
+          loss.backward()
+          optimizer.step()
+
+          if (epoch+1) % 10 == 0:
+              print(f'Epoch [{{epoch+1}}/{{epochs}}], Loss: {{loss.item():.4f}}')
+      
+      torch.save(model, './model.pt')
+
+      return model
+
+    if __name__ == "__main__":
+      ray.init()
+
+      trainer = TorchTrainer(
+          train_loop_per_worker=train_func,
+          train_loop_config={"lr": 0.01, "epochs": 100},
+          scaling_config=train.ScalingConfig(num_workers=4, use_gpu=False)
+      )
+
+      results = trainer.fit()
+      print(results)
 
 
 """
@@ -171,15 +235,17 @@ def handler(event, context):
     eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
     karpenter_node_role = os.environ.get('KARPENTER_NODE_ROLE')
 
-    
-    rayjob_filename = init_rayjob(train_name)
+    rayjob_filename = create_yaml(train_name)
     result_create_rayjob = subprocess.run([
             kubectl, "apply", "-f", rayjob_filename, "--kubeconfig", kubeconfig
         ])
+    if result_create_rayjob.returncode != 0:
+      print("create resource returncode != 0")
+      return result_create_rayjob.returncode
 
     return {
         'statusCode': 200,
-        'body': subprocess.run([kubectl, 'get', 'nodes', "--kubeconfig", kubeconfig], capture_output=True, text=True).stdout
+        'body': "Create Successfully."
     }
     
 if __name__ == "__main__":
