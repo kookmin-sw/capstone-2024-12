@@ -55,7 +55,7 @@ def get_load_data_py():
   with open("/tmp/data_load/sskai_data_load.py", "r") as f:
     line_list = []
     for line in f:
-      line_list.append(line.rstrip()+"\n")
+      line_list.append("    "+line.rstrip()+"\n")
   return line_list
 
 def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, data_load_s3_url, worker_num, epoch_num, optim_str, loss_str, batch_size, learning_rate, train_split_size, ram_size):
