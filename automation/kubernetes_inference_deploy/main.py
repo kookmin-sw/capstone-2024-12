@@ -52,9 +52,11 @@ spec:
           value: {model_s3_url}
         resources:
             requests:
+                cpu: {int(ram_size/4096*1000)}M
                 memory: {ram_size}M
                 nvidia.com/gpu: 1
             limits:
+                cpu: {int(ram_size/4096*1000)}M
                 memory: {ram_size}M
                 nvidia.com/gpu: 1
       nodeSelector:
