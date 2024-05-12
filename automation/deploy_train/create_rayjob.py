@@ -108,12 +108,12 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "3500M"
+                  cpu: "3500m"
                   memory: "12288M"
                   ephemeral-storage: "50Gi"
                   nvidia.com/gpu: 1
                 requests:
-                  cpu: "3500M"
+                  cpu: "3500m"
                   memory: "12288M"
                   ephemeral-storage: "50Gi"
                   nvidia.com/gpu: 1
