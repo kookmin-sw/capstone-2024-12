@@ -1,4 +1,10 @@
-import { PageLayout, TableToolbox } from '../styles.jsx';
+import {
+  ErrorMessage,
+  InputTitle,
+  PageLayout,
+  TableToolbox,
+  Title
+} from '../styles.jsx';
 import { Section } from '../../components/Section/index.jsx';
 import {
   Button,
@@ -32,24 +38,12 @@ const DATA_TABLE_COLUMNS = [
   {
     title: 'Creation Time',
     dataIndex: 'created_at',
+    defaultSortOrder: 'descend',
+    sorter: (a, b) => a.created_at - b.created_at,
     width: 300,
     render: (timestamp) => formatTimestamp(timestamp)
   }
 ];
-
-const Title = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-`;
-
-const InputTitle = styled(Title)`
-  margin-top: 20px;
-  margin-bottom: 8px;
-`;
-
-const ErrorMessage = styled.div`
-  color: #ff4d4f;
-`;
 
 export default function Data(props) {
   const navigate = useNavigate();
@@ -58,7 +52,7 @@ export default function Data(props) {
   const [selected, setSelected] = useState('');
   const [filterInput, setFilterInput] = useState('');
   const [filteredData, setFilteredData] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dataName, setDataName] = useState('');
   const [dataFile, setDataFile] = useState([]);
@@ -69,13 +63,11 @@ export default function Data(props) {
   const uploadSettings = {
     maxCount: 1,
     beforeUpload: (file) => {
-      const isModel = ['application/zip', 'application/tar+gzip'].includes(
-        file.type
-      );
+      const isModel = ['application/zip'].includes(file.type);
       if (!isModel) {
         messageApi.open({
           type: 'error',
-          content: 'Data file can only be uploaded as .zip or .tar.gz.'
+          content: 'Data file can only be uploaded as .zip.'
         });
         return Upload.LIST_IGNORE;
       }
@@ -175,7 +167,7 @@ export default function Data(props) {
   const handleCancel = () => {
     setDataName('');
     setDataFile([]);
-    setIsOpen(false);
+    setIsModalOpen(false);
   };
 
   useEffect(() => {
@@ -225,7 +217,7 @@ export default function Data(props) {
               >
                 <Button>Actions</Button>
               </Dropdown>
-              <Button type={'primary'} onClick={() => setIsOpen(true)}>
+              <Button type={'primary'} onClick={() => setIsModalOpen(true)}>
                 <PlusOutlined />
                 Add New
               </Button>
@@ -246,7 +238,7 @@ export default function Data(props) {
       </PageLayout>
       <Modal
         title={<Title style={{ fontWeight: 600 }}>Add new data</Title>}
-        open={isOpen}
+        open={isModalOpen}
         confirmLoading={loading}
         onCancel={handleCancel}
         footer={[
