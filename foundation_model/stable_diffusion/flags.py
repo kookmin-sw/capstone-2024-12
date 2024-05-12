@@ -103,7 +103,7 @@ def cache_model_flags():
     parser.add_argument(
         "--revision",
         type=str,
-        default="3857c45b7d4e78b3ba0f39d4d7f50a2a05aa23d4",
+        default="b95be7d6f134c3a9e62ee616f310733567f069ce",
         help="Revision of the huggingface model repo to cache.",
     )
 

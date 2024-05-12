@@ -128,7 +128,7 @@ def load_models(config):
     dtype = torch.bfloat16
 
     text_encoder = CLIPTextModel.from_pretrained(
-        args.model_dir,
+        config["model_dir"],
         subfolder="text_encoder",
         torch_dtype=dtype,
     )
@@ -289,12 +289,12 @@ def train_fn(config):
         if not config["use_lora"]:
             pipeline = DiffusionPipeline.from_pretrained(
                 config["model_dir"],
-                text_encoder=text_encoder.module,
-                unet=unet.module,
+                text_encoder=text_encoder,
+                unet=unet,
             )
             pipeline.save_pretrained(config["output_dir"])
         else:
-            save_lora_weights(unet.module, text_encoder.module, config["output_dir"])
+            save_lora_weights(unet, text_encoder, config["output_dir"])
 
 
 def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
