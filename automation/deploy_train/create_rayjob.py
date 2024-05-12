@@ -119,9 +119,11 @@ spec:
                   nvidia.com/gpu: 1
               volumeMounts:
                 - name: train-code
-                  mountPath: /home/ray/
+                  mountPath: /home/ray/train-code.py
+                  subPath: train-code.py
                 - name: data-load-code
-                  mountPath: /home/ray/
+                  mountPath: /home/ray/sskai_load_data.py
+                  subPath: sskai_load_data.py
           volumes:
             - name: train-code
               configMap:
