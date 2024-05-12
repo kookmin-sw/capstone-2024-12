@@ -10,8 +10,6 @@ def text_generate(endpoint, prompt, max_gen_len=512):
         headers = {"Content-Type": "application/json"}
         body = {
             "prompt": prompt,
-            "temperature": 0.5,
-            "top_p": 0.9,
             "max_gen_len": max_gen_len,
         }
 
