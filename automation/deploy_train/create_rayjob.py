@@ -54,8 +54,11 @@ def get_requirements_txt():
 def get_load_data_py():
   with open("/tmp/data_load/sskai_load_data.py", "r") as f:
     line_list = []
-    for line in f:
-      line_list.append("    "+line.rstrip()+"\n")
+    for index, line in enumerate(f):
+      if index == 0:
+        line_list.append(""+line.rstrip()+"\n")
+        continue
+      line_list.append("        "+line.rstrip()+"\n")
   return line_list
 
 def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, data_load_s3_url, worker_num, epoch_num, optim_str, loss_str, batch_size, learning_rate, train_split_size, ram_size):
@@ -122,28 +125,17 @@ spec:
                 - name: train-code
                   mountPath: /home/ray/train-code.py
                   subPath: train-code.py
-                - name: data-load-code
-                  mountPath: /home/ray/sskai_load_data.py
-                  subPath: sskai_load_data.py
           volumes:
             - name: train-code
               configMap:
                 name: ray-job-code-{uid}
-            - name: data-load-code
-              configMap:
-                name: ray-job-code-data-load-{uid}
     workerGroupSpecs:
       # the pod replicas in this group typed worker
-      - replicas: 1
-        minReplicas: 1
-        maxReplicas: 1
-        # logical group name, for this called small-group, also can be functional
+      - replicas: {worker_num}
+        minReplicas: {worker_num}
+        maxReplicas: {worker_num}
         groupName: small-group
-        # The `rayStartParams` are used to configure the `ray start` command.
-        # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
-        # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
         rayStartParams: {{}}
-        #pod template
         template:
           spec:
             containers:
@@ -174,6 +166,7 @@ metadata:
   name: ray-job-code-{uid}
 data:
   train-code.py: |
+    import sys
     import os
     import ray.train
     import ray.train.torch
@@ -256,9 +249,12 @@ data:
       download_and_unzip(MODEL_S3_URL, "model")
       model_dir = os.getcwd() + "/model"
       download_and_unzip(DATA_S3_URL, "/tmp/data")
-        
-      from model.model import ModelClass
-      from sskai_load_data import sskai_load_data
+      sys.path.append(model_dir)
+      sys.path.append("/tmp/data")
+      
+      from model import ModelClass
+      {''.join(get_load_data_py())}
+      # from sskai_load_data import sskai_load_data
 
       if train.get_context().get_world_rank() == 0:
         update_data = {{
@@ -385,20 +381,13 @@ data:
       trainer = TorchTrainer(
           train_loop_per_worker=train_func,
           train_loop_config={{"lr": LR_VALUE, "epochs": EPOCH_NUM, "batch_size": BATCH_SIZE}},
-          scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=False)
+          scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=True)
       )
 
       results = trainer.fit()
       print(results)
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: kuberay
-  name: ray-job-code-data-load-{uid}
-data:
-  sskai_load_data.py: |
-{'    '.join(get_load_data_py())}
+
 """
     filepath = f"/tmp/{filename}.yaml"
     with open(filepath, 'w') as f:
