@@ -2,3 +2,4 @@ torch==2.3.0
 numpy==1.26.4
 requests==2.31.0
 psutil==5.9.8
+torchvision==0.15.2
