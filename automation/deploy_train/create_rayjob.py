@@ -99,7 +99,12 @@ spec:
       rayStartParams:
         dashboard-host: '0.0.0.0'
       template:
-        spec:
+        properties:
+          spec:
+            properties:
+              nodeSelector:
+                karpenter.sh/nodepool: ray-ondemand-nodepool
+
           containers:
             - name: ray-head
               image: rayproject/ray:2.12.0-gpu
@@ -112,15 +117,13 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "3500m"
-                  memory: "12288M"
+                  cpu: "1"
+                  memory: "1024M"
                   ephemeral-storage: "50Gi"
-                  nvidia.com/gpu: 1
                 requests:
-                  cpu: "3500m"
-                  memory: "12288M"
+                  cpu: "1"
+                  memory: "1024M"
                   ephemeral-storage: "50Gi"
-                  nvidia.com/gpu: 1
               volumeMounts:
                 - name: train-code
                   mountPath: /home/ray/train-code.py
@@ -137,6 +140,12 @@ spec:
         groupName: small-group
         rayStartParams: {{}}
         template:
+          properties:
+            spec:
+              properties:
+                nodeSelector:
+                  karpenter.sh/nodepool: nodepool-1
+
           spec:
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
@@ -156,6 +165,12 @@ spec:
                     memory: "12288M"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
+    submitterPodTemplate:
+      properties:
+        metadata:
+          properties:
+            nodeSelector:
+              karpenter.sh/nodepool: ray-ondemand-pool
 
 # Python Code
 ---
