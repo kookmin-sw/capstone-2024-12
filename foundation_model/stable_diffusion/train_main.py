@@ -7,7 +7,7 @@ import dataset as d
 
 def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class):
     epoch = 4
-    max_steps = epoch * 200
+    max_steps = epoch * 100
     cmd_args = [
         f"--model_dir={model_path}",
         f"--output_dir={trained_model_path}",
