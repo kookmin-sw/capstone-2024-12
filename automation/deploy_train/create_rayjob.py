@@ -52,7 +52,7 @@ def get_requirements_txt():
   return add_list
 
 def get_load_data_py():
-  with open("/tmp/data_load/sskai_data_load.py", "r") as f:
+  with open("/tmp/data_load/sskai_load_data.py", "r") as f:
     line_list = []
     for line in f:
       line_list.append("    "+line.rstrip()+"\n")
@@ -232,15 +232,8 @@ data:
       with open(f"./sskai_load_data.py", 'wb') as file:
         file.write(download.content)
 
-    download_and_unzip(MODEL_S3_URL, "model")
-    model_dir = os.getcwd() + "/model"
-    download_and_unzip(DATA_S3_URL, "/tmp/data")
-      
-    from model.model import ModelClass
-    from sskai_load_data import sskai_load_data
-
     #### 데이터 로딩
-    def load_data():
+    def load_data(sskai_load_data):
       import os
       current_dir = os.getcwd()
       os.chdir("/tmp/data")
@@ -249,7 +242,7 @@ data:
       return x, y
 
     #### 학습 설정 함수
-    def getTrainInfo(optimstr, lossstr, lr):
+    def getTrainInfo(ModelClass, optimstr, lossstr, lr):
       import torch.optim as optim
       import torch.nn as nn
       model = ModelClass()
@@ -260,14 +253,23 @@ data:
 
     #### 학습 함수
     def train_func(config):
+      download_and_unzip(MODEL_S3_URL, "model")
+      model_dir = os.getcwd() + "/model"
+      download_and_unzip(DATA_S3_URL, "/tmp/data")
+        
+      from model.model import ModelClass
+      from sskai_load_data import sskai_load_data
+
       if train.get_context().get_world_rank() == 0:
         update_data = {{
           "status": "Running",
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
+      
+      
 
       # 데이터 로딩
-      x, y = load_data()
+      x, y = load_data(sskai_load_data)
       x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=TRAIN_SPLIT_SIZE)
 
       # 데이터셋 및 DataLoader 생성
@@ -281,7 +283,7 @@ data:
       test_loader = prepare_data_loader(test_loader)
 
       # 모델, 손실 함수 및 옵티마이저 설정
-      model, criterion, optimizer = getTrainInfo(optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
+      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
       model = ray.train.torch.prepare_model(model)
       epochs = config["epochs"]
 
