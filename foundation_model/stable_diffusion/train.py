@@ -216,6 +216,7 @@ def train_fn(config):
 
     print(f"Running {num_train_epochs} epochs.")
 
+    global_step = 0
     start_epoch = 0
     checkpoint = train.get_checkpoint()
     if checkpoint:
@@ -236,8 +237,11 @@ def train_fn(config):
             start_epoch = (
                 torch.load(os.path.join(path, "extra_state.pt"))["epoch"] + 1
             )
+            global_step = (
+                torch.load(os.path.join(path, "extra_state.pt"))["step"]
+            )
 
-    global_step = 0
+    results = {}
     for epoch in range(start_epoch, num_train_epochs):
         if global_step >= config["max_train_steps"]:
             print(f"Stopping training after reaching {global_step} steps...")
@@ -301,39 +305,36 @@ def train_fn(config):
                 "step": global_step,
                 "loss": loss.detach().item(),
             }
+            train.report(results)
+
+        with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+            checkpoint = None
+            path = os.path.join(temp_checkpoint_dir, "model")
+            if not os.path.exists(path):
+                os.makedirs(path)
+            torch.save(
+                optimizer.state_dict(),
+                os.path.join(path, "optimizer.pt"),
+            )
+            torch.save(
+                {"epoch":epoch,"step":global_step},
+                os.path.join(path, "extra_state.pt"),
+            )
+            if not config["use_lora"]:
+                pipeline = DiffusionPipeline.from_pretrained(
+                    config["model_dir"],
+                    text_encoder=text_encoder,
+                    unet=unet, 
+                )
+                pipeline.save_pretrained(path)
+            else:
+                save_lora_weights(unet, text_encoder, path)
+            
+            checkpoint = Checkpoint.from_directory(path)
+            train.report(results, checkpoint=checkpoint)
 
             if global_step >= config["max_train_steps"]:
-                with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-                    checkpoint = None
-                    path = os.path.join(temp_checkpoint_dir, "model")
-
-                    torch.save(
-                        optimizer.state_dict(),
-                        os.path.join(path, "optimizer.pt"),
-                    )
-                    torch.save(
-                        {"epoch":epoch},
-                        os.path.join(path, "extra_state.pt"),
-                    )
-
-                    if not config["use_lora"]:
-                        pipeline = DiffusionPipeline.from_pretrained(
-                            config["model_dir"],
-                            text_encoder=text_encoder,
-                            unet=unet, 
-                        )
-                        pipeline.save_pretrained(path)
-                    else:
-                        save_lora_weights(unet, text_encoder, path)
-                    
-                    checkpoint = Checkpoint.from_directory(path)
-                    train.report(results, checkpoint=checkpoint)
-                break
-            else:
-                train.report(results)
-        
-        # if epoch == 1:
-        #     raise RuntimeError("Intentional error to showcase restoration!")
+                 break
     # END: Training loop
 
     # Create pipeline using the trained modules and save it.

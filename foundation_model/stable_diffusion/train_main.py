@@ -6,6 +6,8 @@ import dataset as d
 
 
 def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class):
+    epoch = 4
+    max_steps = epoch * 200
     cmd_args = [
         f"--model_dir={model_path}",
         f"--output_dir={trained_model_path}",
@@ -15,8 +17,8 @@ def set_args(model_path, trained_model_path, user_data_path, class_data_path, da
         f"--class_prompt=photo of a {data_class}",
         "--train_batch_size=2",
         "--lr=5e-6",
-        "--num_epochs=4",
-        "--max_train_steps=200",
+        f"--num_epochs={epoch}",
+        f"--max_train_steps={max_steps}",
         "--num_workers=4",
     ]
     return cmd_args
@@ -69,7 +71,7 @@ if __name__ == '__main__':
     # 훈련을 위한 변수
     model_path = "/tmp/model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots/b95be7d6f134c3a9e62ee616f310733567f069ce"
     class_data_path = "/tmp/data/stable_diffusion/class_data"
-    data_class = "dog"
+    data_class = "rabbit"
 
     trained_model_path = "/tmp/trained_model/stable_diffusion"
     user_data_path = "/tmp/data/stable_diffusion/user_data"
