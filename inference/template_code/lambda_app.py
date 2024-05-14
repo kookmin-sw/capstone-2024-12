@@ -30,7 +30,8 @@ from model import ModelClass
 
 try:
     model = ModelClass()
-    model.load_state_dict(torch.load("/tmp/model/torch.pt"))
+    if os.path.exists('/tmp/model/torch.pt'):
+        model.load_state_dict(torch.load("/tmp/model/torch.pt", map_location=torch.device('cpu')))
 except Exception as e:
     print(f"Model load failed: {e}")
     os._exit(0)

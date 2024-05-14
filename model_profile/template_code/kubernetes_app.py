@@ -113,11 +113,11 @@ if __name__ == "__main__":
         value_type = torch.bool
     if model_value_range == "":
         input_data = torch.rand(size=ast.literal_eval(model_input_shape),
-                                dtype=value_type)
+                                dtype=value_type).to(device)
     else:
         value_range = ast.literal_eval(model_value_range)
         input_data = torch.randint(low=value_range[0], high=value_range[1],
-                                   size=ast.literal_eval(model_input_shape))
+                                   size=ast.literal_eval(model_input_shape)).to(device)
     
     torch.cuda.reset_max_memory_allocated(device)
     start_time = time()
