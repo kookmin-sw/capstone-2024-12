@@ -10,9 +10,9 @@ transform = transforms.Compose(
 cwd = os.getcwd()
 
 # 학습 데이터셋 다운로드
-trainset = torchvision.datasets.CIFAR10(root=f'{cwd}/example/Mobilenetv2_face_emotion/input', train=True,
+trainset = torchvision.datasets.CIFAR10(root=f'{cwd}/example/ResNet34_CIFAR-10/', train=True,
                                         download=True, transform=transform)
 
 # 테스트 데이터셋 다운로드
-testset = torchvision.datasets.CIFAR10(root=f'{cwd}/example/Mobilenetv2_face_emotion/input', train=False,
+testset = torchvision.datasets.CIFAR10(root=f'{cwd}/example/ResNet34_CIFAR-10/', train=False,
                                        download=True, transform=transform)
