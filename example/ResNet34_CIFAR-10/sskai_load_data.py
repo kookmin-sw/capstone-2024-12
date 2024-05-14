@@ -62,8 +62,7 @@ def sskai_load_data():
         x.append(data)
         y.append(label)
         
-    print(f"x type : {type(x[0])}, x shape : {x[0].shape}")
-    print(f"y type : {type(y[0])}, y shape : {y[0].shape}")
+    return x, y
 
 if __name__ == '__main__':
     sskai_load_data()
