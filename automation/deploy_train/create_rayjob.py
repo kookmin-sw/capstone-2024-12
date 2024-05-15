@@ -52,14 +52,18 @@ def get_requirements_txt():
   return add_list
 
 def get_load_data_py():
-  with open("/tmp/data_load/sskai_load_data.py", "r") as f:
-    line_list = []
-    for index, line in enumerate(f):
-      if index == 0:
-        line_list.append(""+line.rstrip()+"\n")
-        continue
-      line_list.append("        "+line.rstrip()+"\n")
-  return line_list
+  try:
+    with open("/tmp/data_load/sskai_load_data.py", "r") as f:
+      line_list = []
+      for index, line in enumerate(f):
+        if index == 0:
+          line_list.append(""+line.rstrip()+"\n")
+          continue
+        line_list.append("        "+line.rstrip()+"\n")
+    return line_list
+  except FileNotFoundError:
+    return []
+
 
 def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, data_load_s3_url, worker_num, epoch_num, optim_str, loss_str, batch_size, learning_rate, train_split_size, ram_size):
     filename = "rayjob"
@@ -99,15 +103,13 @@ spec:
       rayStartParams:
         dashboard-host: '0.0.0.0'
       template:
-        properties:
-          spec:
-            properties:
-              nodeSelector:
-                karpenter.sh/nodepool: ray-ondemand-nodepool
+        spec:
+          nodeSelector:
+            karpenter.sh/nodepool: ray-ondemand-nodepool
 
           containers:
             - name: ray-head
-              image: rayproject/ray:2.12.0-gpu
+              image: rayproject/ray:2.12.0
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -117,12 +119,12 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "1"
-                  memory: "1024M"
+                  cpu: "800m"
+                  memory: "3072M"
                   ephemeral-storage: "50Gi"
                 requests:
-                  cpu: "1"
-                  memory: "1024M"
+                  cpu: "800m"
+                  memory: "3072M"
                   ephemeral-storage: "50Gi"
               volumeMounts:
                 - name: train-code
@@ -140,13 +142,9 @@ spec:
         groupName: small-group
         rayStartParams: {{}}
         template:
-          properties:
-            spec:
-              properties:
-                nodeSelector:
-                  karpenter.sh/nodepool: nodepool-1
-
           spec:
+            nodeSelector:
+              karpenter.sh/nodepool: nodepool-1
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
                 image: rayproject/ray:2.12.0-gpu
@@ -165,12 +163,22 @@ spec:
                     memory: "12288M"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
-    submitterPodTemplate:
-      properties:
-        metadata:
-          properties:
-            nodeSelector:
-              karpenter.sh/nodepool: ray-ondemand-pool
+    
+  submitterPodTemplate:
+    spec:
+      nodeSelector:
+        karpenter.sh/nodepool: ray-ondemand-nodepool
+      containers:
+        - name: ray-job-submitter
+          image: rayproject/ray:2.12.0
+          resources:
+            limits:
+              cpu: "800m"
+              memory: "3072M"
+            requests:
+              cpu: "800m"
+              memory: "3072M"
+      restartPolicy: Never
 
 # Python Code
 ---
@@ -281,6 +289,9 @@ data:
 
       # 데이터 로딩
       x, y = load_data(sskai_load_data)
+      if torch.cuda.is_available():
+        x = x.cuda()
+        y = y.cuda()
       x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=TRAIN_SPLIT_SIZE)
 
       # 데이터셋 및 DataLoader 생성
@@ -296,6 +307,8 @@ data:
       # 모델, 손실 함수 및 옵티마이저 설정
       model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
       model = ray.train.torch.prepare_model(model)
+      if torch.cuda.is_available():
+        model = model.cuda()
       epochs = config["epochs"]
 
       # 학습 루프
@@ -326,9 +339,9 @@ data:
           shutil.rmtree('/tmp/save_model')
         os.makedirs('/tmp/save_model')
         shutil.copy(f'{{model_dir}}/model.py', '/tmp/save_model/model.py')
-        torch.save(model.state_dict(), '/tmp/save_model/torch.pt')
+        model.module.to("cpu")
+        torch.save(model.module.state_dict(), '/tmp/save_model/torch.pt')
         shutil.make_archive('/tmp/model', 'zip', root_dir='/tmp/save_model')
-
         if os.path.getsize("/tmp/model.zip")/(1024**3) < 1.5:
           with open('/tmp/model.zip', 'rb') as file:
             model_json = {{
@@ -387,7 +400,12 @@ data:
           "status": "Completed"
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
-
+        
+        update_data = {{
+          "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
+        }}
+        requests.put(url=f"{{DB_API_URL}}/models/{{MODEL_UID}}", json=update_data)
+        
       return model.state_dict()
 
     if __name__ == "__main__":
@@ -449,9 +467,18 @@ def handler(event, context):
         ])
     if result_create_rayjob.returncode != 0:
       print("create resource returncode != 0")
-      return result_create_rayjob.returncode
+      subprocess.run([
+              kubectl, "delete", "-n", "kuberay", "rayjob", f"rayjob-{uid}", "--kubeconfig", kubeconfig
+      ])
+      subprocess.run([
+              kubectl, "delete", "-n", "kuberay", "configmap", f"ray-job-code-{uid}", "--kubeconfig", kubeconfig
+      ])
+      return {
+        'statusCode': 500,
+        'body': "Rayjob creation failure."
+      }
 
     return {
         'statusCode': 200,
-        'body': "Rayjob create successfully."
+        'body': "Rayjob created successfully."
     }
