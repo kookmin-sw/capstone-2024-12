@@ -53,7 +53,7 @@ def inference(model_path, prompt):
     generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return generated_text
 
-if __name__ == "__manin__":
+if __name__ == "__main__":
     # 저장된 모델 경로
     model_path = "/tmp/trained_model/llama2"
     prompt = "I want to express the word love emotionally, but please recommend 2 sophisticated love expression sentences."
