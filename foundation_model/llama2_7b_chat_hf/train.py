@@ -1,4 +1,4 @@
-import os
+import os, tempfile
 import torch
 from torch.utils.data import DataLoader
 from datasets import load_dataset
@@ -13,10 +13,7 @@ from transformers import (
     AutoTokenizer,
     BitsAndBytesConfig,
 )
-
 from peft import PeftModel, LoraConfig, get_peft_model
-
-import tempfile, os
 
 
 def create_config():
@@ -68,7 +65,7 @@ def train_func(config):
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], weight_decay=1e-2)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config.get("lr"), weight_decay=1e-2)
 
     torch.cuda.empty_cache()
 
@@ -87,32 +84,33 @@ def train_func(config):
     checkpoint = train.get_checkpoint()
     if checkpoint:
         with checkpoint.as_directory() as checkpoint_dir:
-            path = os.path.join(checkpoint_dir, "model")
-            
             optimizer.load_state_dict(
-                torch.load(os.path.join(path, "optimizer.pt"))
+                torch.load(os.path.join(checkpoint_dir, "optimizer.pt"))
             )
             start_epoch = (
-                torch.load(os.path.join(path, "extra_state.pt"))["epoch"] + 1
+                torch.load(os.path.join(checkpoint_dir, "extra_state.pt"))["epoch"]
             )
             global_step = (
-                torch.load(os.path.join(path, "extra_state.pt"))["step"]
+                torch.load(os.path.join(checkpoint_dir, "extra_state.pt"))["step"]
             )
-            model = PeftModel.from_pretrained(model, path)
-            tokenizer = AutoTokenizer.from_pretrained(path)
+            if global_step % 1000 == 0:
+                start_epoch += 1
+            model = PeftModel.from_pretrained(model, checkpoint_dir)
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
 
 
     for epoch in range(start_epoch, config.get("num_epochs")):
+        model.train()
         for batch in dataloader:
+            optimizer.zero_grad()
             inputs = tokenizer(batch['text'], return_tensors='pt', padding=True, truncation=True, max_length=1024)
             inputs = {k: v.cuda() for k, v in inputs.items()}
 
             outputs = model(**inputs, labels=inputs["input_ids"])
             loss = outputs.loss
-
+            loss.requires_grad_(True)
             loss.backward()
             optimizer.step()
-            optimizer.zero_grad()
 
             global_step += 1
             results = {"epoch": epoch, "step": global_step, "loss": loss.item()}
@@ -123,24 +121,23 @@ def train_func(config):
             if global_step % 500 == 0:
                 with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                     checkpoint = None
-                    path = os.path.join(temp_checkpoint_dir, "model")
-                    if not os.path.exists(path):
-                        os.makedirs(path)
+                    if not os.path.exists(temp_checkpoint_dir):
+                        os.makedirs(temp_checkpoint_dir)
                     torch.save(
                         optimizer.state_dict(),
-                        os.path.join(path, "optimizer.pt"),
+                        os.path.join(temp_checkpoint_dir, "optimizer.pt"),
                     )
                     torch.save(
                         {"epoch":epoch,"step":global_step},
-                        os.path.join(path, "extra_state.pt"),
+                        os.path.join(temp_checkpoint_dir, "extra_state.pt"),
                     )
-                    model.save_pretrained(path)
-                    tokenizer.save_pretrained(path)
+                    model.save_pretrained(temp_checkpoint_dir)
+                    tokenizer.save_pretrained(temp_checkpoint_dir)
 
-                    checkpoint = Checkpoint.from_directory(path)
+                    checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
                     train.report(results, checkpoint=checkpoint)
 
-            if global_step >= config["step"]:
+            if global_step >= config.get("step"):
                 break
     # END: Training loop
 
@@ -155,8 +152,8 @@ def run_train(config, user_id, model_id):
             num_workers=config.get("num_workers"),
         ),
         run_config=RunConfig(
-            name=f"{model_id}", # user의 model name 이 들어가야 함
-            storage_path=f"s3://sskai-checkpoint-test/{user_id}", # "s3://{bucket_name}/{user_name}
+            name=f"{model_id}",
+            storage_path=f"s3://sskai-checkpoint-test/{user_id}",
             # checkpoint_config=CheckpointConfig(
             #     num_to_keep=1, # 가장 마지막으로 저장된 체크포인트만을 s3에 저장함.
             # ),
