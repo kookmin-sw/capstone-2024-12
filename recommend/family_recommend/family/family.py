@@ -60,7 +60,7 @@ def get_family_for_inference(region):
     df['TotalScore'] = df.apply(get_total_instance_score, args=(max_price, max_benchmark), axis=1)
 
     groups = [
-        ['g3', 'p2'],            # group 1
+        ['g3'],                  # group 1 (호환성 문제로 p2 제거)
         ['g4dn', 'g5g', 'p3'],   # group 2
         ['g6', 'gr6', 'g5'],     # group 3
         ['p3dn', 'p4d'],         # group 4
