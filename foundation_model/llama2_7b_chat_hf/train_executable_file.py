@@ -25,7 +25,7 @@ def create_config():
         "lr": 2e-4,
         "num_epochs": epochs,
         "step": step,
-        "num_workers": 1,
+        "num_workers": 4,
     }
     return config
 
@@ -150,6 +150,7 @@ def run_train(config, user_id, model_id):
         scaling_config=ScalingConfig(
             use_gpu=True,
             num_workers=config.get("num_workers"),
+            resources_per_worker={"GPU":1, "CPU":8},
         ),
         run_config=RunConfig(
             name=f"{model_id}",
