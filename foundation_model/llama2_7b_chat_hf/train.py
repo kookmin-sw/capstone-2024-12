@@ -1,6 +1,5 @@
 import os
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 
@@ -13,10 +12,11 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    TrainingArguments,
-    pipeline,
-    logging,
 )
+
+from peft import PeftModel, LoraConfig, get_peft_model
+
+import tempfile, os
 
 
 def create_config():
@@ -24,12 +24,11 @@ def create_config():
     batch_size = 1
     step = 1000 // batch_size * epochs
     config = {
-        "model_dir":"/tmp/trained_model/llama2",
-        "batch_size":batch_size,
-        "lr":2e-4,
-        "num_epochs":epochs,
-        "step":step,
-        "num_workers":1,
+        "batch_size": batch_size,
+        "lr": 2e-4,
+        "num_epochs": epochs,
+        "step": step,
+        "num_workers": 1,
     }
     return config
 
@@ -42,22 +41,28 @@ def get_datasets():
 
 def train_func(config):
     dataset = get_datasets()
-    dataloader = DataLoader(dataset, batch_size=config["batch_size"], shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=config.get("batch_size"), shuffle=True)
     dataloader = ray_torch.prepare_data_loader(dataloader)
+
+    compute_dtype = getattr(torch, "float16")
+
+    quant_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=compute_dtype,
+        bnb_4bit_use_double_quant=False,
+    )
 
     model_name = "NousResearch/Llama-2-7b-chat-hf"
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=torch.float16
-        # quantization_config=quant_config,
-        # device_map="auto"
+        quantization_config=quant_config,
+        device_map={"":0}
     )
+
     model.config.use_cache = False
     model.config.pretraining_tp = 1
     model.config.max_position_embeddings = 1024
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
@@ -67,56 +72,87 @@ def train_func(config):
 
     torch.cuda.empty_cache()
 
+    peft_params = LoraConfig(
+        lora_alpha=16,
+        lora_dropout=0.1,
+        r=64,
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+
+    model = get_peft_model(model, peft_params)
+
     start_epoch = 0
     global_step = 0
-    gradient_clipping_value = 1.0
+    checkpoint = train.get_checkpoint()
+    if checkpoint:
+        with checkpoint.as_directory() as checkpoint_dir:
+            path = os.path.join(checkpoint_dir, "model")
+            
+            optimizer.load_state_dict(
+                torch.load(os.path.join(path, "optimizer.pt"))
+            )
+            start_epoch = (
+                torch.load(os.path.join(path, "extra_state.pt"))["epoch"] + 1
+            )
+            global_step = (
+                torch.load(os.path.join(path, "extra_state.pt"))["step"]
+            )
+            model = PeftModel.from_pretrained(model, path)
+            tokenizer = AutoTokenizer.from_pretrained(path)
 
-    os.makedirs(config["model_dir"], exist_ok=True)
 
-    for epoch in range(start_epoch, config["num_epochs"]):
-        if global_step >= config["step"]:
-            print(f"Stopping training after reaching {global_step} steps...")
-            break
+    for epoch in range(start_epoch, config.get("num_epochs")):
         for batch in dataloader:
             inputs = tokenizer(batch['text'], return_tensors='pt', padding=True, truncation=True, max_length=1024)
             inputs = {k: v.cuda() for k, v in inputs.items()}
-            print(inputs)
 
             outputs = model(**inputs, labels=inputs["input_ids"])
             loss = outputs.loss
 
-            optimizer.zero_grad()
             loss.backward()
-
-            # Gradient Clipping
-            torch.nn.utils.clip_grad_norm_(model.parameters(), gradient_clipping_value)
-        
             optimizer.step()
-        
-            global_step += 1
-            results = {"epoch":epoch, "step":global_step, "loss":loss.item()}
+            optimizer.zero_grad()
 
-            if global_step % 100 == 0:
+            global_step += 1
+            results = {"epoch": epoch, "step": global_step, "loss": loss.item()}
+
+            if global_step % 100 == 0 and global_step % 500 != 0:
                 train.report(results)
 
             if global_step % 500 == 0:
-                torch.save(
-                    model.state_dict(), 
-                    os.path.join(config["model_dir"], "model_state_dict.pt")
-                )
-                tokenizer.save_pretrained(config["model_dir"])
+                with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                    checkpoint = None
+                    path = os.path.join(temp_checkpoint_dir, "model")
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    torch.save(
+                        optimizer.state_dict(),
+                        os.path.join(path, "optimizer.pt"),
+                    )
+                    torch.save(
+                        {"epoch":epoch,"step":global_step},
+                        os.path.join(path, "extra_state.pt"),
+                    )
+                    model.save_pretrained(path)
+                    tokenizer.save_pretrained(path)
+
+                    checkpoint = Checkpoint.from_directory(path)
+                    train.report(results, checkpoint=checkpoint)
+
             if global_step >= config["step"]:
-                 break
-    
-        
+                break
+    # END: Training loop
+
+
 def run_train(config, user_id, model_id):
-        # Train with Ray Train TorchTrainer.
+    # Train with Ray Train TorchTrainer.
     trainer = TorchTrainer(
         train_func,
         train_loop_config=config,
         scaling_config=ScalingConfig(
             use_gpu=True,
-            num_workers=config["num_workers"],
+            num_workers=config.get("num_workers"),
         ),
         run_config=RunConfig(
             name=f"{model_id}", # user의 model name 이 들어가야 함
@@ -134,5 +170,8 @@ def run_train(config, user_id, model_id):
 if __name__ == "__main__":
     config = create_config()
 
-    result = run_train(config, "admin", "llama2")
+    user_id = "admin"
+    model_id = "llama2"
+
+    result = run_train(config, user_id, model_id)
     print(result)
