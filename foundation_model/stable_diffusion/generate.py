@@ -5,8 +5,82 @@ import time
 import torch
 import ray
 
-from flags import run_model_flags
-from generate_utils import get_pipeline
+from diffusers import DiffusionPipeline
+from diffusers.loaders import LoraLoaderMixin
+import torch
+
+import argparse
+
+
+def run_model_flags():
+    """Commandline arguments for running a tuned DreamBooth model."""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--model_dir",
+        type=str,
+        default=None,
+        required=True,
+        help="Directory of the tuned model files.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=None,
+        required=True,
+        help="Directory to save the generated images.",
+    )
+    parser.add_argument(
+        "--prompts",
+        type=str,
+        default=None,
+        required=True,
+        help="Comma separated prompt strings for generating the images.",
+    )
+    parser.add_argument(
+        "--num_samples_per_prompt",
+        type=int,
+        default=1,
+        help="Number of images to generate for each prompt.",
+    )
+    parser.add_argument(
+        "--use_ray_data",
+        default=False,
+        action="store_true",
+        help=(
+            "Enable using Ray Data to use multiple GPU workers to perform inference."
+        ),
+    )
+    parser.add_argument(
+        "--lora_weights_dir",
+        default=None,
+        help=("The directory where `pytorch_lora_weights.bin` is stored."),
+    )
+
+    return parser
+
+
+def load_lora_weights(unet, text_encoder, input_dir):
+    lora_state_dict, network_alphas = LoraLoaderMixin.lora_state_dict(input_dir)
+    LoraLoaderMixin.load_lora_into_unet(
+        lora_state_dict, network_alphas=network_alphas, unet=unet
+    )
+    LoraLoaderMixin.load_lora_into_text_encoder(
+        lora_state_dict, network_alphas=network_alphas, text_encoder=text_encoder
+    )
+    return unet, text_encoder
+
+
+def get_pipeline(model_dir, lora_weights_dir=None):
+    pipeline = DiffusionPipeline.from_pretrained(model_dir, torch_dtype=torch.float16)
+    if lora_weights_dir:
+        unet = pipeline.unet
+        text_encoder = pipeline.text_encoder
+        print(f"Loading LoRA weights from {lora_weights_dir}")
+        unet, text_encoder = load_lora_weights(unet, text_encoder, lora_weights_dir)
+        pipeline.unet = unet
+        pipeline.text_encoder = text_encoder
+    return pipeline
 
 
 def run(args):

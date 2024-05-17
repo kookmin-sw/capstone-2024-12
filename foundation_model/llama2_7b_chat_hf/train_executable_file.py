@@ -1,4 +1,5 @@
-import os, tempfile
+import tempfile
+from os import path, makedirs
 import torch
 from torch.utils.data import DataLoader
 from datasets import load_dataset
@@ -85,13 +86,13 @@ def train_func(config):
     if checkpoint:
         with checkpoint.as_directory() as checkpoint_dir:
             optimizer.load_state_dict(
-                torch.load(os.path.join(checkpoint_dir, "optimizer.pt"))
+                torch.load(path.join(checkpoint_dir, "optimizer.pt"))
             )
             start_epoch = (
-                torch.load(os.path.join(checkpoint_dir, "extra_state.pt"))["epoch"]
+                torch.load(path.join(checkpoint_dir, "extra_state.pt"))["epoch"]
             )
             global_step = (
-                torch.load(os.path.join(checkpoint_dir, "extra_state.pt"))["step"]
+                torch.load(path.join(checkpoint_dir, "extra_state.pt"))["step"]
             )
             if global_step % 1000 == 0:
                 start_epoch += 1
@@ -121,15 +122,15 @@ def train_func(config):
             if global_step % 500 == 0:
                 with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                     checkpoint = None
-                    if not os.path.exists(temp_checkpoint_dir):
-                        os.makedirs(temp_checkpoint_dir)
+                    if not path.exists(temp_checkpoint_dir):
+                        makedirs(temp_checkpoint_dir)
                     torch.save(
                         optimizer.state_dict(),
-                        os.path.join(temp_checkpoint_dir, "optimizer.pt"),
+                        path.join(temp_checkpoint_dir, "optimizer.pt"),
                     )
                     torch.save(
                         {"epoch":epoch,"step":global_step},
-                        os.path.join(temp_checkpoint_dir, "extra_state.pt"),
+                        path.join(temp_checkpoint_dir, "extra_state.pt"),
                     )
                     model.save_pretrained(temp_checkpoint_dir)
                     tokenizer.save_pretrained(temp_checkpoint_dir)

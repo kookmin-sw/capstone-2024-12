@@ -32,12 +32,95 @@ import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
 from transformers import CLIPTextModel
 
-import tempfile, os
+import tempfile
+from os import path, makedirs
+import argparse
 
 from dataset import collate, get_train_dataset
-from flags import train_arguments
 
 LORA_RANK = 4
+
+
+def train_arguments():
+    """Commandline arguments for running DreamBooth training script."""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--model_dir",
+        type=str,
+        default=None,
+        required=True,
+        help="Path to a pretrained huggingface Stable Diffusion model.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=None,
+        required=True,
+        help="Directory where trained models or LoRA weights are saved.",
+    )
+    parser.add_argument(
+        "--use_lora", default=False, action="store_true", help="Use LoRA."
+    )
+    parser.add_argument(
+        "--instance_images_dir",
+        type=str,
+        default=None,
+        required=True,
+        help=(
+            "Directory where a few images of the instance to be fine tuned "
+            "into the model are saved."
+        ),
+    )
+    parser.add_argument(
+        "--instance_prompt",
+        type=str,
+        default=None,
+        required=True,
+        help=("Prompt for creating the instance images."),
+    )
+    parser.add_argument(
+        "--class_images_dir",
+        type=str,
+        default=None,
+        required=True,
+        help=(
+            "Directory where images of similar objects for preserving "
+            "model priors are saved."
+        ),
+    )
+    parser.add_argument(
+        "--class_prompt",
+        type=str,
+        default=None,
+        required=True,
+        help=("Prompt for creating the class images."),
+    )
+    parser.add_argument(
+        "--train_batch_size", type=int, default=1, help="Train batch size."
+    )
+    parser.add_argument("--lr", type=float, default=5e-6, help="Train learning rate.")
+    parser.add_argument(
+        "--num_epochs", type=int, default=4, help="Number of epochs to train."
+    )
+    parser.add_argument(
+        "--max_train_steps",
+        type=int,
+        default=800,
+        help="Maximum number of fine-tuning update steps to take.",
+    )
+    parser.add_argument(
+        "--prior_loss_weight",
+        type=float,
+        default=1.0,
+        help="The weight for prior preservation loss.",
+    )
+    parser.add_argument(
+        "--max_grad_norm", type=float, default=1.0, help="Maximum gradient norm."
+    )
+    parser.add_argument("--num_workers", type=int, default=2, help="Number of workers.")
+
+    return parser
 
 
 def prior_preserving_loss(model_pred, target, weight):
@@ -221,8 +304,7 @@ def train_fn(config):
     checkpoint = train.get_checkpoint()
     if checkpoint:
         with checkpoint.as_directory() as checkpoint_dir:
-            path = os.path.join(checkpoint_dir, "model")
-            load_config = {"model_dir":path}
+            load_config = {"model_dir":checkpoint_dir}
             (
                 text_encoder,
                 noise_scheduler,
@@ -232,13 +314,13 @@ def train_fn(config):
                 text_trainable_parameters,
             ) = load_models(load_config)
             optimizer.load_state_dict(
-                torch.load(os.path.join(path, "optimizer.pt"))
+                torch.load(path.join(checkpoint_dir, "optimizer.pt"))
             )
             start_epoch = (
-                torch.load(os.path.join(path, "extra_state.pt"))["epoch"] + 1
+                torch.load(path.join(checkpoint_dir, "extra_state.pt"))["epoch"] + 1
             )
             global_step = (
-                torch.load(os.path.join(path, "extra_state.pt"))["step"]
+                torch.load(path.join(checkpoint_dir, "extra_state.pt"))["step"]
             )
 
     results = {}
@@ -309,16 +391,15 @@ def train_fn(config):
 
         with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
             checkpoint = None
-            path = os.path.join(temp_checkpoint_dir, "model")
-            if not os.path.exists(path):
-                os.makedirs(path)
+            if not path.exists(temp_checkpoint_dir):
+                makedirs(temp_checkpoint_dir)
             torch.save(
                 optimizer.state_dict(),
-                os.path.join(path, "optimizer.pt"),
+                path.join(temp_checkpoint_dir, "optimizer.pt"),
             )
             torch.save(
                 {"epoch":epoch,"step":global_step},
-                os.path.join(path, "extra_state.pt"),
+                path.join(temp_checkpoint_dir, "extra_state.pt"),
             )
             if not config["use_lora"]:
                 pipeline = DiffusionPipeline.from_pretrained(
@@ -326,28 +407,28 @@ def train_fn(config):
                     text_encoder=text_encoder,
                     unet=unet, 
                 )
-                pipeline.save_pretrained(path)
+                pipeline.save_pretrained(temp_checkpoint_dir)
             else:
-                save_lora_weights(unet, text_encoder, path)
+                save_lora_weights(unet, text_encoder, temp_checkpoint_dir)
             
-            checkpoint = Checkpoint.from_directory(path)
+            checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
             train.report(results, checkpoint=checkpoint)
 
             if global_step >= config["max_train_steps"]:
                  break
     # END: Training loop
 
-    # Create pipeline using the trained modules and save it.
-    if train.get_context().get_world_rank() == 0:
-        if not config["use_lora"]:
-            pipeline = DiffusionPipeline.from_pretrained(
-                config["model_dir"],
-                text_encoder=text_encoder,
-                unet=unet,
-            )
-            pipeline.save_pretrained(config["output_dir"])
-        else:
-            save_lora_weights(unet, text_encoder, config["output_dir"])
+    # # Create pipeline using the trained modules and save it.
+    # if train.get_context().get_world_rank() == 0:
+    #     if not config["use_lora"]:
+    #         pipeline = DiffusionPipeline.from_pretrained(
+    #             config["model_dir"],
+    #             text_encoder=text_encoder,
+    #             unet=unet,
+    #         )
+    #         pipeline.save_pretrained(config["output_dir"])
+    #     else:
+    #         save_lora_weights(unet, text_encoder, config["output_dir"])
 
 
 def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:

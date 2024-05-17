@@ -1,4 +1,4 @@
-import generate as g
+import generate
 
 def create_regularization_images(model_path, output_path, prompts):
     cmd_args = [
@@ -7,8 +7,8 @@ def create_regularization_images(model_path, output_path, prompts):
         f"--prompts={prompts}",
         "--num_samples_per_prompt=1",
     ]
-    args = g.run_model_flags().parse_args(cmd_args)
-    g.run(args)
+    args = generate.run_model_flags().parse_args(cmd_args)
+    generate.run(args)
 
 
 if __name__ == '__main__':

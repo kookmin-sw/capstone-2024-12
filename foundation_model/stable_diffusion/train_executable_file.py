@@ -1,12 +1,12 @@
 from ray.train import ScalingConfig, RunConfig, FailureConfig
 from ray.train.torch import TorchTrainer
 
-import train as t
-import dataset as d
+import train
+import dataset
 
 
-def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class):
-    epoch = 4
+def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class, user_epoch):
+    epoch = user_epoch
     max_steps = epoch * 100
     cmd_args = [
         f"--model_dir={model_path}",
@@ -24,16 +24,16 @@ def set_args(model_path, trained_model_path, user_data_path, class_data_path, da
     return cmd_args
 
 def tune_model(cmd_args, user_id, model_id):
-    args = t.train_arguments().parse_args(cmd_args)
+    args = train.train_arguments().parse_args(cmd_args)
     
-    # Build training dataset.
-    train_dataset = d.get_train_dataset(args)
+    # Build training datasetrain.
+    train_dataset = dataset.get_train_dataset(args)
 
     print(f"Loaded training dataset (size: {train_dataset.count()})")
     
     # Train with Ray Train TorchTrainer.
     trainer = TorchTrainer(
-        t.train_fn,
+        train.train_fn,
         train_loop_config=vars(args),
         scaling_config=ScalingConfig(
             use_gpu=True,
@@ -79,6 +79,7 @@ if __name__ == '__main__':
     # 체크포인트를 위한 변수
     user_id = "admin"
     model_id = "stable-diffusion"
+    user_epoch = 4
 
-    args = set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class)
+    args = set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class, user_epoch)
     tune_model(args, user_id, model_id)
