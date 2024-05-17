@@ -17,11 +17,11 @@ from transformers import (
 from peft import PeftModel, LoraConfig, get_peft_model
 
 
-def create_config():
-    epochs = 1
+def create_config(epochs, model_path):
     batch_size = 1
     step = 1000 // batch_size * epochs
     config = {
+        "model_path": model_path,
         "batch_size": batch_size,
         "lr": 2e-4,
         "num_epochs": epochs,
@@ -37,11 +37,9 @@ def get_datasets():
     return dataset
 
 
-def train_func(config):
-    dataset = get_datasets()
-    dataloader = DataLoader(dataset, batch_size=config.get("batch_size"), shuffle=True)
-    dataloader = ray_torch.prepare_data_loader(dataloader)
-
+def load_model(model_path):
+    model_name = "NousResearch/Llama-2-7b-chat-hf"
+    
     compute_dtype = getattr(torch, "float16")
 
     quant_config = BitsAndBytesConfig(
@@ -51,24 +49,15 @@ def train_func(config):
         bnb_4bit_use_double_quant=False,
     )
 
-    model_name = "NousResearch/Llama-2-7b-chat-hf"
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         quantization_config=quant_config,
         device_map={"":0}
     )
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
 
-    model.config.use_cache = False
-    model.config.pretraining_tp = 1
-    model.config.max_position_embeddings = 1024
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = "right"
-
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config.get("lr"), weight_decay=1e-2)
-
-    torch.cuda.empty_cache()
+    # PEFT 모델의 가중치 로드
+    model = PeftModel.from_pretrained(model, model_path)
 
     peft_params = LoraConfig(
         lora_alpha=16,
@@ -79,6 +68,22 @@ def train_func(config):
     )
 
     model = get_peft_model(model, peft_params)
+
+    # 모델 평가 모드로 전환
+    model.train()
+
+    return model, tokenizer
+
+
+def train_func(config):
+    dataset = get_datasets()
+    dataloader = DataLoader(dataset, batch_size=config.get("batch_size"), shuffle=True)
+    dataloader = ray_torch.prepare_data_loader(dataloader)
+
+    model, tokenizer = load_model(config.get("model_path"))
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config.get("lr"), weight_decay=1e-2)
+
+    torch.cuda.empty_cache()
 
     start_epoch = 0
     global_step = 0
@@ -167,7 +172,10 @@ def run_train(config, user_id, model_id):
 
 
 if __name__ == "__main__":
-    config = create_config()
+    epochs = 1
+    model_path = "/home/ubuntu/model"
+    
+    config = create_config(epochs, model_path)
 
     user_id = "admin"
     model_id = "llama2"
