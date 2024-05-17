@@ -1,0 +1,19 @@
+variable "region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+
+variable "awscli_profile" {
+  type    = string
+  default = ""
+}
+
+variable "state_bucket_name" {
+  type = string
+  default = ""
+}
+
+variable "db_api_url" {
+    type = string
+    default = "" 
+}

@@ -1,0 +1,14 @@
+variable "region" {
+  type    = string
+  default = ""
+}
+
+variable "awscli_profile" {
+  type    = string
+  default = ""
+}
+
+variable "eks_cluster_name" {
+    type = string
+    default = ""
+}

@@ -2,57 +2,67 @@ import subprocess
 import os
 from nodepool_generator import *
 
-# request 형식 (GET 요청입니다. queryStringParameter 만 존재하기 때문)
-# {
-#     "queryStringParameters" : {
-#         "isGpu" : "true | True | false | False", GPU 패밀리 요청인지 아닌지
-#     }
-# }
-# 이후 region 이라는 값이 추가 될 수 있습니다. 현재는 ap-northeast-2 로 고정입니다
+eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
+eks_region = os.environ.get('REGION')
+
+kubectl = '/var/task/kubectl'
+kubeconfig = '/tmp/kubeconfig'
+
+# get eks cluster kubernetes configuration by aws cli
+result_get_kubeconfig = subprocess.run([
+    "aws", "eks", "update-kubeconfig",
+    "--name", eks_cluster_name,
+    "--region", eks_region,
+    "--kubeconfig", kubeconfig
+])
+
+def apply_nodepool_yaml(eks_cluster_name, region_name, nodepool_name, nodeclass_name, family_list, capacity_type='spot'):
+    nodepool_filename = generate_yaml(eks_cluster_name, region_name, nodepool_name, nodeclass_name, family_list, capacity_type)
+    result_create_nodepool = subprocess.run([
+        kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
+    ])
+    if result_create_nodepool.returncode != 0: print("create nodepool returncode != 0")
+
+    return result_create_nodepool
 
 def handler(event, context):
-    params = event["queryStringParameters"]
+    ssm = boto3.client('ssm', region_name=eks_region)
+    param_lambda_url = ssm.get_parameter(Name="recocommend_family_lambda_function_url", WithDecryption=False)
+    recommend_lambda_url = param_lambda_url['Parameter']['Value']
 
-    is_gpu = params['isGpu']
-    if is_gpu is not None:
-        is_gpu = is_gpu.lower() == "true"
-    else:
-        return {
-            'statusCode': 400,
-            'body': f'Unexcepted parameter value isGpu : {is_gpu}'
-        }
-    
-    eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
-    # TODO : eks 이름이 유효한지 테스트 할 수 있는 코드
+    region = eks_region
 
-    kubectl = '/var/task/kubectl'
-    kubeconfig = '/tmp/kubeconfig'
+    family_dict = get_instance_family(recommend_lambda_url, region)
 
-    # get eks cluster kubernetes configuration by aws cli
-    result_get_kubeconfig = subprocess.run([
-        "aws", "eks", "update-kubeconfig",
-        "--name", eks_cluster_name,
-        "--region", "ap-northeast-2",
-        "--kubeconfig", kubeconfig
-    ])
-    if result_get_kubeconfig.returncode != 0:
-        print("kubeconfig 받아오기 returncode != 0")
+    for nodepool_name, family_list in family_dict.items():
+        nodeclass_name = 'ec2-gpu'
+        result = apply_nodepool_yaml(eks_cluster_name, region, nodepool_name, nodeclass_name, family_list)
 
-    if not is_gpu:
-        nodepool_filename = generate_cpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
-        result_create_cpu_nodepool = subprocess.run([
-            kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
-        ])
-        if result_create_cpu_nodepool != 0: print("create cpu nodepool returncode != 0")
-    else:
-        nodepool_filename = generate_gpu_nodepool_yaml(eks_cluster_name, "ap-northeast-2")
-        result_create_gpu_nodepool = subprocess.run([
-            kubectl, "apply", "-f", nodepool_filename, "--kubeconfig", kubeconfig
-        ])
-        if result_create_gpu_nodepool != 0: print("create gpu nodepool returncode != 0")
+    streamlit_cpu_nodepool_name = 'streamlit-cpu-nodepool'
+    streamlit_cpu_nodepool_family_list = [
+        't3.nano', 't3.micro', 't3.small', 't3.medium', 't3.large', 't3.xlarge',
+        'm5.large', 'm5.xlarge'
+    ]
+    streamlit_nodeclass_name = 'ec2-cpu'
+    result = apply_nodepool_yaml(eks_cluster_name, region, streamlit_cpu_nodepool_name, streamlit_nodeclass_name, streamlit_cpu_nodepool_family_list)
+
+    profiler_nodepool_name = 'profiler-gpu-nodepool'
+    profiler_nodepool_family_list = [
+        'g6.2xlarge', 'g5.2xlarge', 'g4dn.2xlarge'
+    ]
+    profiler_nodeclass_name = 'ec2-gpu'
+    capacity_type = 'on-demand'
+    result = apply_nodepool_yaml(eks_cluster_name, region, profiler_nodepool_name, profiler_nodeclass_name, profiler_nodepool_family_list, capacity_type)
+
+    ray_nodepool_name = 'ray-ondemand-pool'
+    ray_nodepool_family_list = [
+        't3.medium', 't3.large', 'm5.large',
+    ]
+    ray_nodeclass_name = 'ec2-cpu'
+    capacity_type = 'on-demand'
+    result = apply_nodepool_yaml(eks_cluster_name, region, ray_nodepool_name, ray_nodeclass_name, ray_nodepool_family_list, capacity_type)
 
     return {
         'statusCode': 200,
-        'body': "test complete"
+        'body': "complete update nodepool"
     }
-    

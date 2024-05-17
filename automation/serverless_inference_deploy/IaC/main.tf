@@ -6,24 +6,18 @@ module "serverless_inference_deploy" {
   container_repository = "serverless-inference-deploy"
   container_image_tag = "latest"
   lambda_ram_size = 2048
+  lambda_timeout = 600
+  attach_iam_policy = true
   attach_s3_policy = true
   attach_ec2_policy = true
   attach_lambda_policy = true
   attach_cloudwatch_policy = true
-}
-
-variable "region" {
-  type    = string
-  default = "ap-northeast-2"
-}
-
-variable "awscli_profile" {
-  type    = string
-  default = "default"
+  state_bucket_name = var.state_bucket_name
+  db_api_url = var.db_api_url
 }
 
 output "function_url" {
-  value = module.serverless_inference.function_url
+  value = module.serverless_inference_deploy.function_url
 }
 
 provider "aws" {

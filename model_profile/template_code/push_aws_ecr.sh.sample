@@ -1,0 +1,13 @@
+#!/bin/sh
+
+ECR_URI=""
+DOCKER_FILENAME="Dockerfile"
+IMAGE_NAME="job-model-profile"
+
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
+docker build -t ${IMAGE_NAME} -f ${DOCKER_FILENAME} .
+docker tag ${IMAGE_NAME}:latest $ECR_URI/${IMAGE_NAME}:latest
+docker push $ECR_URI/${IMAGE_NAME}:latest
+
+docker rmi -f ${IMAGE_NAME}
+docker rmi -f $ECR_URI/${IMAGE_NAME}:latest

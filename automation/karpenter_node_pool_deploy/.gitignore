@@ -1,3 +1,2 @@
-push_image.sh
-ecr_login.sh
+*.sh
 *test*

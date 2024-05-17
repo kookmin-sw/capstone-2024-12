@@ -68,19 +68,31 @@ resource "aws_iam_role_policy_attachment" "lambda_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "iam_policy" {
+  count      = var.attach_iam_policy ? 1 : 0
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"
+}
+
 resource "aws_lambda_function" "lambda" {
   function_name = "${var.prefix}-aws-lambda"
   package_type  = "Image"
   architectures = ["x86_64"]
   image_uri     = "${var.container_registry}/${var.container_repository}:${var.container_image_tag}"
   memory_size   = var.ram_mib
-  timeout       = 120
+  timeout       = var.timeout_s
   role          = aws_iam_role.lambda-role.arn
 
   environment {
     variables = {
-      EKS_CLUSTER_NAME      = var.eks_cluster_name
-      RECOMMEND_BUCKET_NAME = var.recommend_bucket_name
+      EKS_CLUSTER_NAME                   = var.eks_cluster_name
+      DB_API_URL                         = var.db_api_url
+      STATE_BUCKET_NAME                  = var.state_bucket_name
+      KARPENTER_NODE_ROLE_PARAMETER_NAME = var.karpenter_node_role_parameter_name
+      REGION                             = var.region_name
+      ECR_URI                            = var.container_registry
+      MODEL_S3_URL                       = var.model_s3_url
+      UPLOAD_S3_URL                      = var.upload_s3_url
     }
   }
 }
@@ -93,6 +105,12 @@ resource "aws_cloudwatch_log_group" "lambda-cloudwath-log-group" {
 resource "aws_lambda_function_url" "lambda-url" {
   function_name      = aws_lambda_function.lambda.function_name
   authorization_type = "NONE"
+
+  cors {
+    allow_origins = [ "*" ]
+    allow_methods = [ "*" ]
+    allow_headers = [ "*" ]
+  }
 }
 
 resource "aws_eks_access_entry" "eks-access-entry" {

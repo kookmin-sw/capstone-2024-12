@@ -1,0 +1,8 @@
+#!/bin/sh
+
+ECR_URI=""
+
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
+docker build -t recommend-inference-cpu-family .
+docker tag recommend-inference-cpu-family:latest $ECR_URI/recommend-inference-cpu-family:latest
+docker push $ECR_URI/recommend-inference-cpu-family:latest

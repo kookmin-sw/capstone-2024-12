@@ -1,0 +1,10 @@
+#!/bin/sh
+
+ECR_URI=""
+
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
+docker build -t $ECR_URI/kubernetes-inference:latest . -f Dockerfile.kubernetes_gpu
+docker push $ECR_URI/kubernetes-inference:latest
+
+docker build -t $ECR_URI/serverless-inference:latest . -f Dockerfile.lambda
+docker push $ECR_URI/serverless-inference:latest

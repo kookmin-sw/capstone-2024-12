@@ -1,2 +1,7 @@
 # Terraform binary
 terraform
+
+terraform_init.zip
+
+# aws ecr login
+push_aws_ecr.sh

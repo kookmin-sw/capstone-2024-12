@@ -33,12 +33,42 @@ variable "lambda_ram_size" {
   default = 2048
 }
 
+variable "lambda_timeout" {
+  type    = number
+  default = 120
+}
+
 variable "eks_cluster_name" {
   type    = string
   default = ""
 }
 
-variable "recommend_bucket_name" {
+variable "state_bucket_name" {
+  type    = string
+  default = ""
+}
+
+variable "db_api_url" {
+  type    = string
+  default = ""
+}
+
+variable "karpenter_node_role_parameter_name" {
+  type = string
+  default = ""
+}
+
+variable "region_name" {
+  type    = string
+  default = ""
+}
+
+variable "model_s3_url" {
+  type    = string
+  default = ""
+}
+
+variable "upload_s3_url" {
   type    = string
   default = ""
 }
@@ -74,6 +104,11 @@ variable "attach_cloudwatch_policy" {
 }
 
 variable "attach_eks_policy" {
+  type    = bool
+  default = false
+}
+
+variable "attach_iam_policy" {
   type    = bool
   default = false
 }
