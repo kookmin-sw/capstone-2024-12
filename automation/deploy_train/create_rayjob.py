@@ -104,6 +104,8 @@ spec:
         dashboard-host: '0.0.0.0'
       template:
         spec:
+          serviceAccount: kuberay-s3-sa
+          serviceAccountName: kuberay-s3-sa
           nodeSelector:
             karpenter.sh/nodepool: ray-ondemand-nodepool
 
@@ -143,6 +145,8 @@ spec:
         rayStartParams: {{}}
         template:
           spec:
+            serviceAccount: kuberay-s3-sa
+            serviceAccountName: kuberay-s3-sa
             nodeSelector:
               karpenter.sh/nodepool: nodepool-1
             containers:
@@ -166,6 +170,8 @@ spec:
     
   submitterPodTemplate:
     spec:
+      serviceAccount: kuberay-s3-sa
+      serviceAccountName: kuberay-s3-sa
       nodeSelector:
         karpenter.sh/nodepool: ray-ondemand-nodepool
       containers:
@@ -191,6 +197,7 @@ data:
   train-code.py: |
     import sys
     import os
+    import tempfile
     import ray.train
     import ray.train.torch
     import requests
@@ -205,6 +212,7 @@ data:
     import ray
     from ray import train
     from ray.train.torch import TorchTrainer, prepare_data_loader
+    from ray.train import RunConfig, CheckpointConfig, FailureConfig, Checkpoint, ScalingConfig
 
     DB_API_URL = "{DB_API_URL}"
     MODEL_S3_URL = "{model_s3_url}"
@@ -311,8 +319,32 @@ data:
         model = model.cuda()
       epochs = config["epochs"]
 
+      # 체크포인트 불러오기
+      checkpoint = train.get_checkpoint()      
+
+      if checkpoint:
+        with checkpoint.as_directory() as checkpoint_dir:
+          model_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "model.pt")
+          )
+          model.module.load_state_dict(model_state_dict)
+
+          optimizer_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "optimizer.pt")
+          )
+          optimizer.load_state_dict(optimizer_state_dict)
+
+          start_epoch = torch.load(
+            os.path.join(checkpoint_dir, "extra_state.pt")
+          )["epoch"] + 1
+          
+      else:
+        print("No checkpoints.")
+        start_epoch = 0
+      
+
       # 학습 루프
-      for epoch in range(epochs):
+      for epoch in range(start_epoch, epochs):
         model.train()
         for inputs, targets in train_loader:
           optimizer.zero_grad()  # 옵티마이저의 기울기 초기화
@@ -330,8 +362,28 @@ data:
             eval_loss += e_loss.item()
         eval_loss /= len(test_loader)
         
-        metrics = {{"loss":loss.item(), "eval_loss":eval_loss}}
-        train.report(metrics)
+        metrics = {{"loss":loss.item(), "eval_loss":eval_loss, "epoch":epoch}}
+
+        # 매 에포크 checkpoint
+        # 진행 에포크, 모델, optimizer 정보 
+        with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+          checkpoint = None
+          if train.get_context().get_world_rank() == 0:
+            torch.save(
+              model.module.state_dict(),  # NOTE: Unwrap the model.
+              os.path.join(temp_checkpoint_dir, f"model.pt"),
+            )
+            torch.save(
+              optimizer.state_dict(),
+              os.path.join(temp_checkpoint_dir, "optimizer.pt"),
+            )
+            torch.save(
+              {{"epoch": metrics.get("epoch")}},
+              os.path.join(temp_checkpoint_dir, "extra_state.pt"),
+            )
+            checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+          train.report(metrics, checkpoint=checkpoint)
+
         
       # 최종 save 및 db 갱신
       if train.get_context().get_world_rank() == 0:
@@ -410,11 +462,16 @@ data:
 
     if __name__ == "__main__":
       ray.init()
-
+      print("init done")
       trainer = TorchTrainer(
           train_loop_per_worker=train_func,
           train_loop_config={{"lr": LR_VALUE, "epochs": EPOCH_NUM, "batch_size": BATCH_SIZE}},
-          scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=True)
+          scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=True),
+          run_config=train.RunConfig(storage_path=f"s3://sskai-model-storage/{{USER_UID}}/model/{{MODEL_UID}}/",
+                                    name=f"{{MODEL_UID}}",
+                                    checkpoint_config=CheckpointConfig(num_to_keep=2,),
+                                    failure_config=FailureConfig(max_failures=-1),
+                                    )
       )
 
       results = trainer.fit()
@@ -430,55 +487,75 @@ data:
 
 def handler(event, context):
     body = json.loads(event.get("body", "{}"))
+    action = body.get("action")
     uid = body.get("uid")
-    user_uid = body.get("user_uid")
-    model_uid = body.get("model_uid")
-    model_s3_url = body.get("model_s3_url")
-    data_s3_url = body.get("data_s3_url")
-    data_load_s3_url = body.get("data_load_s3_url")
-    worker_num = body.get("worker_num")
-    epoch_num = body.get("epoch_num")
-    optim_str = body.get("optim_str")
-    loss_str = body.get("loss_str")
-    batch_size = body.get("batch_size")
-    learning_rate = body.get("learning_rate")
-    train_split_size = body.get("train_split_size")
-    ram_size = body.get("ram_size")
 
-    download_and_unzip(data_load_s3_url, '/tmp/data_load')
+    if action == "create":
+      user_uid = body.get("user_uid")
+      model_uid = body.get("model_uid")
+      model_s3_url = body.get("model_s3_url")
+      data_s3_url = body.get("data_s3_url")
+      data_load_s3_url = body.get("data_load_s3_url")
+      worker_num = body.get("worker_num")
+      epoch_num = body.get("epoch_num")
+      optim_str = body.get("optim_str")
+      loss_str = body.get("loss_str")
+      batch_size = body.get("batch_size")
+      learning_rate = body.get("learning_rate")
+      train_split_size = body.get("train_split_size")
+      ram_size = body.get("ram_size")
+      download_and_unzip(data_load_s3_url, '/tmp/data_load')
 
-    rayjob_filename = create_yaml(uid,
-                                  user_uid,
-                                  model_uid,
-                                  model_s3_url,
-                                  data_s3_url,
-                                  data_load_s3_url,
-                                  worker_num,
-                                  epoch_num,
-                                  optim_str,
-                                  loss_str,
-                                  batch_size,
-                                  learning_rate,
-                                  train_split_size,
-                                  ram_size)
-    
-    result_create_rayjob = subprocess.run([
-            kubectl, "apply", "-f", rayjob_filename, "--kubeconfig", kubeconfig
+      rayjob_filename = create_yaml(uid,
+                                    user_uid,
+                                    model_uid,
+                                    model_s3_url,
+                                    data_s3_url,
+                                    data_load_s3_url,
+                                    worker_num,
+                                    epoch_num,
+                                    optim_str,
+                                    loss_str,
+                                    batch_size,
+                                    learning_rate,
+                                    train_split_size,
+                                    ram_size)
+      
+      result_create_rayjob = subprocess.run([
+              kubectl, "apply", "-f", rayjob_filename, "--kubeconfig", kubeconfig
+          ])
+      if result_create_rayjob.returncode != 0:
+        print("create resource returncode != 0")
+        subprocess.run([
+                kubectl, "delete", "-n", "kuberay", "rayjob", f"rayjob-{uid}", "--kubeconfig", kubeconfig
         ])
-    if result_create_rayjob.returncode != 0:
-      print("create resource returncode != 0")
-      subprocess.run([
-              kubectl, "delete", "-n", "kuberay", "rayjob", f"rayjob-{uid}", "--kubeconfig", kubeconfig
-      ])
-      subprocess.run([
-              kubectl, "delete", "-n", "kuberay", "configmap", f"ray-job-code-{uid}", "--kubeconfig", kubeconfig
-      ])
+        subprocess.run([
+                kubectl, "delete", "-n", "kuberay", "configmap", f"ray-job-code-{uid}", "--kubeconfig", kubeconfig
+        ])
+        return {
+          'statusCode': 500,
+          'body': "Rayjob creation failure."
+        }
       return {
-        'statusCode': 500,
-        'body': "Rayjob creation failure."
+          'statusCode': 200,
+          'body': "Rayjob created successfully."
       }
+    elif action == "delete":
+      result_delete_rayjob = subprocess.run([
+              kubectl, "delete", "-n", "kuberay", "rayjob", f"rayjob-{uid}", "--kubeconfig", kubeconfig
+        ])
+      
+      result_delete_configmap = subprocess.run([
+              kubectl, "delete", "-n", "kuberay", "configmap", f"ray-job-code-{uid}", "--kubeconfig", kubeconfig
+        ])
+      if ((result_delete_configmap.returncode) and (result_delete_rayjob)) != 0:
+        print("delete resource returncode != 0")
+        return {
+          'statusCode': 500,
+          'body': "Rayjob delete failure."
+        }
 
     return {
         'statusCode': 200,
-        'body': "Rayjob created successfully."
+        'body': "Rayjob deleted successfully."
     }
