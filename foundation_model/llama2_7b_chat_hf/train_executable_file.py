@@ -149,6 +149,21 @@ def train_func(config):
                 break
     # END: Training loop
 
+    # Store trained models locally for debugging and testing.
+    # local_save_path = "/home/ubuntu/train"
+    # if not path.exists(local_save_path):
+    #     makedirs(local_save_path)
+    # torch.save(
+    #     optimizer.state_dict(),
+    #     path.join(local_save_path, "optimizer.pt"),
+    # )
+    # torch.save(
+    #     {"epoch":epoch,"step":global_step},
+    #     path.join(local_save_path, "extra_state.pt"),
+    # )
+    # model.save_pretrained(local_save_path)
+    # tokenizer.save_pretrained(local_save_path)
+
 
 def run_train(config, user_id, model_id):
     # Train with Ray Train TorchTrainer.

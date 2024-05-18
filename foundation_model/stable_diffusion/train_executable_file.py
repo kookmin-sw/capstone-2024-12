@@ -560,17 +560,17 @@ def train_fn(config):
             train.report(results, checkpoint=checkpoint)
     # END: Training loop
 
-    # Create pipeline using the trained modules and save it.
-    if train.get_context().get_world_rank() == 0:
-        if not config["use_lora"]:
-            pipeline = DiffusionPipeline.from_pretrained(
-                config["model_dir"],
-                text_encoder=text_encoder,
-                unet=unet,
-            )
-            pipeline.save_pretrained(config["output_dir"])
-        else:
-            save_lora_weights(unet, text_encoder, config["output_dir"])
+    # Store trained models locally for debugging and testing.
+    # if train.get_context().get_world_rank() == 0:
+    #     if not config["use_lora"]:
+    #         pipeline = DiffusionPipeline.from_pretrained(
+    #             config["model_dir"],
+    #             text_encoder=text_encoder,
+    #             unet=unet,
+    #         )
+    #         pipeline.save_pretrained(config["output_dir"])
+    #     else:
+    #         save_lora_weights(unet, text_encoder, config["output_dir"])
 
 
 def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
