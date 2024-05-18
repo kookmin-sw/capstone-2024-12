@@ -1,5 +1,5 @@
-import hashlib
-from os import path
+import base64
+from io import BytesIO
 
 import torch
 
@@ -29,6 +29,7 @@ def get_pipeline(model_dir, lora_weights_dir=None):
         pipeline.text_encoder = text_encoder
     return pipeline
 
+
 class StableDiffusionCallable:
     def __init__(self, model_dir, lora_weights_dir=None):
         print(f"Loading model from {model_dir}")
@@ -38,30 +39,20 @@ class StableDiffusionCallable:
             self.pipeline.to("cuda")
         self.output_dir = "/home/ubuntu/data/generate_data"
 
-    def __call__(self, batch):
-        filenames = []
-        prompt = batch["prompt"]
+    def __call__(self, prompt):
         # Generate 1 image at a time to reduce memory consumption.
         for image in self.pipeline(prompt).images:
-            hash_image = hashlib.sha1(image.tobytes()).hexdigest()
-            image_filename = path.join(self.output_dir, f"{hash_image}.jpg")
-            image.save(image_filename)
-            print(f"Saved {image_filename}")
-            filenames.append(image_filename)
-        return {"filename": filenames}
+            buffered = BytesIO()
+            image.save(buffered, format="JPG")
+            img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return img_base64
     
-
+# (수정하는 부분)
 model_path = "/home/ubuntu/models"
 stable_diffusion_predictor = StableDiffusionCallable(model_path)
 
 
-def run(model_path, prompt):
-    # Generate images one by one
-    stable_diffusion_predictor({"prompt": [prompt]})
-
-
 if __name__ == '__main__':
+    # (수정하는 부분)
     prompt = "A photo of a dog sitting on a bench."
-
-    result = run(model_path, prompt)
-    print(type(result))
+    result = stable_diffusion_predictor(prompt)
