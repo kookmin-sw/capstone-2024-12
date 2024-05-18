@@ -54,13 +54,22 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 1. 필요 패키지 설치
     ```bash
     # macOS
-    brew install terraform awscli
+    brew install terraform awscli node@20
+    npm install -g yarn
     # Linux (Ubuntu)
     sudo apt install terraform awscli -y
+    npm install -g yarn
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    nvm install 20
     # Linux (Redhat)
     sudo dnf install terraform awscli -y
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    nvm install 20
+    npm install -g yarn
     # Windows
     choco install terraform awscli
+    choco install nodejs-lts --version="20.13.1"
+    npm install -g yarn
     ```
 2. AWS 계정 권한 설정
     ```bash
