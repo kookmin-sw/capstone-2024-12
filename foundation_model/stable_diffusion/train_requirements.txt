@@ -12,3 +12,4 @@ jax==0.4.23
 jaxlib==0.4.23
 pyarrow==16.0.0
 pandas==2.2.2
+ray==2.12.0
