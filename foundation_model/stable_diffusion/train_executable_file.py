@@ -109,12 +109,6 @@ def train_arguments():
         "--num_epochs", type=int, default=4, help="Number of epochs to train."
     )
     parser.add_argument(
-        "--max_train_steps",
-        type=int,
-        default=800,
-        help="Maximum number of fine-tuning update steps to take.",
-    )
-    parser.add_argument(
         "--prior_loss_weight",
         type=float,
         default=1.0,
@@ -479,10 +473,6 @@ def train_fn(config):
 
     results = {}
     for epoch in range(start_epoch, num_train_epochs):
-        if global_step >= config["max_train_steps"]:
-            print(f"Stopping training after reaching {global_step} steps...")
-            break
-
         for epoch, batch in enumerate(
             train_dataset.iter_torch_batches(
                 batch_size=config["train_batch_size"],
@@ -538,6 +528,7 @@ def train_fn(config):
 
             global_step += 1
             results = {
+                "epoch": epoch,
                 "step": global_step,
                 "loss": loss.detach().item(),
             }
@@ -552,7 +543,7 @@ def train_fn(config):
                 path.join(temp_checkpoint_dir, "optimizer.pt"),
             )
             torch.save(
-                {"epoch":epoch,"step":global_step},
+                {"epoch":epoch, "step":global_step},
                 path.join(temp_checkpoint_dir, "extra_state.pt"),
             )
             if not config["use_lora"]:
@@ -567,9 +558,6 @@ def train_fn(config):
             
             checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
             train.report(results, checkpoint=checkpoint)
-
-            if global_step >= config["max_train_steps"]:
-                 break
     # END: Training loop
 
     # Create pipeline using the trained modules and save it.
@@ -615,9 +603,7 @@ def save_lora_weights(unet, text_encoder, output_dir):
     )
 
 
-def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class, user_epoch):
-    epoch = user_epoch
-    max_steps = epoch * 100
+def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class, epoch):
     cmd_args = [
         f"--model_dir={model_path}",
         f"--output_dir={trained_model_path}",
@@ -625,10 +611,9 @@ def set_args(model_path, trained_model_path, user_data_path, class_data_path, da
         f"--instance_prompt=photo of the {data_class}",
         f"--class_images_dir={class_data_path}",
         f"--class_prompt=photo of a {data_class}",
-        "--train_batch_size=2",
+        "--train_batch_size=4",
         "--lr=5e-6",
         f"--num_epochs={epoch}",
-        f"--max_train_steps={max_steps}",
         "--num_workers=4",
     ]
     return cmd_args
