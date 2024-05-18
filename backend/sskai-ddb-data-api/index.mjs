@@ -53,6 +53,7 @@ export const handler = async (event) => {
           TableName,
           IndexName: "user-index",
           KeyConditionExpression: "#user = :user",
+          FilterExpression: "attribute_exists(s3_url)",
           ExpressionAttributeNames: {
             "#user": "user"
           },

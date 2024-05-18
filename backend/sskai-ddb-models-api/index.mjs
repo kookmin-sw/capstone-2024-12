@@ -14,7 +14,7 @@ const clientS3 = new S3Client({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-models";
 const Bucket = "sskai-model-storage";
-const REQUIRED_FIELDS = ["name", "type", "user", "input_shape", "value_type"];
+const REQUIRED_FIELDS = ["name", "type", "user"];
 
 export const handler = async (event) => {
   let body, command, statusCode = 200;
@@ -44,6 +44,10 @@ export const handler = async (event) => {
             input_shape: data.input_shape,
             value_type: data.value_type,
             value_range: data.value_range,
+            deploy_platform: data.deploy_platform,
+            max_used_ram: data.max_used_ram,
+            max_used_gpu_mem: data.max_used_gpu_mem,
+            inference_time: data.inference_time,
             created_at: new Date().getTime(),
           }
         };
@@ -56,6 +60,7 @@ export const handler = async (event) => {
           TableName,
           IndexName: "user-index",
           KeyConditionExpression: "#user = :user",
+          FilterExpression: "attribute_exists(s3_url)",
           ExpressionAttributeNames: {
             "#user": "user"
           },
