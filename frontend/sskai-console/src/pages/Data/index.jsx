@@ -13,6 +13,7 @@ import {
   Input,
   message,
   Modal,
+  Popconfirm,
   Table,
   Upload
 } from 'antd';
@@ -22,7 +23,8 @@ import {
   deleteData,
   getData,
   updateData,
-  uploadS3
+  uploadS3,
+  uploadS3Multipart
 } from '../../api/index.jsx';
 import { SearchOutlined, PlusOutlined, InboxOutlined } from '@ant-design/icons';
 import { formatTimestamp } from '../../utils/index.jsx';
@@ -38,16 +40,12 @@ const DATA_TABLE_COLUMNS = [
   {
     title: 'Creation Time',
     dataIndex: 'created_at',
-    defaultSortOrder: 'descend',
-    sorter: (a, b) => a.created_at - b.created_at,
     width: 300,
     render: (timestamp) => formatTimestamp(timestamp)
   }
 ];
 
 export default function Data(props) {
-  const navigate = useNavigate();
-
   const [data, setData] = useState([]);
   const [selected, setSelected] = useState('');
   const [filterInput, setFilterInput] = useState('');
@@ -59,6 +57,7 @@ export default function Data(props) {
   const [createdData, setCreatedData] = useState(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [fetchLoading, setFetchLoading] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const uploadSettings = {
     maxCount: 1,
@@ -84,6 +83,7 @@ export default function Data(props) {
     setFetchLoading(true);
     // TODO: User UID Value Storing in Storage (browser's)
     const dataList = await getData(import.meta.env.VITE_TMP_USER_UID);
+    dataList.sort((a, b) => b.created_at - a.created_at);
     setData(dataList.map((data) => ({ ...data, key: data.uid })));
     setFetchLoading(false);
   };
@@ -125,7 +125,10 @@ export default function Data(props) {
 
     if (!createData) setCreatedData(data);
 
-    const uploaded = await uploadS3('data', user, data.uid, dataFile[0]);
+    const uploaded =
+      dataFile[0].size < 5 * 1024 * 1024 * 1024 // 5GB
+        ? await uploadS3('data', user, data.uid, dataFile[0])
+        : await uploadS3Multipart('data', user, data.uid, dataFile[0]);
 
     if (!uploaded) {
       await deleteData(data.uid);
@@ -168,6 +171,39 @@ export default function Data(props) {
     setDataName('');
     setDataFile([]);
     setIsModalOpen(false);
+    setIsUpdateModalOpen(false);
+  };
+
+  const handleDeleteData = async () => {
+    await Promise.all(selected.map((uid) => deleteData(uid)));
+    await fetchData();
+    messageApi.open({
+      type: 'success',
+      content: 'The data has been removed successfully.'
+    });
+  };
+
+  const handleUpdateModalOpen = (uid) => {
+    setDataName(data.filter((item) => item.uid === uid).pop().name || '');
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleUpdateData = async () => {
+    if (!dataName || !/^[a-zA-Z0-9-_]{1,20}$/.test(dataName))
+      return messageApi.open({
+        type: 'error',
+        content:
+          'Please check that you have entered all items according to the entry conditions.'
+      });
+    setLoading(true);
+    await updateData(selected[0], { name: dataName });
+    await fetchData();
+    setLoading(false);
+    handleCancel();
+    return messageApi.open({
+      type: 'success',
+      content: 'The data has been updated successfully.'
+    });
   };
 
   useEffect(() => {
@@ -204,10 +240,18 @@ export default function Data(props) {
                     {
                       label: 'Edit',
                       key: 'update',
-                      disabled: selected.length >= 2
+                      disabled: selected.length >= 2,
+                      onClick: () => handleUpdateModalOpen(selected[0])
                     },
                     {
-                      label: 'Delete',
+                      label: (
+                        <Popconfirm
+                          title={'Delete it?'}
+                          onConfirm={handleDeleteData}
+                        >
+                          <div style={{ width: '100%' }}>Delete</div>
+                        </Popconfirm>
+                      ),
                       key: 'delete',
                       danger: true
                     }
@@ -249,7 +293,7 @@ export default function Data(props) {
         ]}
       >
         <Flex vertical style={{ marginBottom: '20px' }}>
-          <InputTitle>Input your data name</InputTitle>
+          <InputTitle>Enter your data name</InputTitle>
           <Input
             placeholder={'Name'}
             value={dataName}
@@ -277,6 +321,40 @@ export default function Data(props) {
               Click or drag file to this area to upload
             </p>
           </Upload.Dragger>
+        </Flex>
+      </Modal>
+      <Modal
+        title={<Title style={{ fontWeight: 600 }}>Update data</Title>}
+        open={isUpdateModalOpen}
+        confirmLoading={loading}
+        onCancel={handleCancel}
+        footer={[
+          <Button onClick={handleCancel}>Cancel</Button>,
+          <Button type={'primary'} onClick={handleUpdateData} loading={loading}>
+            Save
+          </Button>
+        ]}
+      >
+        <Flex vertical style={{ marginBottom: '20px' }}>
+          <InputTitle>Enter your data name</InputTitle>
+          <Input
+            placeholder={'Name'}
+            value={dataName}
+            onChange={(e) => setDataName(e.target.value)}
+            status={
+              dataName && !/^[a-zA-Z0-9-_]{1,20}$/.test(dataName) && 'error'
+            }
+          />
+          {dataName && !/^[a-zA-Z0-9-_]{1,20}$/.test(dataName) && (
+            <>
+              <ErrorMessage>
+                The data name can be up to 20 characters long.
+              </ErrorMessage>
+              <ErrorMessage>
+                Only English and special characters (-, _) can be entered.
+              </ErrorMessage>
+            </>
+          )}
         </Flex>
       </Modal>
     </>
