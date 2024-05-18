@@ -5,8 +5,18 @@ body {
 #root {
   width: 100%;
   height: 100vh;
+  min-width: 1050px;
 }
 
 * {
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.ant-dropdown-menu-title-content {
+  flex: 1 !important;
+}
+
+.ant-layout-sider-trigger {
+  left: 0;
+  position: absolute !important;
 }

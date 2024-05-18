@@ -10,12 +10,16 @@ export const formatTimestamp = (timestamp) => {
 };
 
 export const calculateDuration = (startTime, endTime) => {
-  console.log(startTime, endTime);
-  let duration = new Date(endTime - startTime);
-  let hours = duration.getUTCHours().toString().padStart(2, '0');
-  let minutes = duration.getUTCMinutes().toString().padStart(2, '0');
-  let seconds = duration.getUTCSeconds().toString().padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
+  const duration = endTime - startTime;
+  const seconds = Math.floor((duration / 1000) % 60);
+  const minutes = Math.floor((duration / 1000 / 60) % 60);
+  const hours = Math.floor(duration / 1000 / 60 / 60);
+
+  const paddedHours = hours.toString().padStart(2, '0');
+  const paddedMinutes = minutes.toString().padStart(2, '0');
+  const paddedSeconds = seconds.toString().padStart(2, '0');
+
+  return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
 };
 
 export const copyToClipBoard = (text) => {
@@ -25,4 +29,13 @@ export const copyToClipBoard = (text) => {
   textArea.select();
   document.execCommand('copy');
   document.body.removeChild(textArea);
+};
+
+export const filterObject = (obj, keys) => {
+  return keys.reduce((result, key) => {
+    if (key in obj) {
+      result[key] = obj[key];
+    }
+    return result;
+  }, {});
 };

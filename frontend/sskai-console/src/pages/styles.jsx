@@ -22,7 +22,8 @@ export const Title = styled.div`
 
 export const InputTitle = styled(Title)`
   margin-top: 20px;
-  margin-bottom: 8px;
+  margin-bottom: ${(props) => (props?.size === 'xs' ? '4px' : '8px')};
+  ${(props) => props?.size === 'xs' && 'font-size: 16px;'}
 `;
 
 export const ErrorMessage = styled.div`

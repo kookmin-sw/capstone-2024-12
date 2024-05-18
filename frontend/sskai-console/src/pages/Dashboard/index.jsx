@@ -21,12 +21,10 @@ const Title = styled.div`
   display: flex;
   font-size: 20px;
   font-weight: 500;
-  margin-bottom: 24px;
 `;
 
 const SubTitle = styled.div`
   font-size: 16px;
-  margin-bottom: 8px;
 `;
 
 const ProgressWrapper = styled.div`
@@ -156,7 +154,10 @@ export default function Dashboard(props) {
       <Flex gap={24}>
         <Section>
           <Flex>
-            <Flex style={{ width: '100%' }} justify={'space-between'}>
+            <Flex
+              style={{ width: '100%', marginBottom: '24px' }}
+              justify={'space-between'}
+            >
               <Title>Savings</Title>
               <QuestionCircleOutlined
                 style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
@@ -185,10 +186,18 @@ export default function Dashboard(props) {
         </Section>
         <Section>
           <Flex vertical={true}>
-            <Flex style={{ width: '100%' }} justify={'space-between'}>
+            <Flex
+              style={{ width: '100%', marginBottom: '24px' }}
+              justify={'space-between'}
+            >
               <Title>Cost Summary</Title>
             </Flex>
-            <Flex vertical={false} gap={10} align={'start'}>
+            <Flex
+              vertical={false}
+              gap={10}
+              align={'center'}
+              style={{ marginBottom: '8px' }}
+            >
               <SubTitle>Month-to-date cost</SubTitle>
               <QuestionCircleOutlined
                 style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
@@ -211,7 +220,10 @@ export default function Dashboard(props) {
       </Flex>
       <Section>
         <Flex vertical={false}>
-          <Flex style={{ width: '100%' }} justify={'space-between'}>
+          <Flex
+            style={{ width: '100%', marginBottom: '24px' }}
+            justify={'space-between'}
+          >
             <Title>Progress</Title>
           </Flex>
         </Flex>

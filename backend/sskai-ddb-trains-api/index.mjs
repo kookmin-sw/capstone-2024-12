@@ -11,7 +11,7 @@ import { randomUUID } from 'crypto';
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-trains";
-const REQUIRED_FIELDS = ["name", "data", "checkpoint_path", "desired_epoch", "user"];
+const REQUIRED_FIELDS = ["name", "data", "user"];
 
 export const handler = async (event) => {
   let body, command, statusCode = 200;
@@ -40,13 +40,20 @@ export const handler = async (event) => {
             status: "Pending",
             cost: 0,
             checkpoint_path: "",
-            desired_epoch: data.desired_epoch,
-            code_path: data.code_path,
+            epoch_num: data.epoch_num,
+            learning_rate: data.learning_rate,
+            optim_str: data.optim_str,
+            loss_str: data.loss_str,
+            train_split_size: data.train_split_size,
+            batch_size: data.batch_size,
+            worker_num: data.worker_num,
+            data_loader_path: data.data_loader_path,
+            class: data.class,
             created_at: new Date().getTime(),
           }
         };
         await dynamo.send(new PutCommand(command));
-        body = { message: "Train created", model: command.Item };
+        body = { message: "Train created", train: command.Item };
         break;
 
       case "GET /trains":
@@ -100,6 +107,7 @@ export const handler = async (event) => {
             status: data.status || Item.status,
             cost: data.cost || Item.cost,
             checkpoint_path: data.checkpoint_path || Item.checkpoint_path,
+            data_loader_path: data.data_loader_path || Item.data_loader_path,
             updated_at: new Date().getTime(),
           }
         };
