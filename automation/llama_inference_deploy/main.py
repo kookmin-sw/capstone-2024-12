@@ -20,7 +20,7 @@ result_get_kubeconfig = subprocess.run([
     "--kubeconfig", kubeconfig
 ])
 
-def generate_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_size):
+def generate_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name):
     content = f"""---
 apiVersion: v1
 kind: Namespace
@@ -106,8 +106,8 @@ spec:
 
     return filepath
 
-def apply_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_size):
-    filename = generate_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name, ram_size)
+def apply_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name):
+    filename = generate_yaml(user_namespace, endpoint_uid, model_s3_url, node_pool_name)
     result = subprocess.run([
         kubectl, "apply", "-f", filename, "--kubeconfig", kubeconfig
     ])
@@ -142,8 +142,7 @@ def handler(event, context):
     if action == "create":
         model_s3_url = body['model']['s3_url']
         node_pool_name = "nodepool-1"
-        ram_size = body['model']['max_used_ram']
-        result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
+        result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name)
 
         cmd = "{} get ingress -A --kubeconfig {} | grep {}".format(kubectl, kubeconfig, endpoint_uid)
         time.sleep(10)
