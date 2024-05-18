@@ -53,12 +53,12 @@ spec:
           value: {model_s3_url}
         resources:
             requests:
-                cpu: 2000m
-                memory: 2000M
+                cpu: 1700m
+                memory: 3800M
                 nvidia.com/gpu: 1
             limits:
-                cpu: 2000m
-                memory: 2000M
+                cpu: 1700m
+                memory: 3800M
                 nvidia.com/gpu: 1
       nodeSelector:
         karpenter.sh/nodepool: {node_pool_name}
@@ -141,7 +141,7 @@ def handler(event, context):
 
     if action == "create":
         model_s3_url = body['model']['s3_url']
-        node_pool_name = body['model']['deployment_type']
+        node_pool_name = "nodepool-1"
         ram_size = body['model']['max_used_ram']
         result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
 
