@@ -6,7 +6,7 @@ from datasets import load_dataset
 
 import ray.train.torch as ray_torch
 from ray.train.torch import TorchTrainer
-from ray.train import ScalingConfig, Checkpoint, FailureConfig, RunConfig
+from ray.train import ScalingConfig, Checkpoint, FailureConfig, RunConfig, CheckpointConfig
 from ray import train
 
 from transformers import (
@@ -161,9 +161,9 @@ def run_train(config, user_id, model_id):
         run_config=RunConfig(
             name=f"{model_id}",
             storage_path=f"s3://sskai-checkpoint-test/{user_id}",
-            # checkpoint_config=CheckpointConfig(
-            #     num_to_keep=1, # 가장 마지막으로 저장된 체크포인트만을 s3에 저장함.
-            # ),
+            checkpoint_config=CheckpointConfig(
+                num_to_keep=2, 
+            ),
             failure_config=FailureConfig(max_failures=-1) # 계속 실행하게 함
         ),
     )

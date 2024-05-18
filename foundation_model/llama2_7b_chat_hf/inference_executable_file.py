@@ -50,7 +50,7 @@ def load_model(model_path):
 # 저장된 모델 경로
 model_path = "/tmp/trained_model/llama2"
 
-model = load_model(model_path)
+model, tokenizer = load_model(model_path)
 
 
 def inference(model, tokenizer, prompt):
@@ -64,7 +64,7 @@ def inference(model, tokenizer, prompt):
 if __name__ == "__main__":
     prompt = "I want to express the word love emotionally, but please recommend 2 sophisticated love expression sentences."
 
-    generated_text = inference(model, prompt)
+    generated_text = inference(model, tokenizer, prompt)
     
     print("---------------------------------------------")
     print(f"\n{generated_text}\n")
