@@ -1,6 +1,8 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Layout } from 'antd';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import LogoSVG from '/logo.svg';
 
 const Logo = styled.div`
   display: flex;
@@ -10,6 +12,13 @@ const Logo = styled.div`
   font-size: 24px;
   font-weight: 900;
   gap: 8px;
+  letter-spacing: -1px;
+  cursor: pointer;
+
+  > img {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
 `;
 
 const Menu = styled.div`
@@ -40,10 +49,15 @@ const User = styled.div`
 `;
 
 export default function Header(props) {
+  const navigate = useNavigate();
   return (
     <Layout.Header style={{ display: 'flex' }}>
-      <Logo>
-        <img src={'https://placehold.co/50x50'} alt={''} width={'50px'} />
+      <Logo
+        onClick={() => {
+          navigate('/dashboard');
+        }}
+      >
+        <img src={LogoSVG} alt={''} width={'50px'} />
         SSKAI
       </Logo>
       <Menu>

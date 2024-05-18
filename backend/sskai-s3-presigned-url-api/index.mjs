@@ -18,18 +18,17 @@ export const handler = async (event) => {
     };
 
   const isZip = /\.zip$/.test(filename);
-  const isPython = /\.py$/.test(filename);
 
-  if (!isZip && !isPython)
+  if (!isZip)
     return {
       statusCode: 400,
       body: JSON.stringify({
-        message: 'Invalid File Extension (need .zip or .py)'
+        message: 'Invalid File Extension (need .zip)'
       }),
       headers
     };
     
-  if (!['model', 'data', 'code'].includes(upload_type))
+  if (!['model', 'data', 'data_loader'].includes(upload_type))
     return {
       statusCode: 400,
       body: JSON.stringify({
@@ -39,7 +38,7 @@ export const handler = async (event) => {
     };
   
   const client = new S3Client({ region: 'ap-northeast-2' });
-  const command = new PutObjectCommand({ Bucket: 'sskai-model-storage', Key: `${user_uid}/${upload_type}/${uid}/${upload_type}${isZip ? '.zip' : '.py'}` });
+  const command = new PutObjectCommand({ Bucket: 'sskai-model-storage', Key: `${user_uid}/${upload_type}/${uid}/${upload_type}.zip` });
   const url = await getSignedUrl(client, command, { expiresIn: 3600 });
   
   return {
