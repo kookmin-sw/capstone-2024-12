@@ -91,6 +91,7 @@ async def healthcheck():
 async def inference(request: Request):
     data = await request.json()
     prompt = data.get('prompt', '')
+    max_gen_length = data.get('max_gen_len', 512)
     try:
         # 입력 데이터 준비
         inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
@@ -103,7 +104,7 @@ async def inference(request: Request):
     with torch.no_grad():
         try:
             # 텍스트 생성
-            outputs = model.generate(**inputs, max_length=1024)
+            outputs = model.generate(**inputs, max_length=max_gen_length)
         except Exception as e:
             return {
                 "error": "Inference failed",
