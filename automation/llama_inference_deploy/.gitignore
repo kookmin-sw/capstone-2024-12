@@ -1,0 +1,4 @@
+push_aws_ecr.sh
+ecr_login.sh
+get_kubeconfig.sh
+*test*

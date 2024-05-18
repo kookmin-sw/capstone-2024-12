@@ -43,7 +43,7 @@ spec:
         app.kubernetes.io/name: app-{endpoint_uid}
     spec:
       containers:
-      - image: {ecr_uri}/kubernetes-inference:latest
+      - image: {ecr_uri}/llama2-inference:latest
         imagePullPolicy: Always
         name: app-{endpoint_uid}
         ports:
@@ -53,12 +53,12 @@ spec:
           value: {model_s3_url}
         resources:
             requests:
-                cpu: {int(ram_size/4096*1000)}m
-                memory: {ram_size}M
+                cpu: 1700m
+                memory: 3800M
                 nvidia.com/gpu: 1
             limits:
-                cpu: {int(ram_size/4096*1000)}m
-                memory: {ram_size}M
+                cpu: 1700m
+                memory: 3800M
                 nvidia.com/gpu: 1
       nodeSelector:
         karpenter.sh/nodepool: {node_pool_name}
@@ -141,7 +141,7 @@ def handler(event, context):
 
     if action == "create":
         model_s3_url = body['model']['s3_url']
-        node_pool_name = body['model']['deployment_type']
+        node_pool_name = "nodepool-1"
         ram_size = body['model']['max_used_ram']
         result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
 
