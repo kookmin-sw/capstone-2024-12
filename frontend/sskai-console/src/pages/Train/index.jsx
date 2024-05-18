@@ -26,7 +26,7 @@ import {
   QuestionCircleOutlined
 } from '@ant-design/icons';
 import { calculateDuration } from '../../utils/index.jsx';
-import TrainCreateModal from '../NewModel/TrainCreateModal.jsx';
+import TrainCreateModal from './TrainCreateModal.jsx';
 
 const STATUS_BADGE_MAPPER = {
   Running: 'processing',

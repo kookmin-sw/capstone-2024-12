@@ -144,8 +144,8 @@ export default function NewModel(props) {
 
     const uploaded =
       modelFile[0].size < 5 * 1024 * 1024 * 1024 // 5GB
-        ? await uploadS3('model', user, modelFile.uid, modelFile[0])
-        : await uploadS3Multipart('model', user, modelFile.uid, modelFile[0]);
+        ? await uploadS3('model', user, model.uid, modelFile[0])
+        : await uploadS3Multipart('model', user, model.uid, modelFile[0]);
 
     if (!uploaded) {
       await deleteModel(model.uid);
