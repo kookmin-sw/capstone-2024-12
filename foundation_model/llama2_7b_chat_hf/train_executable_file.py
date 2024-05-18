@@ -2,7 +2,8 @@ import tempfile
 from os import path, makedirs
 import torch
 from torch.utils.data import DataLoader
-from datasets import load_dataset
+from datasets import Dataset
+import pandas as pd
 
 import ray.train.torch as ray_torch
 from ray.train.torch import TorchTrainer
@@ -17,11 +18,13 @@ from transformers import (
 from peft import PeftModel, LoraConfig, get_peft_model
 
 
-def create_config(epochs, model_path):
+def create_config(epochs, model_path, data_path):
+    data_size = get_datasets(data_path).num_rows
     batch_size = 1
-    step = 1000 // batch_size * epochs
+    step = data_size // batch_size * epochs
     config = {
         "model_path": model_path,
+        "data_path" : data_path,
         "batch_size": batch_size,
         "lr": 2e-4,
         "num_epochs": epochs,
@@ -31,9 +34,9 @@ def create_config(epochs, model_path):
     return config
 
 
-def get_datasets():
-    dataset = "mlabonne/guanaco-llama2-1k"
-    dataset = load_dataset(dataset, split="train")
+def get_datasets(data_path):
+    dataframe = pd.read_parquet(data_path)
+    dataset = Dataset.from_pandas(dataframe)
     return dataset
 
 
@@ -76,7 +79,7 @@ def load_model(model_path):
 
 
 def train_func(config):
-    dataset = get_datasets()
+    dataset = get_datasets(config.get("data_path"))
     dataloader = DataLoader(dataset, batch_size=config.get("batch_size"), shuffle=True)
     dataloader = ray_torch.prepare_data_loader(dataloader)
 
@@ -106,7 +109,6 @@ def train_func(config):
 
 
     for epoch in range(start_epoch, config.get("num_epochs")):
-        model.train()
         for batch in dataloader:
             optimizer.zero_grad()
             inputs = tokenizer(batch['text'], return_tensors='pt', padding=True, truncation=True, max_length=1024)
@@ -174,8 +176,9 @@ def run_train(config, user_id, model_id):
 if __name__ == "__main__":
     epochs = 1
     model_path = "/home/ubuntu/model"
+    data_path = "/home/ubuntu/data/train-00000-of-00001-9ad84bb9cf65a42f.parquet"
     
-    config = create_config(epochs, model_path)
+    config = create_config(epochs, model_path, data_path)
 
     user_id = "admin"
     model_id = "llama2"
