@@ -82,7 +82,7 @@ docker build -t $ECR_URI/llama2-streamlit:latest .
 docker push $ECR_URI/llama2-streamlit:latest
 cd -
 
-cd ./automaion/deploy_streamlit/stable_diffusion
+cd ./automation/deploy_streamlit/stable_diffusion
 docker build -t $ECR_URI/sdxl1-streamlit:latest .
 docker push $ECR_URI/sdxl1-streamlit:latest
 cd -
