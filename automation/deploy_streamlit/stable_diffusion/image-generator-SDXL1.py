@@ -7,12 +7,9 @@ import streamlit as st
 
 endpoint = os.environ.get("ENDPOINT_URL")
 
-def create_request_body(text, extras=None):
-    if extras is None:
-        extras = {}
-
+def create_request_body(text):
     body = {
-        "text_prompts": [{"text": text}],
+        "prompt": text,
     }
     return body
 
@@ -22,7 +19,6 @@ def image_generate(endpoint, prompt):
         headers = {"Content-Type": "application/json"}
         request_body = create_request_body(
             text=prompt,
-            extras={}
         )
 
         res = requests.post(endpoint, data=json.dumps(request_body), headers=headers)
