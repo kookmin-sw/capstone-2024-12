@@ -531,10 +531,10 @@ def save_lora_weights(unet, text_encoder, output_dir):
 def set_config(model_path, user_data_path, class_data_path, data_class, epoch, save_path="/home/ubuntu/model"):
     data_config = {
         "model_dir":model_path,
-        "instacne_prompt":f"photo of the {data_class} that the user wants",
+        "instance_prompt":f"photo of the {data_class} that the user wants",
         "instance_images_dir":user_data_path,
         "class_prompt":f"photo of the ordinary {data_class}",
-        "class_image_dir":class_data_path,
+        "class_images_dir":class_data_path,
     }
     train_config = {
         "model_dir":model_path,
@@ -584,9 +584,8 @@ if __name__ == "__main__":
     # 훈련을 위한 변수
     model_path = "/tmp/model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots/b95be7d6f134c3a9e62ee616f310733567f069ce"
     class_data_path = "/tmp/data/stable_diffusion/class_data"
-    data_class = "rabbit"
-
     user_data_path = "/tmp/data/stable_diffusion/user_data"
+    data_class = "rabbit"
 
     # 체크포인트를 위한 변수
     user_id = "admin"
