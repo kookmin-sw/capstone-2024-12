@@ -22,8 +22,10 @@ import {
 } from 'antd';
 import { useEffect, useState } from 'react';
 import {
+  createFMInference,
   createServerlessInference,
   createSpotInference,
+  deleteFMInference,
   deleteServerlessInference,
   deleteSpotInference,
   getInferences,
@@ -234,9 +236,11 @@ export default function Inference(props) {
       }
     };
     const endpoint =
-      inferenceType === 'Spot'
-        ? await createSpotInference(args)
-        : await createServerlessInference(args);
+      inferenceType === 'Serverless'
+        ? await createServerlessInference(args)
+        : selectedModel.type === 'user'
+          ? await createSpotInference(args)
+          : await createFMInference(selectedModel.type, args);
 
     setIsCreateLoading(false);
     if (!endpoint)
@@ -256,18 +260,24 @@ export default function Inference(props) {
     const target = selectedDetail[0];
     if (!target) return;
     target?.streamlit_url && (await handleStreamlit('delete'));
-    target.type === 'Spot'
-      ? await deleteSpotInference({
-          uid: target.uid,
-          user: target.user,
-          name: target.name
-        })
-      : await deleteServerlessInference({
+    target.type === 'Serverless'
+      ? await deleteServerlessInference({
           uid: target.uid,
           user: target.user,
           model: target.model,
           name: target.name
-        });
+        })
+      : target.model_type === 'user'
+        ? await deleteSpotInference({
+            uid: target.uid,
+            user: target.user,
+            name: target.name
+          })
+        : await deleteFMInference(target.model_type, {
+            uid: target.uid,
+            user: target.user,
+            name: target.name
+          });
     await fetchData();
     messageApi.open({
       type: 'success',
@@ -408,11 +418,7 @@ export default function Inference(props) {
               <Button
                 type={'default'}
                 onClick={() =>
-                  window.open(
-                    selectedDetail[0].streamlit_url,
-                    '_blank',
-                    'rel=noopener noreferrer'
-                  )
+                  window.open(selectedDetail[0].streamlit_url, '_blank')
                 }
                 loading={isDeployLoading}
                 disabled={
