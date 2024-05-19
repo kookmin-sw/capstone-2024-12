@@ -8,3 +8,4 @@ pyarrow==16.0.0
 scipy==1.13.0
 tensorboardX==2.6.2.2
 xformers==0.0.26.post1
+ray==2.12.0

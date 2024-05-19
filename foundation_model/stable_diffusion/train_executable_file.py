@@ -40,94 +40,17 @@ from transformers import CLIPTextModel, AutoTokenizer
 
 import tempfile
 from os import path, makedirs
-import argparse
 
 
 LORA_RANK = 4
 
 
-def train_arguments():
-    """Commandline arguments for running DreamBooth training script."""
-    parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--model_dir",
-        type=str,
-        default=None,
-        required=True,
-        help="Path to a pretrained huggingface Stable Diffusion model.",
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=str,
-        default=None,
-        required=True,
-        help="Directory where trained models or LoRA weights are saved.",
-    )
-    parser.add_argument(
-        "--use_lora", default=False, action="store_true", help="Use LoRA."
-    )
-    parser.add_argument(
-        "--instance_images_dir",
-        type=str,
-        default=None,
-        required=True,
-        help=(
-            "Directory where a few images of the instance to be fine tuned "
-            "into the model are saved."
-        ),
-    )
-    parser.add_argument(
-        "--instance_prompt",
-        type=str,
-        default=None,
-        required=True,
-        help=("Prompt for creating the instance images."),
-    )
-    parser.add_argument(
-        "--class_images_dir",
-        type=str,
-        default=None,
-        required=True,
-        help=(
-            "Directory where images of similar objects for preserving "
-            "model priors are saved."
-        ),
-    )
-    parser.add_argument(
-        "--class_prompt",
-        type=str,
-        default=None,
-        required=True,
-        help=("Prompt for creating the class images."),
-    )
-    parser.add_argument(
-        "--train_batch_size", type=int, default=1, help="Train batch size."
-    )
-    parser.add_argument("--lr", type=float, default=5e-6, help="Train learning rate.")
-    parser.add_argument(
-        "--num_epochs", type=int, default=4, help="Number of epochs to train."
-    )
-    parser.add_argument(
-        "--prior_loss_weight",
-        type=float,
-        default=1.0,
-        help="The weight for prior preservation loss.",
-    )
-    parser.add_argument(
-        "--max_grad_norm", type=float, default=1.0, help="Maximum gradient norm."
-    )
-    parser.add_argument("--num_workers", type=int, default=2, help="Number of workers.")
-
-    return parser
-
-
-
-def get_train_dataset(args, image_resolution=512):
+def get_train_dataset(config, image_resolution=512):
     """Build a Dataset for fine-tuning DreamBooth model."""
     # Load a directory of images as a Ray Dataset
-    instance_dataset = read_images(args.instance_images_dir)
-    class_dataset = read_images(args.class_images_dir)
+    instance_dataset = read_images(config.get("instance_images_dir"))
+    class_dataset = read_images(config.get("class_images_dir"))
 
     # We now duplicate the instance images multiple times to make the
     # two sets contain exactly the same number of images.
@@ -152,7 +75,7 @@ def get_train_dataset(args, image_resolution=512):
 
     # Load tokenizer for tokenizing the image prompts.
     tokenizer = AutoTokenizer.from_pretrained(
-        pretrained_model_name_or_path=args.model_dir,
+        pretrained_model_name_or_path=config.get("model_dir"),
         subfolder="tokenizer",
     )
 
@@ -166,8 +89,8 @@ def get_train_dataset(args, image_resolution=512):
         ).input_ids.numpy()
 
     # Get the token ids for both prompts.
-    class_prompt_ids = _tokenize(args.class_prompt)[0]
-    instance_prompt_ids = _tokenize(args.instance_prompt)[0]
+    class_prompt_ids = _tokenize(config.get("class_prompt"))[0]
+    instance_prompt_ids = _tokenize(config.get("instance_prompt"))[0]
 
     # START: image preprocessing
     transform = transforms.Compose(
@@ -590,6 +513,8 @@ def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
 
 
 def save_lora_weights(unet, text_encoder, output_dir):
+    if not path.exists(output_dir):
+        makedirs(output_dir)
     unet_lora_layers_to_save = None
     text_encoder_lora_layers_to_save = None
 
@@ -603,36 +528,39 @@ def save_lora_weights(unet, text_encoder, output_dir):
     )
 
 
-def set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class, epoch):
-    cmd_args = [
-        f"--model_dir={model_path}",
-        f"--output_dir={trained_model_path}",
-        f"--instance_images_dir={user_data_path}",
-        f"--instance_prompt=photo of the {data_class}",
-        f"--class_images_dir={class_data_path}",
-        f"--class_prompt=photo of a {data_class}",
-        "--train_batch_size=4",
-        "--lr=5e-6",
-        f"--num_epochs={epoch}",
-        "--num_workers=4",
-    ]
-    return cmd_args
+def set_config(model_path, user_data_path, class_data_path, data_class, epoch, save_path="/home/ubuntu/model"):
+    data_config = {
+        "model_dir":model_path,
+        "instacne_prompt":f"photo of the {data_class} that the user wants",
+        "instance_images_dir":user_data_path,
+        "class_prompt":f"photo of the ordinary {data_class}",
+        "class_image_dir":class_data_path,
+    }
+    train_config = {
+        "model_dir":model_path,
+        "output_dir":save_path,
+        "use_lora":False,
+        "prior_loss_weight":1.0,
+        "max_grad_norm":1.0,
+        "train_batch_size":4,
+        "lr":5e-6,
+        "num_epochs":epoch, 
+    }
+    return data_config, train_config
 
-def tune_model(cmd_args, user_id, model_id):
-    args = train_arguments().parse_args(cmd_args)
-    
+def tune_model(data_config, train_config, user_id, model_id):
     # Build training datasetrain.
-    train_dataset = get_train_dataset(args)
+    train_dataset = get_train_dataset(data_config)
 
     print(f"Loaded training dataset (size: {train_dataset.count()})")
     
     # Train with Ray Train TorchTrainer.
     trainer = TorchTrainer(
         train_fn,
-        train_loop_config=vars(args),
+        train_loop_config=train_config,
         scaling_config=ScalingConfig(
             use_gpu=True,
-            num_workers=args.num_workers,
+            num_workers=4,
             resources_per_worker={"GPU":1, "CPU":8},
         ),
         datasets={
@@ -658,7 +586,6 @@ if __name__ == "__main__":
     class_data_path = "/tmp/data/stable_diffusion/class_data"
     data_class = "rabbit"
 
-    trained_model_path = "/tmp/trained_model/stable_diffusion"
     user_data_path = "/tmp/data/stable_diffusion/user_data"
 
     # 체크포인트를 위한 변수
@@ -666,5 +593,5 @@ if __name__ == "__main__":
     model_id = "stable-diffusion"
     user_epoch = 4
 
-    args = set_args(model_path, trained_model_path, user_data_path, class_data_path, data_class, user_epoch)
-    tune_model(args, user_id, model_id)
+    data_config, train_config = set_config(model_path, user_data_path, class_data_path, data_class, user_epoch)
+    tune_model(data_config, train_config, user_id, model_id)
