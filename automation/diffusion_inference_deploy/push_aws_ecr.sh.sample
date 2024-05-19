@@ -1,0 +1,7 @@
+#!/bin/sh
+
+ECR_URI=""
+
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
+docker build -t $ECR_URI/diffusion-inference-deploy:latest .
+docker push $ECR_URI/diffusion-inference-deploy:latest
