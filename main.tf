@@ -139,3 +139,10 @@ module "deploy_s3_web" {
 
   depends_on = [ module.deploy_db_api ]
 }
+
+resource "aws_lambda_invocation" "nodepool_deploy" {
+  function_name = module.karpenter_node_pool_deploy.karpenter_nodepool_manager_function_name
+  input = jsonencode({
+    "a": "b"
+  })
+}
