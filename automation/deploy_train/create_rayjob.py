@@ -52,11 +52,18 @@ def get_requirements_txt():
   return add_list
 
 def get_load_data_py():
-  with open("/tmp/data_load/sskai_data_load.py", "r") as f:
-    line_list = []
-    for line in f:
-      line_list.append("    "+line.rstrip()+"\n")
-  return line_list
+  try:
+    with open("/tmp/data_load/sskai_load_data.py", "r") as f:
+      line_list = []
+      for index, line in enumerate(f):
+        if index == 0:
+          line_list.append(""+line.rstrip()+"\n")
+          continue
+        line_list.append("        "+line.rstrip()+"\n")
+    return line_list
+  except FileNotFoundError:
+    return []
+
 
 def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, data_load_s3_url, worker_num, epoch_num, optim_str, loss_str, batch_size, learning_rate, train_split_size, ram_size):
     filename = "rayjob"
@@ -97,9 +104,14 @@ spec:
         dashboard-host: '0.0.0.0'
       template:
         spec:
+          serviceAccount: kuberay-s3-sa
+          serviceAccountName: kuberay-s3-sa
+          nodeSelector:
+            karpenter.sh/nodepool: ray-ondemand-nodepool
+
           containers:
             - name: ray-head
-              image: rayproject/ray:2.12.0-gpu
+              image: rayproject/ray:2.12.0
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -109,43 +121,34 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "3500m"
-                  memory: "12288M"
+                  cpu: "800m"
+                  memory: "3072M"
                   ephemeral-storage: "50Gi"
-                  nvidia.com/gpu: 1
                 requests:
-                  cpu: "3500m"
-                  memory: "12288M"
+                  cpu: "800m"
+                  memory: "3072M"
                   ephemeral-storage: "50Gi"
-                  nvidia.com/gpu: 1
               volumeMounts:
                 - name: train-code
                   mountPath: /home/ray/train-code.py
                   subPath: train-code.py
-                - name: data-load-code
-                  mountPath: /home/ray/sskai_load_data.py
-                  subPath: sskai_load_data.py
           volumes:
             - name: train-code
               configMap:
                 name: ray-job-code-{uid}
-            - name: data-load-code
-              configMap:
-                name: ray-job-code-data-load-{uid}
     workerGroupSpecs:
       # the pod replicas in this group typed worker
-      - replicas: 1
-        minReplicas: 1
-        maxReplicas: 1
-        # logical group name, for this called small-group, also can be functional
+      - replicas: {worker_num}
+        minReplicas: {worker_num}
+        maxReplicas: {worker_num}
         groupName: small-group
-        # The `rayStartParams` are used to configure the `ray start` command.
-        # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
-        # See https://docs.ray.io/en/latest/cluster/cli.html#ray-start for all available options in `rayStartParams`.
         rayStartParams: {{}}
-        #pod template
         template:
           spec:
+            serviceAccount: kuberay-s3-sa
+            serviceAccountName: kuberay-s3-sa
+            nodeSelector:
+              karpenter.sh/nodepool: nodepool-1
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
                 image: rayproject/ray:2.12.0-gpu
@@ -164,6 +167,24 @@ spec:
                     memory: "12288M"
                     ephemeral-storage: "50Gi"
                     nvidia.com/gpu: 1
+    
+  submitterPodTemplate:
+    spec:
+      serviceAccount: kuberay-s3-sa
+      serviceAccountName: kuberay-s3-sa
+      nodeSelector:
+        karpenter.sh/nodepool: ray-ondemand-nodepool
+      containers:
+        - name: ray-job-submitter
+          image: rayproject/ray:2.12.0
+          resources:
+            limits:
+              cpu: "800m"
+              memory: "3072M"
+            requests:
+              cpu: "800m"
+              memory: "3072M"
+      restartPolicy: Never
 
 # Python Code
 ---
@@ -174,7 +195,9 @@ metadata:
   name: ray-job-code-{uid}
 data:
   train-code.py: |
+    import sys
     import os
+    import tempfile
     import ray.train
     import ray.train.torch
     import requests
@@ -189,6 +212,7 @@ data:
     import ray
     from ray import train
     from ray.train.torch import TorchTrainer, prepare_data_loader
+    from ray.train import RunConfig, CheckpointConfig, FailureConfig, Checkpoint, ScalingConfig
 
     DB_API_URL = "{DB_API_URL}"
     MODEL_S3_URL = "{model_s3_url}"
@@ -232,15 +256,8 @@ data:
       with open(f"./sskai_load_data.py", 'wb') as file:
         file.write(download.content)
 
-    download_and_unzip(MODEL_S3_URL, "model")
-    model_dir = os.getcwd() + "/model"
-    download_and_unzip(DATA_S3_URL, "/tmp/data")
-      
-    from model.model import ModelClass
-    from sskai_load_data import sskai_load_data
-
     #### 데이터 로딩
-    def load_data():
+    def load_data(sskai_load_data):
       import os
       current_dir = os.getcwd()
       os.chdir("/tmp/data")
@@ -249,7 +266,7 @@ data:
       return x, y
 
     #### 학습 설정 함수
-    def getTrainInfo(optimstr, lossstr, lr):
+    def getTrainInfo(ModelClass, optimstr, lossstr, lr):
       import torch.optim as optim
       import torch.nn as nn
       model = ModelClass()
@@ -260,14 +277,29 @@ data:
 
     #### 학습 함수
     def train_func(config):
+      download_and_unzip(MODEL_S3_URL, "model")
+      model_dir = os.getcwd() + "/model"
+      download_and_unzip(DATA_S3_URL, "/tmp/data")
+      sys.path.append(model_dir)
+      sys.path.append("/tmp/data")
+      
+      from model import ModelClass
+      {''.join(get_load_data_py())}
+      # from sskai_load_data import sskai_load_data
+
       if train.get_context().get_world_rank() == 0:
         update_data = {{
           "status": "Running",
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
+      
+      
 
       # 데이터 로딩
-      x, y = load_data()
+      x, y = load_data(sskai_load_data)
+      if torch.cuda.is_available():
+        x = x.cuda()
+        y = y.cuda()
       x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=TRAIN_SPLIT_SIZE)
 
       # 데이터셋 및 DataLoader 생성
@@ -281,12 +313,38 @@ data:
       test_loader = prepare_data_loader(test_loader)
 
       # 모델, 손실 함수 및 옵티마이저 설정
-      model, criterion, optimizer = getTrainInfo(optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
+      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
       model = ray.train.torch.prepare_model(model)
+      if torch.cuda.is_available():
+        model = model.cuda()
       epochs = config["epochs"]
 
+      # 체크포인트 불러오기
+      checkpoint = train.get_checkpoint()      
+
+      if checkpoint:
+        with checkpoint.as_directory() as checkpoint_dir:
+          model_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "model.pt")
+          )
+          model.module.load_state_dict(model_state_dict)
+
+          optimizer_state_dict = torch.load(
+            os.path.join(checkpoint_dir, "optimizer.pt")
+          )
+          optimizer.load_state_dict(optimizer_state_dict)
+
+          start_epoch = torch.load(
+            os.path.join(checkpoint_dir, "extra_state.pt")
+          )["epoch"] + 1
+          
+      else:
+        print("No checkpoints.")
+        start_epoch = 0
+      
+
       # 학습 루프
-      for epoch in range(epochs):
+      for epoch in range(start_epoch, epochs):
         model.train()
         for inputs, targets in train_loader:
           optimizer.zero_grad()  # 옵티마이저의 기울기 초기화
@@ -304,8 +362,28 @@ data:
             eval_loss += e_loss.item()
         eval_loss /= len(test_loader)
         
-        metrics = {{"loss":loss.item(), "eval_loss":eval_loss}}
-        train.report(metrics)
+        metrics = {{"loss":loss.item(), "eval_loss":eval_loss, "epoch":epoch}}
+
+        # 매 에포크 checkpoint
+        # 진행 에포크, 모델, optimizer 정보 
+        with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+          checkpoint = None
+          if train.get_context().get_world_rank() == 0:
+            torch.save(
+              model.module.state_dict(),  # NOTE: Unwrap the model.
+              os.path.join(temp_checkpoint_dir, f"model.pt"),
+            )
+            torch.save(
+              optimizer.state_dict(),
+              os.path.join(temp_checkpoint_dir, "optimizer.pt"),
+            )
+            torch.save(
+              {{"epoch": metrics.get("epoch")}},
+              os.path.join(temp_checkpoint_dir, "extra_state.pt"),
+            )
+            checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+          train.report(metrics, checkpoint=checkpoint)
+
         
       # 최종 save 및 db 갱신
       if train.get_context().get_world_rank() == 0:
@@ -313,9 +391,9 @@ data:
           shutil.rmtree('/tmp/save_model')
         os.makedirs('/tmp/save_model')
         shutil.copy(f'{{model_dir}}/model.py', '/tmp/save_model/model.py')
-        torch.save(model.state_dict(), '/tmp/save_model/torch.pt')
+        model.module.to("cpu")
+        torch.save(model.module.state_dict(), '/tmp/save_model/torch.pt')
         shutil.make_archive('/tmp/model', 'zip', root_dir='/tmp/save_model')
-
         if os.path.getsize("/tmp/model.zip")/(1024**3) < 1.5:
           with open('/tmp/model.zip', 'rb') as file:
             model_json = {{
@@ -374,29 +452,32 @@ data:
           "status": "Completed"
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
-
+        
+        update_data = {{
+          "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
+        }}
+        requests.put(url=f"{{DB_API_URL}}/models/{{MODEL_UID}}", json=update_data)
+        
       return model.state_dict()
 
     if __name__ == "__main__":
       ray.init()
-
+      print("init done")
       trainer = TorchTrainer(
           train_loop_per_worker=train_func,
           train_loop_config={{"lr": LR_VALUE, "epochs": EPOCH_NUM, "batch_size": BATCH_SIZE}},
-          scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=False)
+          scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=True),
+          run_config=train.RunConfig(storage_path=f"s3://sskai-model-storage/{{USER_UID}}/model/{{MODEL_UID}}/",
+                                    name=f"{{MODEL_UID}}",
+                                    checkpoint_config=CheckpointConfig(num_to_keep=2,),
+                                    failure_config=FailureConfig(max_failures=-1),
+                                    )
       )
 
       results = trainer.fit()
       print(results)
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: kuberay
-  name: ray-job-code-data-load-{uid}
-data:
-  sskai_load_data.py: |
-{'    '.join(get_load_data_py())}
+
 """
     filepath = f"/tmp/{filename}.yaml"
     with open(filepath, 'w') as f:
@@ -406,46 +487,75 @@ data:
 
 def handler(event, context):
     body = json.loads(event.get("body", "{}"))
+    action = body.get("action")
     uid = body.get("uid")
-    user_uid = body.get("user_uid")
-    model_uid = body.get("model_uid")
-    model_s3_url = body.get("model_s3_url")
-    data_s3_url = body.get("data_s3_url")
-    data_load_s3_url = body.get("data_load_s3_url")
-    worker_num = body.get("worker_num")
-    epoch_num = body.get("epoch_num")
-    optim_str = body.get("optim_str")
-    loss_str = body.get("loss_str")
-    batch_size = body.get("batch_size")
-    learning_rate = body.get("learning_rate")
-    train_split_size = body.get("train_split_size")
-    ram_size = body.get("ram_size")
 
-    download_and_unzip(data_load_s3_url, '/tmp/data_load')
+    if action == "create":
+      user_uid = body.get("user_uid")
+      model_uid = body.get("model_uid")
+      model_s3_url = body.get("model_s3_url")
+      data_s3_url = body.get("data_s3_url")
+      data_load_s3_url = body.get("data_load_s3_url")
+      worker_num = body.get("worker_num")
+      epoch_num = body.get("epoch_num")
+      optim_str = body.get("optim_str")
+      loss_str = body.get("loss_str")
+      batch_size = body.get("batch_size")
+      learning_rate = body.get("learning_rate")
+      train_split_size = body.get("train_split_size")
+      ram_size = body.get("ram_size")
+      download_and_unzip(data_load_s3_url, '/tmp/data_load')
 
-    rayjob_filename = create_yaml(uid,
-                                  user_uid,
-                                  model_uid,
-                                  model_s3_url,
-                                  data_s3_url,
-                                  data_load_s3_url,
-                                  worker_num,
-                                  epoch_num,
-                                  optim_str,
-                                  loss_str,
-                                  batch_size,
-                                  learning_rate,
-                                  train_split_size,
-                                  ram_size)
-    
-    result_create_rayjob = subprocess.run([
-            kubectl, "apply", "-f", rayjob_filename, "--kubeconfig", kubeconfig
+      rayjob_filename = create_yaml(uid,
+                                    user_uid,
+                                    model_uid,
+                                    model_s3_url,
+                                    data_s3_url,
+                                    data_load_s3_url,
+                                    worker_num,
+                                    epoch_num,
+                                    optim_str,
+                                    loss_str,
+                                    batch_size,
+                                    learning_rate,
+                                    train_split_size,
+                                    ram_size)
+      
+      result_create_rayjob = subprocess.run([
+              kubectl, "apply", "-f", rayjob_filename, "--kubeconfig", kubeconfig
+          ])
+      if result_create_rayjob.returncode != 0:
+        print("create resource returncode != 0")
+        subprocess.run([
+                kubectl, "delete", "-n", "kuberay", "rayjob", f"rayjob-{uid}", "--kubeconfig", kubeconfig
         ])
-    if result_create_rayjob.returncode != 0:
-      print("create resource returncode != 0")
-      return result_create_rayjob.returncode
+        subprocess.run([
+                kubectl, "delete", "-n", "kuberay", "configmap", f"ray-job-code-{uid}", "--kubeconfig", kubeconfig
+        ])
+        return {
+          'statusCode': 500,
+          'body': "Rayjob creation failure."
+        }
+      return {
+          'statusCode': 200,
+          'body': "Rayjob created successfully."
+      }
+    elif action == "delete":
+      result_delete_rayjob = subprocess.run([
+              kubectl, "delete", "-n", "kuberay", "rayjob", f"rayjob-{uid}", "--kubeconfig", kubeconfig
+        ])
+      
+      result_delete_configmap = subprocess.run([
+              kubectl, "delete", "-n", "kuberay", "configmap", f"ray-job-code-{uid}", "--kubeconfig", kubeconfig
+        ])
+      if ((result_delete_configmap.returncode) and (result_delete_rayjob)) != 0:
+        print("delete resource returncode != 0")
+        return {
+          'statusCode': 500,
+          'body': "Rayjob delete failure."
+        }
 
     return {
         'statusCode': 200,
-        'body': "Rayjob create successfully."
+        'body': "Rayjob deleted successfully."
     }

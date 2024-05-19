@@ -28,8 +28,6 @@ import {
 } from '../../api/index.jsx';
 import { SearchOutlined, PlusOutlined, InboxOutlined } from '@ant-design/icons';
 import { formatTimestamp } from '../../utils/index.jsx';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
 
 const DATA_TABLE_COLUMNS = [
   {
@@ -45,7 +43,7 @@ const DATA_TABLE_COLUMNS = [
   }
 ];
 
-export default function Data(props) {
+export default function Data() {
   const [data, setData] = useState([]);
   const [selected, setSelected] = useState('');
   const [filterInput, setFilterInput] = useState('');

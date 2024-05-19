@@ -297,6 +297,47 @@ resource "null_resource" "install-nvidia-plugin" {
   depends_on = [ null_resource.update-kubeconfig ]
 }
 
+module "kuberay_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+
+  role_name             = "${var.cluster_name}-kuberay-role"
+  role_policy_arns = {
+    policy = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  }
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kuberay:kuberay-s3-sa"]
+    }
+  }
+  depends_on = [ helm_release.kuberay_operator ]
+}
+
+resource "local_file" "kuberay_sa_yaml_file" {
+  content  = <<EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: ${module.kuberay_irsa_role.iam_role_arn}
+  name: kuberay-s3-sa
+  namespace: kuberay
+EOF
+  filename = "${path.module}/generated_kuberay_sa.yml"
+}
+
+resource "null_resource" "create-kuberay-sa-account" {
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+  provisioner "local-exec" {
+    when = create
+    command = "kubectl apply -f ${local_file.kuberay_sa_yaml_file.filename}"
+  }
+
+  depends_on = [ null_resource.update-kubeconfig, helm_release.kuberay_operator, module.kuberay_irsa_role ]
+}
 resource "helm_release" "kuberay_operator" {
   name       = "kuberay-operator"
   chart      = "kuberay-operator"

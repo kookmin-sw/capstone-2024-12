@@ -9,11 +9,12 @@ import {
 import { DeleteObjectCommand, DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from 'crypto';
 
-const client = new DynamoDBClient({});
-const clientS3 = new S3Client({});
+const region = process.env.AWS_REGION;
+const client = new DynamoDBClient({ region });
+const clientS3 = new S3Client({ region });
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-models";
-const Bucket = "sskai-model-storage";
+const Bucket = process.env.BUCKET_NAME;
 const REQUIRED_FIELDS = ["name", "type", "user"];
 
 export const handler = async (event) => {
@@ -150,7 +151,7 @@ export const handler = async (event) => {
         await clientS3.send(deleteFileCommand);
         await clientS3.send(deletedDirCommand);
 
-        body = { message: "Model deleted", uid: event.pathParameters.id };
+        body = { message: "Model deleted", uid: event.pathParameters.id, model: deleted.Attributes };
         break;
     }
   } catch (err) {

@@ -1,6 +1,10 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+const region = process.env.AWS_REGION;
+const Bucket = process.env.BUCKET_NAME;
+const client = new S3Client({ region });
+
 export const handler = async (event) => {
   const headers = {
     'Content-Type': "application/json"
@@ -37,8 +41,7 @@ export const handler = async (event) => {
       headers
     };
   
-  const client = new S3Client({ region: 'ap-northeast-2' });
-  const command = new PutObjectCommand({ Bucket: 'sskai-model-storage', Key: `${user_uid}/${upload_type}/${uid}/${upload_type}.zip` });
+  const command = new PutObjectCommand({ Bucket, Key: `${user_uid}/${upload_type}/${uid}/${upload_type}.zip` });
   const url = await getSignedUrl(client, command, { expiresIn: 3600 });
   
   return {

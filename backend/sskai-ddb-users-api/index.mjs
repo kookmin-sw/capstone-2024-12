@@ -7,7 +7,8 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from 'crypto';
 
-const client = new DynamoDBClient({});
+const region = process.env.AWS_REGION;
+const client = new DynamoDBClient({ region });
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-users"
 const REQUIRED_FIELDS = ["email", "name"];

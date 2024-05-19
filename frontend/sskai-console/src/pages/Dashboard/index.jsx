@@ -1,6 +1,6 @@
 import { PageLayout } from '../styles.jsx';
 import styled from 'styled-components';
-import { Flex, Progress, Space, Table } from 'antd';
+import { Flex, Progress, Table, Tag } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { Section } from '../../components/Section/index.jsx';
@@ -16,6 +16,8 @@ import {
   YAxis
 } from 'recharts';
 import CountUp from 'react-countup';
+import { formatTimestamp } from '../../utils/index.jsx';
+import { getLogs } from '../../api/index.jsx';
 
 const Title = styled.div`
   display: flex;
@@ -48,37 +50,46 @@ const Cost = styled.div`
   font-weight: 600;
 `;
 
+const TAG_COLOR = {
+  data: 'red',
+  model: 'orange',
+  train: 'green',
+  inference: 'geekblue'
+};
+
 const LOG_TABLE_COLUMNS = [
   {
     title: 'Name',
     dataIndex: 'name',
-    key: 'name'
+    key: 'name',
+    width: 250
   },
   {
-    title: 'Status',
-    dataIndex: 'status',
-    key: 'status'
+    title: 'Type',
+    dataIndex: 'kind_of_job',
+    key: 'type',
+    width: 150,
+    render: (type) => <Tag color={TAG_COLOR[type]}>{type.toUpperCase()}</Tag>
   },
   {
     title: 'Recent Job',
     dataIndex: 'job',
-    key: 'job'
+    key: 'job',
+    width: 300
   },
   {
-    title: 'Last Time',
-    dataIndex: 'time',
-    key: 'time'
+    title: 'Time',
+    dataIndex: 'created_at',
+    key: 'time',
+    width: 350,
+    render: (timestamp) => formatTimestamp(timestamp)
   },
   {
     title: 'Action',
+    dataIndex: 'kind_of_job',
     key: 'action',
-    render: () => (
-      <Space size="middle">
-        <a>Data</a>
-        <a>Train</a>
-        <a>Inference</a>
-      </Space>
-    )
+    width: 150,
+    render: (kind) => <a href={`/${kind}`}>{kind.toUpperCase()}</a>
   }
 ];
 
@@ -136,17 +147,32 @@ const EXAMPLE_COST = [
   }
 ];
 
-export default function Dashboard(props) {
+export default function Dashboard() {
   const [savingsPercent, setSavingsPercent] = useState({
     time: 0,
     cost: 0
   });
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const fetchData = async () => {
+    setLoading(true);
+    // TODO: User UID Value Storing in Storage (browser's)
+    const user = import.meta.env.VITE_TMP_USER_UID;
+    const logs = await getLogs(user);
+
+    if (!logs) return;
+
+    logs.sort((a, b) => b.created_at - a.created_at);
+    setLogs(logs);
+    setLoading(false);
+  };
 
   useEffect(() => {
     setSavingsPercent({
       time: 95,
       cost: 95
     });
+    fetchData();
   }, []);
 
   return (
@@ -227,7 +253,12 @@ export default function Dashboard(props) {
             <Title>Progress</Title>
           </Flex>
         </Flex>
-        <Table columns={LOG_TABLE_COLUMNS} />
+        <Table
+          loading={loading}
+          columns={LOG_TABLE_COLUMNS}
+          dataSource={logs}
+          pagination={{ pageSize: 5 }}
+        />
       </Section>
     </PageLayout>
   );
