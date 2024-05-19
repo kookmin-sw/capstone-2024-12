@@ -21,5 +21,5 @@ resource "null_resource" "build_react_app" {
     working_dir = "${path.module}/../../frontend/sskai-console"
   }
 
-  depends_on = [ aws_s3_bucket.sskai-s3-web-bucket ]
+  depends_on = [ aws_s3_bucket.sskai-s3-web-bucket, local_file.react_env_file ]
 }
