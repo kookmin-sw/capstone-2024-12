@@ -1,7 +1,7 @@
 module "kubernetes_model_profiler_deploy" {
   source                     = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix                     = "kubernetes_model_profiler_deploy"
-  container_registry         = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+  container_registry         = var.container_registry
   container_repository       = "job-model-profile-deploy"
   container_image_tag        = "latest"
   lambda_ram_size            = 256
@@ -18,10 +18,10 @@ output "kubernetes_model_profiler_deploy_function_url" {
   value = module.kubernetes_model_profiler_deploy.function_url
 }
 
-provider "aws" {
-  region  = var.region
-  profile = var.awscli_profile
-}
+# provider "aws" {
+#   region  = var.region
+#   profile = var.awscli_profile
+# }
 
 terraform {
   backend "s3" {

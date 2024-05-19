@@ -1,7 +1,7 @@
 module "karpenter_nodepool_manager" {
   source                             = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix                             = "karpenter_nodepool_manager"
-  container_registry                 = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+  container_registry                 = var.container_registry
   container_repository               = "deploy-karpenter-node-pool"
   container_image_tag                = "latest"
   lambda_ram_size                    = 256
@@ -20,10 +20,10 @@ output "karpenter_nodepool_manager_function_url" {
   value = module.karpenter_nodepool_manager.function_url
 }
 
-provider "aws" {
-  region  = var.region
-  profile = var.awscli_profile
-}
+# provider "aws" {
+#   region  = var.region
+#   profile = var.awscli_profile
+# }
 
 terraform {
   backend "s3" {

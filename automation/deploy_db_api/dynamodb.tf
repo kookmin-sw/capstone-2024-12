@@ -56,28 +56,28 @@ resource "aws_dynamodb_table" "sskai-trains" {
     }
 }
 
-# resource "aws_dynamodb_table" "sskai-logs" {
-#     name = "sskai-logs"
-#     billing_mode = "PAY_PER_REQUEST"
+resource "aws_dynamodb_table" "sskai-logs" {
+    name = "sskai-logs"
+    billing_mode = "PAY_PER_REQUEST"
 
-#     attribute {
-#         name = "uid"
-#         type = "S"
-#     }
+    attribute {
+        name = "uid"
+        type = "S"
+    }
 
-    # attribute {
-    #     name = "user"
-    #     type = "S"
-    # }
+    attribute {
+        name = "user"
+        type = "S"
+    }
 
-#     hash_key = "uid"
+    hash_key = "uid"
 
-#     global_secondary_index {
-#         name = "user-index"
-#         hash_key = "user"
-#         projection_type = "ALL"
-#     }
-# }
+    global_secondary_index {
+        name = "user-index"
+        hash_key = "user"
+        projection_type = "ALL"
+    }
+}
 
 resource "aws_dynamodb_table" "sskai-inferences" {
     name = "sskai-inferences"

@@ -33,7 +33,27 @@ variable "user_train_api_url" {
   default = "https://"
 }
 
-variable "stream_api_url" {
+variable "streamlit_api_url" {
+  type = string
+  default = "https://"
+}
+
+variable "inference_llama_api_url" {
+  type = string
+  default = "https://"
+}
+
+variable "inference_diffusion_api_url" {
+  type = string
+  default = "https://"
+}
+
+variable "llama_train_api_url" {
+  type = string
+  default = "https://"
+}
+
+variable "diffusion_train_api_url" {
   type = string
   default = "https://"
 }

@@ -21,7 +21,7 @@
 module "recommend_family" {
   source = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix = "recommend_family"
-  container_registry = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+  container_registry = var.container_registry
   container_repository = "recommend-family"
   container_image_tag = "latest"
   lambda_ram_size = 256
@@ -37,10 +37,10 @@ resource "aws_ssm_parameter" "param_recommend_family_lambda_function_url" {
   depends_on = [ module.recommend_family ]
 }
 
-provider "aws" {
-    region = var.region
-    profile = var.awscli_profile
-}
+# provider "aws" {
+#     region = var.region
+#     profile = var.awscli_profile
+# }
 
 terraform {
   backend "s3" {

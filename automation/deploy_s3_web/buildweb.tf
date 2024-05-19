@@ -7,7 +7,11 @@ VITE_INFERENCE_SPOT_API_URL = "${var.inference_spot_api_url}"
 VITE_INFERENCE_SERVERLESS_API_URL = "${var.inference_serverless_api_url}"
 VITE_MODEL_PROFILE_API_URL = "${var.model_profile_api_url}"
 VITE_USER_TRAIN_API_URL = "${var.model_profile_api_url}"
-VITE_STREAMLIT_API_URL = "${var.stream_api_url}"
+VITE_STREAMLIT_API_URL = "${var.streamlit_api_url}"
+VITE_INFERENCE_LLAMA_API_URL="${var.inference_llama_api_url}"
+VITE_INFERENCE_DIFFUSION_API_URL="${var.inference_diffusion_api_url}"
+VITE_LLAMA_TRAIN_API_URL="${var.llama_train_api_url}"
+VITE_DIFFUSION_TRAIN_API_URL="${var.diffusion_train_api_url}"
 EOF
 }
 
