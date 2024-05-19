@@ -6,7 +6,12 @@ const INFERENCE_SERVERLESS_API = import.meta.env
   .VITE_INFERENCE_SERVERLESS_API_URL;
 const MODEL_PROFILE_API = import.meta.env.VITE_MODEL_PROFILE_API_URL;
 const USER_TRAIN_API = import.meta.env.VITE_USER_TRAIN_API_URL;
+const LLAMA_TRAIN_API = import.meta.env.VITE_LLAMA_TRAIN_API_URL;
+const DIFFUSION_TRAIN_API = import.meta.env.VITE_DIFFUSION_TRAIN_API_URL;
 const STREAMLIT_API = import.meta.env.VITE_STREAMLIT_API_URL;
+const INFERENCE_LLAMA_API = import.meta.env.VITE_INFERENCE_LLAMA_API_URL;
+const INFERENCE_DIFFUSION_API = import.meta.env
+  .VITE_INFERENCE_DIFFUSION_API_URL;
 
 // Model
 export const createModel = async (args) => {
@@ -428,6 +433,108 @@ export const manageStreamlit = async ({
   return res.status === 200;
 };
 
+export const createFMInference = async (type, args) => {
+  const res = await axios
+    .post(`${DB_API}/inferences`, {
+      user: args.user,
+      name: args.name,
+      model: args.model,
+      model_type: args.model_type,
+      type: args.type
+    })
+    .catch((err) => err);
+
+  if (!res?.data) {
+    console.error(res);
+    return false;
+  }
+
+  const { Item } = res.data.inference;
+
+  if (type === 'llama') {
+    const llama = await axios
+      .post(`${INFERENCE_LLAMA_API}`, {
+        uid: Item.uid,
+        user: args.user,
+        action: 'create',
+        model: args.model_detail
+      })
+      .catch((err) => err);
+
+    if (llama.status !== 200) {
+      await axios.delete(`${DB_API}/inferences/${Item.uid}`);
+      return false;
+    }
+
+    await createLog({
+      user: args.user,
+      name: args.name,
+      kind_of_job: 'inference',
+      job: 'Endpoint (Llama) Created'
+    });
+  } else if (type === 'diffusion') {
+    const diffusion = await axios
+      .post(`${INFERENCE_DIFFUSION_API}`, {
+        uid: Item.uid,
+        user: args.user,
+        action: 'create',
+        model: args.model_detail
+      })
+      .catch((err) => err);
+
+    if (diffusion.status !== 200) {
+      await axios.delete(`${DB_API}/inferences/${Item.uid}`);
+      return false;
+    }
+
+    await createLog({
+      user: args.user,
+      name: args.name,
+      kind_of_job: 'inference',
+      job: 'Endpoint (Diffusion) Created'
+    });
+  }
+  return Item;
+};
+
+export const deleteFMInference = async (type, args) => {
+  if (type === 'llama') {
+    const llama = await axios
+      .post(`${INFERENCE_LLAMA_API}`, {
+        uid: args.uid,
+        user: args.user,
+        action: 'delete'
+      })
+      .catch((err) => err);
+
+    await createLog({
+      user: args.user,
+      name: args.name,
+      kind_of_job: 'inference',
+      job: 'Endpoint (Llama) Deleted'
+    });
+
+    return llama.status === 200;
+  } else if (type === 'diffusion') {
+    const diffusion = await axios
+      .post(`${INFERENCE_DIFFUSION_API}`, {
+        uid: args.uid,
+        user: args.user,
+        action: 'delete'
+      })
+      .catch((err) => err);
+
+    await createLog({
+      user: args.user,
+      name: args.name,
+      kind_of_job: 'inference',
+      job: 'Endpoint (Diffusion) Deleted'
+    });
+
+    return diffusion.status === 200;
+  }
+};
+
 // Upload Files (Model / Data)
 export const uploadS3 = async (upload_type, user_uid, uid, file) => {
   const res = await axios
@@ -532,7 +639,6 @@ export const uploadS3Multipart = async (upload_type, user_uid, uid, file) => {
 };
 
 // Logs
-
 export const getLogs = async (user_uid) => {
   const res = await axios
     .get(`${DB_API}/logs`, {
