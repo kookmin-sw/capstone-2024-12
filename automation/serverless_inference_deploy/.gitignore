@@ -5,3 +5,5 @@ terraform_init.zip
 
 # aws ecr login
 push_aws_ecr.sh
+
+terraform-provider-aws_v5.43.0_x5
