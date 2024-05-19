@@ -84,7 +84,7 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/group.name: "streamlit-{user_namespace}"
+    alb.ingress.kubernetes.io/group.name: "{user_namespace}"
 spec:
   ingressClassName: alb
   rules:
@@ -155,7 +155,7 @@ def handler(event, context):
       # 추론 엔드포인트 주소
       endpoint_url = body.get("endpoint_url")
       result = apply_yaml(user_uid, endpoint_uid, endpoint_url, image_name, image_py_name)
-      cmd = "{} get ingress -A --kubeconfig {} | grep {}".format(kubectl, kubeconfig, endpoint_uid)
+      cmd = "{} get ingress -A --kubeconfig {} | grep {} | grep streamlit".format(kubectl, kubeconfig, endpoint_uid)
       # streamlit endpoint 주소
       streamlit_endpoint_url = subprocess.run(cmd, capture_output=True, shell=True).stdout.decode('utf-8').strip().split()[4]
       print(f"streamlit_endpoint_url: {streamlit_endpoint_url}/streamlit/{endpoint_uid}")

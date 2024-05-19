@@ -2,6 +2,7 @@ import subprocess
 import requests
 import os
 import json
+import time
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
@@ -145,6 +146,7 @@ def handler(event, context):
         result = apply_yaml(user_uid, endpoint_uid, model_s3_url, node_pool_name, ram_size)
 
         cmd = "{} get ingress -A --kubeconfig {} | grep {}".format(kubectl, kubeconfig, endpoint_uid)
+        time.sleep(10)
         endpoint_url = subprocess.run(cmd, capture_output=True, shell=True).stdout.decode('utf-8').strip().split()[4]
         print(f"endpoint_url: {endpoint_url}")
         update_data = {

@@ -54,6 +54,14 @@ def handler(event, context):
     capacity_type = 'on-demand'
     result = apply_nodepool_yaml(eks_cluster_name, region, profiler_nodepool_name, profiler_nodeclass_name, profiler_nodepool_family_list, capacity_type)
 
+    ray_nodepool_name = 'ray-ondemand-pool'
+    ray_nodepool_family_list = [
+        't3.medium', 't3.large', 'm5.large',
+    ]
+    ray_nodeclass_name = 'ec2-cpu'
+    capacity_type = 'on-demand'
+    result = apply_nodepool_yaml(eks_cluster_name, region, ray_nodepool_name, ray_nodeclass_name, ray_nodepool_family_list, capacity_type)
+
     return {
         'statusCode': 200,
         'body': "complete update nodepool"

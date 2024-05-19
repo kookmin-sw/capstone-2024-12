@@ -1,7 +1,10 @@
 FROM public.ecr.aws/lambda/python:3.11
 
 COPY requirements_lambda.txt ${LAMBDA_TASK_ROOT}/requirements.txt
+
 RUN pip3 install --no-cache-dir -r requirements.txt 
+
+RUN yum update -y && yum install -y wget unzip && yum clean all && rm -rf /var/cache/yum
 
 COPY lambda_app.py ${LAMBDA_TASK_ROOT}/app.py
 

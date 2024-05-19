@@ -13,6 +13,7 @@ import {
   Input,
   message,
   Modal,
+  Popconfirm,
   Select,
   Space,
   Spin,
@@ -20,7 +21,17 @@ import {
   Tag
 } from 'antd';
 import { useEffect, useState } from 'react';
-import { getInferences, getModels } from '../../api/index.jsx';
+import {
+  createServerlessInference,
+  createSpotInference,
+  deleteServerlessInference,
+  deleteSpotInference,
+  getInferences,
+  getModel,
+  getModels,
+  manageStreamlit,
+  updateInference
+} from '../../api/index.jsx';
 import {
   PlusOutlined,
   SearchOutlined,
@@ -28,11 +39,13 @@ import {
   CopyOutlined,
   QuestionCircleOutlined,
   CloudOutlined,
-  CloudServerOutlined
+  CloudServerOutlined,
+  LinkOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
-import RadioIcon from '../../components/RadioIcon/index.jsx';
+import IconRadio from '../../components/IconRadio/index.jsx';
 import { copyToClipBoard } from '../../utils/index.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const INFERENCE_TABLE_COLUMNS = [
   {
@@ -108,73 +121,51 @@ const INFERENCE_TABLE_COLUMNS = [
 export default function Inference(props) {
   const [, setNow] = useState(Date.now());
   const [inferences, setInferences] = useState([]);
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState([]);
+  const [selectedDetail, setSelectedDetail] = useState([]);
   const [filterInput, setFilterInput] = useState('');
   const [filteredInferences, setFilteredInferences] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [inferenceName, setInferenceName] = useState('');
   const [modelList, setModelList] = useState([]);
+  const [selectedModelId, setSelectedModelId] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [fetchModelListLoading, setFetchModelListLoading] = useState(false);
   const [fetchModelLoading, setFetchModelLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-
-  // TODO: DELETE START (Only For Testing)
-  const [isTestOpen, setIsTestOpen] = useState(false);
-  const [testForm, setTestForm] = useState({});
-  const [isTestLoading, setIsTestLoading] = useState(false);
-  // TODO: DELETE END
+  const [inferenceType, setInferenceType] = useState(null);
+  const [isCreateLoading, setIsCreateLoading] = useState(false);
+  const [isDeployLoading, setIsDeployLoading] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const fetchData = async () => {
     setFetchLoading(true);
+    setSelectedRowKeys([]);
     // TODO: User UID Value Storing in Storage (browser's)
     setNow(Date.now());
-    const models = await getInferences(import.meta.env.VITE_TMP_USER_UID);
-    setInferences(models.map((model) => ({ ...model, key: model.uid })));
+    const inferences = await getInferences(import.meta.env.VITE_TMP_USER_UID);
+    inferences.sort((a, b) => b.created_at - a.created_at);
+    setInferences(
+      inferences.map((inference) => ({ ...inference, key: inference.uid }))
+    );
     setFetchLoading(false);
   };
 
-  // TODO: DELETE START (Only For Testing)
   const handleCancel = () => {
-    const isReset = confirm('Reset?');
-    if (!isReset) return;
-    setTestForm({});
+    setSelectedModelId(null);
+    setInferenceName('');
+    setSelectedModel(null);
+    setIsModalOpen(false);
   };
-  const handleTest = async () => {
-    if (!testForm.endpoint)
-      return message.open({
-        type: 'error',
-        content: 'Please enter Endpoint URL.'
-      });
-    try {
-      JSON.parse(testForm.body);
-    } catch (err) {
-      return message.open({
-        type: 'error',
-        content: 'Please enter in JSON format.'
-      });
-    }
-    setIsTestLoading(true);
-    const res = await axios
-      .post(testForm.endpoint, JSON.parse(testForm.body))
-      .catch((err) => err);
-    if (!res?.data) {
-      console.log(res);
-      setIsTestLoading(false);
-      return message.open({
-        type: 'error',
-        content: 'Occurred error. Please check your browser console.'
-      });
-    }
-    setTestForm({ ...testForm, res: JSON.stringify(res.data, null, 4) });
-    setIsTestLoading(false);
-  };
-  // TODO: DELETE END
 
   const fetchModelList = async () => {
-    if (modelList.length) return;
     // TODO: User UID Value Storing in Storage (browser's)
-    setFetchModelLoading(true);
-    const models = await getModels(import.meta.env.VITE_TMP_USER_UID);
+    const user = import.meta.env.VITE_TMP_USER_UID;
+    if (modelList.length) return;
+    setFetchModelListLoading(true);
+    const models = await getModels(user);
     if (!models)
       return messageApi.open({
         type: 'error',
@@ -183,10 +174,155 @@ export default function Inference(props) {
     setModelList(
       models.map((model) => ({
         label: `${model.name} (${model.uid})`,
-        value: model.uid
+        value: model.uid,
+        ...model
       }))
     );
+    setFetchModelListLoading(false);
+  };
+
+  const fetchModel = async (uid) => {
+    setSelectedModelId(uid);
+    setFetchModelLoading(true);
+    const model = await getModel(uid);
+    if (!model) {
+      setFetchModelLoading(false);
+      return messageApi.open({
+        type: 'error',
+        content: 'Failed to load model. Please try again.'
+      });
+    }
+    setSelectedModel(model);
     setFetchModelLoading(false);
+  };
+
+  const handleCreateInference = async () => {
+    if (
+      !inferenceName ||
+      !selectedModel ||
+      !inferenceType ||
+      !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName)
+    )
+      return messageApi.open({
+        type: 'error',
+        content:
+          'Please check that you have entered all items according to the entry conditions.'
+      });
+
+    setIsCreateLoading(true);
+
+    // TODO: User UID Value Storing in Storage (browser's)
+    const user = import.meta.env.VITE_TMP_USER_UID;
+    const args = {
+      user,
+      name: inferenceName,
+      model: selectedModel.uid,
+      model_type: selectedModel.type,
+      type: inferenceType,
+      model_detail: {
+        s3_url: selectedModel.s3_url,
+        max_used_ram:
+          selectedModel.max_used_ram ||
+          (inferenceType === 'Spot' ? 20480 : 5120),
+        ...(inferenceType === 'Spot' && {
+          deployment_type:
+            !selectedModel?.deploy_platform ||
+            selectedModel.deploy_platform === 'Serverless'
+              ? 'nodepool-3'
+              : selectedModel.deploy_platform
+        })
+      }
+    };
+    const endpoint =
+      inferenceType === 'Spot'
+        ? await createSpotInference(args)
+        : await createServerlessInference(args);
+
+    setIsCreateLoading(false);
+    if (!endpoint)
+      return messageApi.open({
+        type: 'error',
+        content:
+          'An error occurred while creating an endpoint. Please try again.'
+      });
+
+    return messageApi.open({
+      type: 'success',
+      content: 'The endpoint creation request was completed successfully.'
+    });
+  };
+
+  const handleDeleteInference = async () => {
+    const target = selectedDetail[0];
+    if (!target) return;
+    target?.streamlit_url && (await handleStreamlit('delete'));
+    target.type === 'Spot'
+      ? await deleteSpotInference({
+          uid: target.uid,
+          user: target.user
+        })
+      : await deleteServerlessInference({
+          uid: target.uid,
+          user: target.user,
+          model: target.model
+        });
+    await fetchData();
+    messageApi.open({
+      type: 'success',
+      content: 'The endpoint has been removed successfully.'
+    });
+  };
+
+  const handleStreamlit = async (action) => {
+    if (!selectedDetail.length) return;
+    setIsDeployLoading(true);
+    const isCompleted = await manageStreamlit({
+      user: selectedDetail[0].user,
+      uid: selectedDetail[0].uid,
+      model_type: selectedDetail[0].model_type,
+      endpoint_url: selectedDetail[0].endpoint,
+      action
+    });
+    setIsDeployLoading(false);
+    if (!isCompleted)
+      return messageApi.open({
+        type: 'error',
+        content:
+          action === 'create'
+            ? 'Streamlit was not deployed. Please try again later.'
+            : 'Streamlit was not un-deployed. Please try again later.'
+      });
+    messageApi.open({
+      type: 'success',
+      content:
+        action === 'create'
+          ? 'Streamlit has been deployed successfully.'
+          : 'Streamlit has been un-deployed successfully.'
+    });
+    await fetchData();
+  };
+
+  const handleUpdateModalOpen = () => {
+    setInferenceName(selectedDetail[0].name || '');
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleUpdateInference = async () => {
+    if (!inferenceName || !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName))
+      return messageApi.open({
+        type: 'error',
+        content:
+          'Please check that you have entered all items according to the entry conditions.'
+      });
+    setIsCreateLoading(true);
+    await updateInference(selected[0], { name: inferenceName });
+    await fetchData();
+    setIsCreateLoading(false);
+    setIsUpdateModalOpen(false);
+    messageApi.open({
+      type: 'success',
+      content: 'The endpoint has been updated successfully.'
+    });
   };
 
   useEffect(() => {
@@ -228,22 +364,62 @@ export default function Inference(props) {
                     {
                       label: 'Edit',
                       key: 'update',
-                      disabled: selected.length >= 2
+                      disabled: selected.length >= 2,
+                      onClick: () => handleUpdateModalOpen()
                     },
                     {
-                      label: 'Delete',
+                      label: 'Deploy Streamlit',
+                      key: 'deploy',
+                      onClick: () => handleStreamlit('create'),
+                      disabled:
+                        (selectedDetail[0]?.streamlit_url &&
+                          selectedDetail[0]?.streamlit_url !== '-') ||
+                        selectedDetail[0]?.model_type === 'user'
+                    },
+                    {
+                      label: 'Un-deploy Streamlit',
+                      key: 'undeploy',
+                      onClick: () => handleStreamlit('delete'),
+                      disabled:
+                        !selectedDetail[0]?.streamlit_url ||
+                        selectedDetail[0].streamlit_url === '-'
+                    },
+                    {
+                      label: (
+                        <Popconfirm
+                          title={'Delete it?'}
+                          onConfirm={handleDeleteInference}
+                        >
+                          <div style={{ width: '100%' }}>Delete</div>
+                        </Popconfirm>
+                      ),
                       key: 'delete',
                       danger: true
                     }
                   ]
                 }}
-                disabled={!selected.length}
+                disabled={!selectedRowKeys.length || isDeployLoading}
               >
                 <Button>Actions</Button>
               </Dropdown>
-              <Button type={'primary'} onClick={() => setIsTestOpen(true)}>
-                <PlusOutlined />
-                Test
+              <Button
+                type={'default'}
+                onClick={() =>
+                  window.open(
+                    selectedDetail[0].streamlit_url,
+                    '_blank',
+                    'rel=noopener noreferrer'
+                  )
+                }
+                loading={isDeployLoading}
+                disabled={
+                  !selectedDetail.length ||
+                  !selectedDetail[0]?.streamlit_url ||
+                  selectedDetail[0]?.streamlit_url === '-'
+                }
+              >
+                <LinkOutlined />
+                Streamlit
               </Button>
               <Button type={'primary'} onClick={() => setIsModalOpen(true)}>
                 <PlusOutlined />
@@ -256,68 +432,34 @@ export default function Inference(props) {
             columns={INFERENCE_TABLE_COLUMNS}
             dataSource={filterInput ? filteredInferences : inferences}
             rowSelection={{
-              type: 'checkbox',
-              onChange: (selectedRowKeys) => {
+              selectedRowKeys,
+              type: 'radio',
+              onChange: (selectedRowKeys, selectedRows) => {
+                setSelectedRowKeys(selectedRowKeys);
                 setSelected(selectedRowKeys);
+                setSelectedDetail(selectedRows);
               }
             }}
           />
         </Section>
       </PageLayout>
       <Modal
-        title={<Title style={{ fontWeight: 600 }}>Test Form</Title>}
-        open={isTestOpen}
-        onCancel={() => setIsTestOpen(false)}
+        title={<Title style={{ fontWeight: 600 }}>New endpoint</Title>}
+        open={isModalOpen}
+        onCancel={handleCancel}
         footer={[
-          <Button onClick={handleCancel}>Reset</Button>,
-          <Button type={'primary'} onClick={handleTest} loading={isTestLoading}>
-            Send
+          <Button onClick={handleCancel}>Cancel</Button>,
+          <Button
+            type={'primary'}
+            onClick={handleCreateInference}
+            loading={isCreateLoading}
+          >
+            Create
           </Button>
         ]}
       >
         <Flex vertical style={{ marginBottom: '20px' }}>
-          <InputTitle>Input Endpoint URL</InputTitle>
-          <Input
-            placeholder={'https://example.com'}
-            value={testForm.endpoint}
-            onChange={(e) =>
-              setTestForm({ ...testForm, endpoint: e.target.value })
-            }
-            disabled={isTestLoading}
-          />
-          <InputTitle>Input Body (JSON)</InputTitle>
-          <Input.TextArea
-            rows={7}
-            placeholder={'{"hello": "world"}'}
-            style={{ resize: 'none' }}
-            value={testForm.body}
-            onChange={(e) => setTestForm({ ...testForm, body: e.target.value })}
-            disabled={isTestLoading}
-          />
-          <InputTitle>Output Body (JSON)</InputTitle>
-          <Input.TextArea
-            readOnly
-            value={testForm.res}
-            rows={7}
-            style={{
-              resize: 'none',
-              whiteSpace: 'pre-wrap',
-              background: '#f4f4f4',
-              border: '1px solid #ccc',
-              padding: '10px',
-              borderRadius: '5px',
-              color: '#333',
-              overflowX: 'auto'
-            }}
-          />
-        </Flex>
-      </Modal>
-      <Modal
-        title={<Title style={{ fontWeight: 600 }}>New inference</Title>}
-        open={isModalOpen}
-      >
-        <Flex vertical style={{ marginBottom: '20px' }}>
-          <InputTitle>Input your endpoint name</InputTitle>
+          <InputTitle>Enter your endpoint name</InputTitle>
           <Input
             placeholder={'Name'}
             value={inferenceName}
@@ -331,7 +473,7 @@ export default function Inference(props) {
           {inferenceName && !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName) && (
             <>
               <ErrorMessage>
-                The train name can be up to 20 characters long.
+                The endpoint name can be up to 20 characters long.
               </ErrorMessage>
               <ErrorMessage>
                 Only English and special characters (-, _) can be entered.
@@ -342,29 +484,95 @@ export default function Inference(props) {
           <Select
             showSearch
             notFoundContent={
-              fetchModelLoading ? <Spin size={'small'} /> : undefined
+              fetchModelListLoading ? <Spin size={'small'} /> : undefined
             }
             optionFilterProp={'label'}
             placeholder={'Model'}
             onFocus={fetchModelList}
             options={modelList}
+            value={selectedModelId}
+            onChange={(value) => fetchModel(value)}
           />
-          <InputTitle>Select inference type</InputTitle>
-          <RadioIcon
-            recommend={'spot'}
-            options={[
-              {
-                key: 'serverless',
-                label: 'serverless',
-                icon: CloudOutlined
-              },
-              {
-                key: 'spot',
-                label: 'spot',
-                icon: CloudServerOutlined
-              }
-            ]}
+          {fetchModelLoading && (
+            <Spin size={'default'} style={{ marginTop: '40px' }} />
+          )}
+          {!fetchModelLoading && selectedModel && (
+            <>
+              <InputTitle>Select inference type</InputTitle>
+              <IconRadio
+                selected={inferenceType}
+                setSelected={setInferenceType}
+                recommend={
+                  selectedModel.deploy_platform &&
+                  (selectedModel.deploy_platform === 'Serverless'
+                    ? 'Serverless'
+                    : 'Spot')
+                }
+                options={
+                  selectedModel?.type === 'user'
+                    ? [
+                        {
+                          key: 'Serverless',
+                          label: 'serverless',
+                          icon: CloudOutlined
+                        },
+                        {
+                          key: 'Spot',
+                          label: 'spot',
+                          icon: CloudServerOutlined
+                        }
+                      ]
+                    : [
+                        {
+                          key: 'Spot',
+                          label: 'spot',
+                          icon: CloudServerOutlined
+                        }
+                      ]
+                }
+              />
+            </>
+          )}
+        </Flex>
+      </Modal>
+      <Modal
+        title={<Title style={{ fontWeight: 600 }}>Update endpoint</Title>}
+        open={isUpdateModalOpen}
+        confirmLoading={isCreateLoading}
+        onCancel={() => setIsUpdateModalOpen(false)}
+        footer={[
+          <Button onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button>,
+          <Button
+            type={'primary'}
+            onClick={handleUpdateInference}
+            loading={isCreateLoading}
+          >
+            Save
+          </Button>
+        ]}
+      >
+        <Flex vertical style={{ marginBottom: '20px' }}>
+          <InputTitle>Enter your model name</InputTitle>
+          <Input
+            placeholder={'Name'}
+            value={inferenceName}
+            onChange={(e) => setInferenceName(e.target.value)}
+            status={
+              inferenceName &&
+              !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName) &&
+              'error'
+            }
           />
+          {inferenceName && !/^[a-zA-Z0-9-_]{1,20}$/.test(inferenceName) && (
+            <>
+              <ErrorMessage>
+                The endpoint name can be up to 20 characters long.
+              </ErrorMessage>
+              <ErrorMessage>
+                Only English and special characters (-, _) can be entered.
+              </ErrorMessage>
+            </>
+          )}
         </Flex>
       </Modal>
     </>
