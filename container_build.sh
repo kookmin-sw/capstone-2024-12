@@ -5,6 +5,7 @@ AWSCLI_PROFILE=""
 # Create ECR repository
 aws ecr create-repository --repository-name deploy-streamlit --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name train-deploy --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name recommend-family --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name deploy-karpenter-node-pool --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name kubernetes-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name job-model-profile-deploy --region $REGION --profile $AWSCLI_PROFILE
@@ -28,6 +29,11 @@ cd -
 cd ./automation/deploy_train
 docker build -t $ECR_URI/train-deploy:latest .
 docker push $ECR_URI/train-deploy:latest
+cd -
+
+cd ./recommend/family_recommend/family
+docker build -t $ECR_URI/recommend-family:latest .
+docker push $ECR_URI/recommend-family:latest
 cd -
 
 cd ./automation/karpenter_node_pool_deploy
