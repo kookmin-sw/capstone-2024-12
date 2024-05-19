@@ -1,0 +1,11 @@
+bitsandbytes==0.40.2
+accelerate==0.21.0 
+peft==0.4.0 
+transformers==4.31.0
+datasets==2.19.1
+pandas==2.2.2 
+pyarrow==16.0.0
+scipy==1.13.0
+tensorboardX==2.6.2.2
+xformers==0.0.26.post1
+ray==2.12.0
