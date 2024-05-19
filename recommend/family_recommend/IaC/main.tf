@@ -30,7 +30,7 @@ module "recommend_family" {
 }
 
 resource "aws_ssm_parameter" "param_recommend_family_lambda_function_url" {
-  name = "recocommend_family_lambda_function_url"
+  name = "recommend_family_lambda_function_url"
   type = "String"
   value = module.recommend_family.function_url
 

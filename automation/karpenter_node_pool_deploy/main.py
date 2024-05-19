@@ -27,7 +27,7 @@ def apply_nodepool_yaml(eks_cluster_name, region_name, nodepool_name, nodeclass_
 
 def handler(event, context):
     ssm = boto3.client('ssm', region_name=eks_region)
-    param_lambda_url = ssm.get_parameter(Name="recocommend_family_lambda_function_url", WithDecryption=False)
+    param_lambda_url = ssm.get_parameter(Name="recommend_family_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']
 
     region = eks_region
