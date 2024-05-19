@@ -7,21 +7,21 @@ import requests
 import shutil
 import zipfile
 import json
+import subprocess
 
 model_s3_url = os.getenv('MODEL_S3_URL')
 
-model_download = requests.get(model_s3_url)
 model_filename = model_s3_url.split('/')[-1]
 model_temp_path = os.path.join('/tmp', model_filename)
-with open(model_temp_path, 'wb') as file:
-    file.write(model_download.content)
+os.makedirs('/tmp', exist_ok=True)
+
+subprocess.run(['wget', model_s3_url, '-O', model_temp_path], check=True)
 
 if os.path.exists('/tmp/model'):
     shutil.rmtree('/tmp/model')
 os.makedirs('/tmp/model')
 
-with zipfile.ZipFile(model_temp_path, 'r') as zip_ref:
-    zip_ref.extractall('/tmp/model')
+subprocess.run(['unzip', model_temp_path, '-d', '/tmp/model'], check=True)
 
 os.remove(model_temp_path)
 

@@ -1,7 +1,10 @@
 FROM public.ecr.aws/lambda/python:3.11
 
 COPY requirements_lambda.txt ${LAMBDA_TASK_ROOT}/requirements.txt
+
 RUN pip3 install --no-cache-dir -r requirements.txt 
+
+RUN dnf update -y && dnf install -y dnf-utils wget unzip && dnf clean all && rm -rf /var/cache/dnf
 
 COPY lambda_app.py ${LAMBDA_TASK_ROOT}/app.py
 
