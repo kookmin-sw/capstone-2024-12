@@ -129,13 +129,13 @@ module "deploy_s3_web" {
   db_api_url = module.deploy_db_api.api_endpoint_url
   # diffusion_train_api_url = 
   # llama_train_api_url =
-  inference_diffusion_api_url = module.diffusion_inference_deploy.api_endpoint_url
-  inference_llama_api_url = module.llama_inference_deploy.api_endpoint_url
-  streamlit_api_url = module.deploy_streamlit.api_endpoint_url
-  user_train_api_url = module.deploy_train.api_endpoint_url
-  model_profile_api_url = module.kubernetes_model_profiler_deploy.api_endpoint_url
-  inference_serverless_api_url = module.serverless_inference_deploy.api_endpoint_url
-  inference_spot_api_url = module.kubernetes_inference_deploy.api_endpoint_url
+  inference_diffusion_api_url = module.diffusion_inference_deploy.diffusion_inference_deploy_function_url
+  inference_llama_api_url = module.llama_inference_deploy.llama_inference_deploy_function_url
+  streamlit_api_url = module.deploy_streamlit.streamlit_function_url
+  user_train_api_url = module.deploy_train.train_deploy_function_url
+  model_profile_api_url = module.kubernetes_model_profiler_deploy.kubernetes_model_profiler_deploy_function_url
+  inference_serverless_api_url = module.serverless_inference_deploy.function_url
+  inference_spot_api_url = module.kubernetes_inference_deploy.kubernetes_inference_deploy_function_url
 
   depends_on = [ module.deploy_db_api ]
 }
