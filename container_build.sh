@@ -77,7 +77,7 @@ docker build -t $ECR_URI/diffusion-inference:latest . -f Dockerfile.kubernetes_g
 docker push $ECR_URI/diffusion-inference:latest
 cd -
 
-cd ./inference/deploy_streamlit/llama2
+cd ./automation/deploy_streamlit/llama2
 docker build -t $ECR_URI/llama2-streamlit:latest .
 docker push $ECR_URI/llama2-streamlit:latest
 cd -
