@@ -20,6 +20,10 @@ output "karpenter_nodepool_manager_function_url" {
   value = module.karpenter_nodepool_manager.function_url
 }
 
+output "karpenter_nodepool_manager_function_name" {
+  value = module.karpenter_nodepool_manager.function_name
+}
+
 # provider "aws" {
 #   region  = var.region
 #   profile = var.awscli_profile
