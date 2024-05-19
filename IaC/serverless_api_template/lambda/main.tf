@@ -1,7 +1,7 @@
 provider "random" {}
 
 resource "random_id" "random_string" {
-  byte_length = 8
+  byte_length = 4
 }
 
 resource "aws_iam_role" "lambda-role" {
