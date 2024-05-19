@@ -1,4 +1,3 @@
-# 전처리
 def sskai_load_data():
     import pickle
     import numpy as np
@@ -63,6 +62,3 @@ def sskai_load_data():
         y.append(label)
         
     return x, y
-
-if __name__ == '__main__':
-    sskai_load_data()
