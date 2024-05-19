@@ -6,7 +6,11 @@ resource "aws_lambda_function" "sskai-ddb-data-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -18,7 +22,11 @@ resource "aws_lambda_function" "sskai-ddb-inferences-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -30,7 +38,11 @@ resource "aws_lambda_function" "sskai-ddb-logs-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -42,7 +54,11 @@ resource "aws_lambda_function" "sskai-ddb-models-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -54,7 +70,11 @@ resource "aws_lambda_function" "sskai-ddb-trains-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -66,7 +86,11 @@ resource "aws_lambda_function" "sskai-ddb-users-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -78,7 +102,11 @@ resource "aws_lambda_function" "sskai-s3-multipart-presigned-url" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
 
@@ -90,6 +118,10 @@ resource "aws_lambda_function" "sskai-s3-presigned-url-api" {
     runtime       = "nodejs20.x"
     memory_size   = 128
     timeout       = 60
-
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
     depends_on = [ null_resource.download_lambda_codes ]
 }
