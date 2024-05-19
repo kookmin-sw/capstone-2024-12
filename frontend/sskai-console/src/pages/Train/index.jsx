@@ -1,10 +1,4 @@
-import {
-  ErrorMessage,
-  InputTitle,
-  PageLayout,
-  TableToolbox,
-  Title
-} from '../styles.jsx';
+import { PageLayout, TableToolbox } from '../styles.jsx';
 import { Section } from '../../components/Section/index.jsx';
 import {
   Badge,
@@ -94,15 +88,23 @@ export default function Train(props) {
     setFetchLoading(true);
     setNow(Date.now());
     // TODO: User UID Value Storing in Storage (browser's)
-    const trains = await getTrains(import.meta.env.VITE_TMP_USER_UID);
+    const user = import.meta.env.VITE_TMP_USER_UID;
+    const trains = await getTrains(user);
     trains.sort((a, b) => b.created_at - a.created_at);
     setTrains(trains.map((train) => ({ ...train, key: train.uid })));
     setFetchLoading(false);
   };
 
   const handleDeleteTrain = async () => {
+    // TODO: User UID Value Storing in Storage (browser's)
+    const user = import.meta.env.VITE_TMP_USER_UID;
     if (!selected.length) return;
-    await deleteTrain(selected[0], selectedDetail[0]?.status);
+    await deleteTrain(
+      selected[0],
+      selectedDetail[0]?.status,
+      user,
+      selectedDetail[0]?.name
+    );
     await fetchData();
     messageApi.open({
       type: 'success',

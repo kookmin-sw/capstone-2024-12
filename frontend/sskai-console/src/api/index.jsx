@@ -11,6 +11,13 @@ const STREAMLIT_API = import.meta.env.VITE_STREAMLIT_API_URL;
 // Model
 export const createModel = async (args) => {
   const res = await axios.post(`${DB_API}/models`, args).catch((err) => err);
+  if (res?.data)
+    await createLog({
+      user: args.user,
+      name: args.name,
+      kind_of_job: 'model',
+      job: 'Model Created'
+    });
   return res?.data?.model;
 };
 
@@ -18,6 +25,15 @@ export const updateModel = async (uid, args) => {
   const res = await axios
     .put(`${DB_API}/models/${uid}`, args)
     .catch((err) => err);
+  if (res?.data && args?.name) {
+    const { model } = res.data;
+    await createLog({
+      user: model.user,
+      name: model.name,
+      kind_of_job: 'model',
+      job: 'Model Updated'
+    });
+  }
   return res?.data?.model;
 };
 
@@ -38,7 +54,16 @@ export const getModels = async (user_uid) => {
 };
 
 export const deleteModel = async (uid) => {
-  const res = await axios.delete(`${DB_API}/models/${uid}`);
+  const res = await axios.delete(`${DB_API}/models/${uid}`).catch((err) => err);
+  if (res?.data) {
+    const { model } = res.data;
+    await createLog({
+      user: model.user,
+      name: model.name,
+      kind_of_job: 'model',
+      job: 'Model Deleted'
+    });
+  }
   return res?.data;
 };
 
@@ -64,6 +89,13 @@ export const getData = async (user_uid) => {
 
 export const createData = async (args) => {
   const res = await axios.post(`${DB_API}/data`, args).catch((err) => err);
+  if (res?.data)
+    await createLog({
+      user: args.user,
+      name: args.name,
+      kind_of_job: 'data',
+      job: 'Data Created'
+    });
   return res?.data?.data;
 };
 
@@ -71,11 +103,29 @@ export const updateData = async (uid, args) => {
   const res = await axios
     .put(`${DB_API}/data/${uid}`, args)
     .catch((err) => err);
+  if (res?.data && args?.name) {
+    const { data } = res.data;
+    await createLog({
+      user: data.user,
+      name: data.name,
+      kind_of_job: 'data',
+      job: 'Data Updated'
+    });
+  }
   return res?.data?.data;
 };
 
 export const deleteData = async (uid) => {
   const res = await axios.delete(`${DB_API}/data/${uid}`).catch((err) => err);
+  if (res?.data) {
+    const { data } = res.data;
+    await createLog({
+      user: data.user,
+      name: data.name,
+      kind_of_job: 'data',
+      job: 'Data Deleted'
+    });
+  }
   return res?.data;
 };
 
@@ -165,10 +215,17 @@ export const createUserTrain = async (args) => {
     })
     .catch((err) => err);
 
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'train',
+    job: 'Train Created'
+  });
+
   return model;
 };
 
-export const deleteTrain = async (uid, status) => {
+export const deleteTrain = async (uid, status, user, name) => {
   if (status !== 'Completed')
     await axios
       .post(USER_TRAIN_API, {
@@ -178,6 +235,13 @@ export const deleteTrain = async (uid, status) => {
       .catch((err) => err);
 
   await axios.delete(`${DB_API}/trains/${uid}`);
+
+  await createLog({
+    user,
+    name,
+    kind_of_job: 'train',
+    job: 'Train Deleted'
+  });
 };
 
 // Inferences
@@ -213,6 +277,13 @@ export const createSpotInference = async (args) => {
     return false;
   }
 
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'inference',
+    job: 'Endpoint (using Spot) Created'
+  });
+
   return Item;
 };
 
@@ -225,6 +296,13 @@ export const deleteSpotInference = async (args) => {
     })
     .catch((err) => err);
 
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'inference',
+    job: 'Endpoint (using Spot) Deleted'
+  });
+
   return spot.status === 200;
 };
 
@@ -232,7 +310,15 @@ export const updateInference = async (uid, args) => {
   const res = await axios
     .put(`${DB_API}/inferences/${uid}`, args)
     .catch((err) => err);
-
+  if (res?.data) {
+    const { inference } = res.data;
+    await createLog({
+      user: inference.user,
+      name: inference.name,
+      kind_of_job: 'inference',
+      job: 'Endpoint Updated'
+    });
+  }
   return res?.data;
 };
 
@@ -268,6 +354,13 @@ export const createServerlessInference = async (args) => {
     return false;
   }
 
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'inference',
+    job: 'Endpoint (using Serverless) Created'
+  });
+
   return Item;
 };
 
@@ -285,6 +378,13 @@ export const deleteServerlessInference = async (args) => {
       }
     })
     .catch((err) => err);
+
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'inference',
+    job: 'Endpoint (using Serverless) Deleted'
+  });
 
   return serverless.status === 200;
 };
@@ -305,7 +405,8 @@ export const manageStreamlit = async ({
   uid,
   model_type,
   endpoint_url,
-  action
+  action,
+  name
 }) => {
   const res = await axios
     .post(STREAMLIT_API, {
@@ -316,6 +417,14 @@ export const manageStreamlit = async ({
       endpoint_url
     })
     .catch((err) => err);
+
+  await createLog({
+    user,
+    name,
+    kind_of_job: 'inference',
+    job: `Streamlit ${action === 'create' ? 'Deployed' : 'Un-Deployed'}`
+  });
+
   return res.status === 200;
 };
 
@@ -420,4 +529,29 @@ export const uploadS3Multipart = async (upload_type, user_uid, uid, file) => {
   }
 
   return true;
+};
+
+// Logs
+
+export const getLogs = async (user_uid) => {
+  const res = await axios
+    .get(`${DB_API}/logs`, {
+      headers: {
+        user: user_uid
+      }
+    })
+    .catch((err) => err);
+  return res?.data;
+};
+
+const createLog = async ({ user, name, kind_of_job, job }) => {
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+  await axios
+    .post(`${DB_API}/logs`, {
+      user,
+      name,
+      kind_of_job,
+      job
+    })
+    .catch((err) => err);
 };

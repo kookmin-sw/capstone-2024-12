@@ -259,12 +259,14 @@ export default function Inference(props) {
     target.type === 'Spot'
       ? await deleteSpotInference({
           uid: target.uid,
-          user: target.user
+          user: target.user,
+          name: target.name
         })
       : await deleteServerlessInference({
           uid: target.uid,
           user: target.user,
-          model: target.model
+          model: target.model,
+          name: target.name
         });
     await fetchData();
     messageApi.open({
@@ -279,6 +281,7 @@ export default function Inference(props) {
     const isCompleted = await manageStreamlit({
       user: selectedDetail[0].user,
       uid: selectedDetail[0].uid,
+      name: selectedDetail[0].name,
       model_type: selectedDetail[0].model_type,
       endpoint_url: selectedDetail[0].endpoint,
       action
