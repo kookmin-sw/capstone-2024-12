@@ -40,7 +40,7 @@ docker build -t $ECR_URI/kubernetes-inference-deploy:latest .
 docker push $ECR_URI/kubernetes-inference-deploy:latest
 cd -
 
-cd ./automation/kubernetes_model_profilder_deploy
+cd ./automation/kubernetes_model_profiler_deploy
 docker build -t $ECR_URI/job-model-profile-deploy:latest .
 docker push $ECR_URI/job-model-profile-deploy:latest
 cd -
