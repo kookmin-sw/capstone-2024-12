@@ -77,9 +77,9 @@ spec:
       ebs:
         volumeSize: 300Gi
         volumeType: gp3
-        iops: 5000
+        iops: 3000
         deleteOnTermination: true
-        throughput: 1000
+        throughput: 300
 """
 
     filepath = f"/tmp/{nodepool_name}.yaml"
