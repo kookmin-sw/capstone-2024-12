@@ -15,6 +15,8 @@ aws ecr create-repository --repository-name llama-inference-deploy --region $REG
 aws ecr create-repository --repository-name diffusion-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name llama2-inference --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name diffusion-inference --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name llama2-streamlit --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name sdxl1-streamlit --region $REGION --profile $AWSCLI_PROFILE
 
 aws ecr get-login-password --region $REGION --profile $AWSCLI_PROFILE | docker login --username AWS --password-stdin $ECR_URI
 
@@ -73,4 +75,14 @@ cd -
 cd ./inference/template_code/diffusion
 docker build -t $ECR_URI/diffusion-inference:latest . -f Dockerfile.kubernetes_gpu
 docker push $ECR_URI/diffusion-inference:latest
+cd -
+
+cd ./inference/deploy_streamlit/llama2
+docker build -t $ECR_URI/llama2-streamlit:latest .
+docker push $ECR_URI/llama2-streamlit:latest
+cd -
+
+cd ./automaion/deploy_streamlit/stable_diffusion
+docker build -t $ECR_URI/sdxl1-streamlit:latest .
+docker push $ECR_URI/sdxl1-streamlit:latest
 cd -
