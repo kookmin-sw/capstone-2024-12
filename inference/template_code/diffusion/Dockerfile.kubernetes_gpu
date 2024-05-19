@@ -3,7 +3,10 @@ FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 WORKDIR /app
 
 COPY requirements_kubernetes_gpu.txt /app/requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt 
+
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+RUN apt-get update && apt-get install -y apt-utils wget unzip
 
 COPY kubernetes_app_diffusion.py /app/app.py
 
