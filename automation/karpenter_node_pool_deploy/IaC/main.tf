@@ -10,7 +10,7 @@ module "karpenter_nodepool_manager" {
   attach_ec2_policy                  = true
   attach_eks_policy                  = true
   attach_ssm_readonly_policy         = true
-  region_name                        = "ap-northeast-2"
+  region_name                        = var.region
   karpenter_node_role_parameter_name = "karpenter_node_role_name_${var.eks_cluster_name}"
 
   eks_cluster_name = var.eks_cluster_name
