@@ -7,6 +7,7 @@ import zipfile
 
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
+REGION = os.environ.get('REGION')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
@@ -16,7 +17,7 @@ eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
 result_get_kubeconfig = subprocess.run([
     "aws", "eks", "update-kubeconfig",
     "--name", eks_cluster_name,
-    "--region", "ap-northeast-2",
+    "--region", REGION,
     "--kubeconfig", kubeconfig
 ])
 if result_get_kubeconfig.returncode != 0:

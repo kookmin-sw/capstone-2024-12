@@ -4,6 +4,7 @@ import json
 import subprocess
 
 eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
+REGION = os.environ.get('REGION')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
@@ -12,7 +13,7 @@ kubeconfig = '/tmp/kubeconfig'
 result_get_kubeconfig = subprocess.run([
     "aws", "eks", "update-kubeconfig",
     "--name", eks_cluster_name,
-    "--region", "ap-northeast-2",
+    "--region", REGION,
     "--kubeconfig", kubeconfig
 ])
 
