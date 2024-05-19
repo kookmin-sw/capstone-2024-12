@@ -2,11 +2,12 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
-  ScanCommand,
+  QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from 'crypto';
 
-const client = new DynamoDBClient({});
+const region = process.env.AWS_REGION;
+const client = new DynamoDBClient({ region });
 const dynamo = DynamoDBDocumentClient.from(client);
 const TableName = "sskai-logs"
 
@@ -28,7 +29,7 @@ export const handler = async (event) => {
             user: data.user,
             kind_of_job: data.kind_of_job,
             job: data.job,
-            type: data.type,
+            name: data.name,
             created_at: new Date().getTime(),
           }
         };
@@ -36,18 +37,18 @@ export const handler = async (event) => {
         body = { message: "Log created", log: command };
         break;
 
-      case "GET /logs/{id}":
-        command = { 
+      case "GET /logs":
+        body = await dynamo.send(new QueryCommand({ 
           TableName,
-          FilterExpression: '#user = :user',
+          IndexName: "user-index",
+          KeyConditionExpression: "#user = :user",
           ExpressionAttributeNames: {
             "#user": "user"
           },
           ExpressionAttributeValues: {
-            ':user': event.pathParameters.id,
-          }
-        };
-        body = await dynamo.send(new ScanCommand(command));
+            ':user': event.headers.user,
+          },
+        }));
         body = body.Items;
         break;
     }
