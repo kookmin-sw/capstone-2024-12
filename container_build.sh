@@ -52,6 +52,8 @@ docker push $ECR_URI/job-model-profile-deploy:latest
 cd -
 
 cd ./automation/serverless_inference_deploy
+./install_terraform_init.sh
+./install_terraform_binary.sh
 docker build -t $ECR_URI/serverless-inference-deploy:latest .
 docker push $ECR_URI/serverless-inference-deploy:latest
 cd -
