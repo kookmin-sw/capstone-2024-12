@@ -11,7 +11,7 @@ aws ecr create-repository --repository-name kubernetes-inference-deploy --region
 aws ecr create-repository --repository-name job-model-profile-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name serverless-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name kubernetes-inference --region $REGION --profile $AWSCLI_PROFILE
-aws ecr create-repository --repository-name severless-inference --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name serverless-inference --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name llama-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name diffusion-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name llama2-inference --region $REGION --profile $AWSCLI_PROFILE
