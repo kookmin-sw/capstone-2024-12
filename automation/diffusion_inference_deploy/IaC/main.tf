@@ -20,10 +20,10 @@ output "diffusion_inference_deploy_function_url" {
   value = module.diffusion_inference_deploy.function_url
 }
 
-provider "aws" {
-  region  = var.region
-  profile = var.awscli_profile
-}
+# provider "aws" {
+#   region  = var.region
+#   profile = var.awscli_profile
+# }
 
 terraform {
   backend "s3" {
