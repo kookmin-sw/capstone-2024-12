@@ -461,7 +461,7 @@ data:
         model_bucket_name = match_url.group()
 
         update_data = {{
-          "s3_url": f"https://{{model_bucket_name}}.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
+          "s3_url": f"https://{{model_bucket_name}}.s3.{REGION}.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
         }}
         requests.put(url=f"{{DB_API_URL}}/models/{{MODEL_UID}}", json=update_data)
         
