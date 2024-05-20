@@ -146,3 +146,65 @@ resource "aws_lambda_invocation" "nodepool_deploy" {
     "a": "b"
   })
 }
+
+resource "null_resource" "add_ddb_genai_record" {
+  provisioner "local-exec" {
+    command = <<EOT
+aws s3 cp s3://sskai-model-storage/llama-2-7b-chat-hf.zip s3://${module.deploy_db_api.model_storage_bucket_name}/llama-2-7b-chat-hf.zip --profile ${var.awscli_profile} --region ${var.region}
+aws s3 cp s3://sskai-model-storage/stable-diffusion.zip s3://${module.deploy_db_api.model_storage_bucket_name}/stable-diffusion.zip --profile ${var.awscli_profile} --region ${var.region}
+aws dynamodb put-item --table-name sskai-models --profile ${var.awscli_profile} --region ${var.region} --item '{
+  "uid": {
+    "S": "llama"
+  },
+  "deploy_platform": {
+    "S": "nodepool-1"
+  },
+  "inference_time": {
+    "N": "0"
+  },
+  "max_used_gpu_mem": {
+    "N": "0"
+  },
+  "max_used_ram": {
+    "N": "2048"
+  },
+  "name": {
+    "S": "llama-2-7b-chat-hf"
+  },
+  "s3_url": {
+    "S": "https://${module.deploy_db_api.model_storage_bucket_name}.s3.${var.region}.amazonaws.com/llama-2-7b-chat-hf.zip"
+  },
+  "type": {
+    "S": "llama"
+  }
+}'
+aws dynamodb put-item --table-name sskai-models --profile ${var.awscli_profile} --region ${var.region} --item '{
+  "uid": {
+    "S": "diffusion"
+  },
+  "deploy_platform": {
+    "S": "nodepool-1"
+  },
+  "inference_time": {
+    "N": "0"
+  },
+  "max_used_gpu_mem": {
+    "N": "0"
+  },
+  "max_used_ram": {
+    "N": "2048"
+  },
+  "name": {
+    "S": "stable-diffusion-v1-4"
+  },
+  "s3_url": {
+    "S": "https://${module.deploy_db_api.model_storage_bucket_name}.s3.${var.region}.amazonaws.com/stable_diffusion.zip"
+  },
+  "type": {
+    "S": "diffusion"
+  }
+}'
+EOT
+  }
+  depends_on = [ module.deploy_db_api ]
+}
