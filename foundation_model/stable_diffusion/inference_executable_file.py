@@ -43,7 +43,7 @@ class StableDiffusionCallable:
         # Generate 1 image at a time to reduce memory consumption.
         for image in self.pipeline(prompt).images:
             buffered = BytesIO()
-            image.save(buffered, format="JPG")
+            image.save(buffered, format="JPEG")
             img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
         return img_base64
     
