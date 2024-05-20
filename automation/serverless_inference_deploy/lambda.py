@@ -5,6 +5,7 @@ import requests
 
 db_api_url = os.getenv("DB_API_URL")
 container_registry = os.getenv("ECR_URI")
+REGION = os.getenv("REGION")
 
 # Terraform 바이너리의 전체 경로 설정
 terraform_binary = '/var/task/terraform'
@@ -26,7 +27,7 @@ def create_backend(user_uid, endpoint_uid):
     backend "s3" {{
         bucket = "{bucket_name}"
         key = "{user_uid}/{endpoint_uid}/terraform.state"
-        region = "ap-northeast-2"
+        region = "{REGION}"
         encrypt = true
     }}
     }}
