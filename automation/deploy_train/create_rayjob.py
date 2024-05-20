@@ -458,7 +458,7 @@ data:
         
         parse_model_url = urlparse(MODEL_S3_URL)
         match_url = re.search(r'sskai-s3-model-\w+', parse_model_url.netloc)
-        model_bucket_name = match.group()
+        model_bucket_name = match_url.group()
 
         update_data = {{
           "s3_url": f"https://{{model_bucket_name}}.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
