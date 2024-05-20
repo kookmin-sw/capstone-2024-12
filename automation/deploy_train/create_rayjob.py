@@ -197,6 +197,8 @@ metadata:
 data:
   train-code.py: |
     import sys
+    import re
+    from urllib.parse import urlparse
     import os
     import tempfile
     import ray.train
@@ -454,8 +456,12 @@ data:
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
         
+        parse_model_url = urlparse(MODEL_S3_URL)
+        match_url = re.search(r'sskai-s3-model-\w+', parse_model_url.netloc)
+        model_bucket_name = match.group()
+
         update_data = {{
-          "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
+          "s3_url": f"https://{{model_bucket_name}}.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
         }}
         requests.put(url=f"{{DB_API_URL}}/models/{{MODEL_UID}}", json=update_data)
         
