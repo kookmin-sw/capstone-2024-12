@@ -67,9 +67,9 @@ def apply_job_yaml(job_filename):
     return result_create_job
 
 def handler(event, context):
-    body = json.loads(event['body'])
+    body = json.loads(event.get("body", "{}"))
     try:
-        uid = body['uid']
+        uid = body.get('uid').lower()
     except Exception as e:
         return {
             'statusCode': 404,
