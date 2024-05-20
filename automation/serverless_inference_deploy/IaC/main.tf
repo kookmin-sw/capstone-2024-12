@@ -14,6 +14,7 @@ module "serverless_inference_deploy" {
   attach_cloudwatch_policy = true
   state_bucket_name = var.state_bucket_name
   db_api_url = var.db_api_url
+  region_name = var.region
 }
 
 output "function_url" {
