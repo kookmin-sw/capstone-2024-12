@@ -31,6 +31,8 @@ def create_backend(user_uid, endpoint_uid):
         encrypt = true
     }}
     }}
+
+
     """
 
     # 파일 저장
@@ -42,7 +44,8 @@ def create_var_json(prefix, container_registry, ram_size, model_s3_url):
         "prefix": prefix,
         "container_registry": container_registry,
         "lambda_ram_size": ram_size,
-        "model_s3_url": model_s3_url
+        "model_s3_url": model_s3_url,
+        "region": REGION
     }
     
     var_file_path = f"/tmp/{prefix}.tfvars.json"
