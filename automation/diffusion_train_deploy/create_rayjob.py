@@ -198,9 +198,13 @@ data:
     import torch.nn.functional as F
     from torch.nn.utils import clip_grad_norm_
     from transformers import CLIPTextModel, AutoTokenizer
-
+    import requests
+    import shutil
+    import zipfile
     import tempfile
     from os import path, makedirs
+    import os
+    import sys
 
     LORA_RANK = 4
 
