@@ -76,7 +76,7 @@ def handler(event, context):
             'message': "error at get uid from requestbody",
             'errorMessage': e
         }
-    model_api_url = f"{db_api_url}models/"
+    model_api_url = f"{db_api_url}/models/"
     model_api_url = f"{model_api_url}{uid}"
     response = requests.get(model_api_url)
     if response.status_code != 200:
