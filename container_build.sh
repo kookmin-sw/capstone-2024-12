@@ -9,6 +9,7 @@ aws ecr create-repository --repository-name recommend-family --region $REGION --
 aws ecr create-repository --repository-name deploy-karpenter-node-pool --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name kubernetes-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name job-model-profile-deploy --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name job-model-profile --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name serverless-inference-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name kubernetes-inference --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name serverless-inference --region $REGION --profile $AWSCLI_PROFILE
@@ -49,6 +50,11 @@ cd -
 cd ./automation/kubernetes_model_profiler_deploy
 docker build -t $ECR_URI/job-model-profile-deploy:latest .
 docker push $ECR_URI/job-model-profile-deploy:latest
+cd -
+
+cd ./model_profile/template_code
+docker build -t $ECR_URI/job-model-profile:latest .
+docker push $ECR_URI/job-model-profile:latest
 cd -
 
 cd ./automation/serverless_inference_deploy
