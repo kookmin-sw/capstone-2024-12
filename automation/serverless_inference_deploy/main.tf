@@ -6,6 +6,7 @@ module "serverless_inference" {
   container_image_tag = "latest"
   lambda_ram_size = var.lambda_ram_size
   model_s3_url = var.model_s3_url
+  region = var.region
 }
 
 variable "region" {
