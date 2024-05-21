@@ -55,19 +55,20 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
     ```bash
     # macOS
     brew install terraform awscli node@20
+    brew install --cask docker
     npm install -g yarn
     # Linux (Ubuntu)
-    sudo apt install terraform awscli -y
+    sudo apt install terraform awscli docker.io -y
     npm install -g yarn
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     nvm install 20
     # Linux (Redhat)
-    sudo dnf install terraform awscli -y
+    sudo dnf install terraform awscli docker.io -y
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     nvm install 20
     npm install -g yarn
     # Windows
-    choco install terraform awscli
+    choco install terraform awscli docker-desktop
     choco install nodejs-lts --version="20.13.1"
     npm install -g yarn
     ```
