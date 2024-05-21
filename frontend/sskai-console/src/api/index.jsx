@@ -159,7 +159,8 @@ export const createUserTrain = async (args) => {
       loss_str: args.lossStr,
       train_split_size: args.trainSplitSize,
       batch_size: args.batchSize,
-      worker_num: args.workerNum
+      worker_num: args.workerNum,
+      model_type: args.model.type
     })
     .catch((err) => err);
 
@@ -192,7 +193,7 @@ export const createUserTrain = async (args) => {
     input_shape: args.model.input_shape,
     value_type: args.model.value_type,
     value_range: args.model.value_range,
-    deployment_type: args.model.deployment_type,
+    deploy_platform: args.model.deploy_platform,
     max_used_ram: args.model.max_used_ram,
     max_used_gpu_ram: args.model.max_used_gpu_ram,
     inference_time: args.model.inference_time
@@ -232,14 +233,66 @@ export const createUserTrain = async (args) => {
   return model;
 };
 
-export const deleteTrain = async (uid, status, user, name) => {
-  if (status !== 'Completed')
-    await axios
-      .post(USER_TRAIN_API, {
-        action: 'delete',
-        uid
-      })
-      .catch((err) => err);
+export const createDiffusionTrain = async (args) => {
+  const res = await axios
+    .post(`${DB_API}/trains`, {
+      user: args.user,
+      name: args.name,
+      model: args.model.uid,
+      data: args.data.uid,
+      epoch_num: args.epochNum,
+      class: args.dataClass,
+      model_type: 'diffusion'
+    })
+    .catch((err) => err);
+
+  if (!res?.data) {
+    console.log(res);
+    return false;
+  }
+
+  const { train } = res.data;
+
+  const model = await createModel({
+    user: args.user,
+    name: args.name,
+    type: 'diffusion',
+    deploy_platform: 'nodepool-2'
+  }).catch((err) => err);
+
+  if (!model) return false;
+
+  await axios
+    .post(DIFFUSION_TRAIN_API, {
+      action: 'create',
+      uid: train.uid,
+      user_uid: args.user,
+      model_uid: model.uid,
+      model_s3_url: args.model.s3_url,
+      data_s3_url: args.data.s3_url,
+      epoch_num: args.epochNum,
+      data_class: args.dataClass
+    })
+    .catch((err) => err);
+
+  await createCost('train', train.uid, 'nodepool-2', 0);
+
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'train',
+    job: 'Train Created'
+  });
+
+  return model;
+};
+
+export const deleteTrain = async (uid, type, status, user, name) => {
+  if (status !== 'Completed') {
+    if (type === 'diffusion') await stopDiffusionTrain(uid);
+    else if (type === 'llama') await stopLlamaTrain(uid);
+    else await stopUserTrain(uid);
+  }
 
   await axios.delete(`${DB_API}/trains/${uid}`);
 
@@ -249,6 +302,33 @@ export const deleteTrain = async (uid, status, user, name) => {
     kind_of_job: 'train',
     job: 'Train Deleted'
   });
+};
+
+const stopUserTrain = async (uid) => {
+  await axios
+    .post(USER_TRAIN_API, {
+      action: 'delete',
+      uid
+    })
+    .catch((err) => err);
+};
+
+const stopDiffusionTrain = async (uid) => {
+  await axios
+    .post(DIFFUSION_TRAIN_API, {
+      action: 'delete',
+      uid
+    })
+    .catch((err) => err);
+};
+
+const stopLlamaTrain = async (uid) => {
+  await axios
+    .post(LLAMA_TRAIN_API, {
+      action: 'delete',
+      uid
+    })
+    .catch((err) => err);
 };
 
 // Inferences
@@ -669,7 +749,6 @@ export const getLogs = async (user_uid) => {
 };
 
 const createLog = async ({ user, name, kind_of_job, job }) => {
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
   await axios
     .post(`${DB_API}/logs`, {
       user,
