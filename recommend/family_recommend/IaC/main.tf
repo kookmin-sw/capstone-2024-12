@@ -37,6 +37,27 @@ resource "aws_ssm_parameter" "param_recommend_family_lambda_function_url" {
   depends_on = [ module.recommend_family ]
 }
 
+variable "nodepool_numbers" {
+  type    = list(string)
+  default = ["1", "2", "3", "4", "5"]
+}
+
+resource "aws_ssm_parameter" "nodepool_ondemand_price" {
+  for_each = toset(var.nodepool_numbers)
+  
+  name  = "nodepool_${each.value}_ondemand_price"
+  type  = "String"
+  value = "9999"
+}
+
+resource "aws_ssm_parameter" "nodepool_spot_price" {
+  for_each = toset(var.nodepool_numbers)
+  
+  name  = "nodepool_${each.value}_spot_price"
+  type  = "String"
+  value = "9999"
+}
+
 # provider "aws" {
 #     region = var.region
 #     profile = var.awscli_profile

@@ -79,13 +79,12 @@ def get_family_for_inference(region):
 
         family_name = f"nodepool-{i+1}"
         family_list = []
-        for i in range(min(10, len(sorted_df_by_total_score))):
+        for i in range(min(5, len(sorted_df_by_total_score))):
             family_list.append(sorted_df_by_total_score.iloc[i]['InstanceType'])
         recommended_family[family_name] = family_list
     
     return recommended_family
 
 if __name__ == "__main__":
-    family_list = get_family_for_inference("ap-northeast-2")
-    for k, v in family_list.items():
-        print(f"{k}: {v}")
+    family = get_family_for_inference("ap-northeast-2")
+    print(family)

@@ -34,14 +34,7 @@ subprocess.run(['unzip', model_temp_path, '-d', 'model'], check=True)
 os.remove(model_temp_path)
 shutil.rmtree('temp')
 
-# 압축 해제 후 동적으로 생성된 경로 찾기
-snapshots_dir = '/app/model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots'
-snapshot_subdirs = [d for d in os.listdir(snapshots_dir) if os.path.isdir(os.path.join(snapshots_dir, d))]
-if not snapshot_subdirs:
-    raise ValueError("No snapshot subdirectories found")
-model_path = os.path.join(snapshots_dir, snapshot_subdirs[0])
-
-print(f"Dynamic snapshot directory: {model_path}")
+model_path = '/app/model/model'
 
 def load_lora_weights(unet, text_encoder, input_dir):
     lora_state_dict, network_alphas = LoraLoaderMixin.lora_state_dict(input_dir)

@@ -362,6 +362,9 @@ def train_fn(config):
         itertools.chain(unet_trainable_parameters, text_trainable_parameters),
         lr=config["lr"],
     )
+    optimizer.load_state_dict(
+        torch.load(path.join(config.get("model_dir"), "optimizer.pt"))
+    )
 
     train_dataset = train.get_dataset_shard("train")
 
@@ -484,16 +487,19 @@ def train_fn(config):
     # END: Training loop
 
     # Store trained models locally for debugging and testing.
-    # if train.get_context().get_world_rank() == 0:
-    #     if not config["use_lora"]:
-    #         pipeline = DiffusionPipeline.from_pretrained(
-    #             config["model_dir"],
-    #             text_encoder=text_encoder,
-    #             unet=unet,
-    #         )
-    #         pipeline.save_pretrained(config["output_dir"])
-    #     else:
-    #         save_lora_weights(unet, text_encoder, config["output_dir"])
+    # torch.save(
+    #     optimizer.state_dict(),
+    #     path.join(temp_checkpoint_dir, "optimizer.pt"),
+    # )
+    # if not config["use_lora"]:
+    #     pipeline = DiffusionPipeline.from_pretrained(
+    #         config["model_dir"],
+    #         text_encoder=text_encoder,
+    #         unet=unet,
+    #     )
+    #     pipeline.save_pretrained(config["output_dir"])
+    # else:
+    #     save_lora_weights(unet, text_encoder, config["output_dir"])
 
 
 def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
@@ -582,7 +588,7 @@ def tune_model(data_config, train_config, user_id, model_id):
 
 if __name__ == "__main__":
     # 훈련을 위한 변수
-    model_path = "/tmp/model/stable_diffusion/models--CompVis--stable-diffusion-v1-4/snapshots/b95be7d6f134c3a9e62ee616f310733567f069ce"
+    model_path = "/tmp/model/stable_diffusion"
     class_data_path = "/tmp/data/stable_diffusion/class_data"
     user_data_path = "/tmp/data/stable_diffusion/user_data"
     data_class = "rabbit"
