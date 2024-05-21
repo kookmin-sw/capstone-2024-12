@@ -7,7 +7,8 @@ variable "api_list" {
     "sskai-ddb-trains-api",
     "sskai-ddb-users-api",
     "sskai-s3-multipart-presigned-url",
-  "sskai-s3-presigned-url-api"]
+  "sskai-s3-presigned-url-api",
+  "sskai-cost-calculate"]
 }
 
 variable "region" {

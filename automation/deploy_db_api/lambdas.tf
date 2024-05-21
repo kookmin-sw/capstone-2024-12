@@ -125,3 +125,19 @@ resource "aws_lambda_function" "sskai-s3-presigned-url-api" {
     }
     depends_on = [ null_resource.download_lambda_codes ]
 }
+
+resource "aws_lambda_function" "sskai-cost-calculate-api" {
+    function_name = "sskai-cost-calculate-${random_id.random_string.hex}"
+    filename      = "/tmp/sskai-cost-calculate.zip"
+    role          = aws_iam_role.lambda_api_role.arn
+    handler       = "index.handler"
+    runtime       = "nodejs20.x"
+    memory_size   = 128
+    timeout       = 60
+    environment {
+      variables = {
+        BUCKET_NAME = aws_s3_bucket.sskai-s3-model-bucket.bucket
+      }
+    }
+    depends_on = [ null_resource.download_lambda_codes ]
+}
