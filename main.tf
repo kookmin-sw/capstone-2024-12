@@ -116,6 +116,17 @@ module "diffusion_inference_deploy" {
   depends_on = [ module.kubernetes_cluster, module.deploy_db_api ]
 }
 
+module "diffusion_train_deploy" {
+  source = "./automation/diffusion_train_deploy/IaC"
+  awscli_profile = var.awscli_profile
+  region = var.region
+  eks_cluster_name = module.kubernetes_cluster.cluster_name
+  db_api_url = module.deploy_db_api.api_endpoint_url
+  container_registry = var.container_registry
+
+  depends_on = [ module.kubernetes_cluster, module.deploy_db_api ]
+}
+
 module "deploy_db_api" {
   source = "./automation/deploy_db_api"
   awscli_profile = var.awscli_profile
