@@ -771,7 +771,7 @@ def handler(event, context):
         data_s3_url = body.get("data_s3_url")
         epoch_num = body.get("epoch_num")
         data_class = body.get("data_class")
-        worker_num = body.get("worker_num")
+        worker_num = 2
 
         rayjob_filename = create_yaml(uid, 
                                       user_uid, 
