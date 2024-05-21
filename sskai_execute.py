@@ -10,7 +10,7 @@ def is_valid_region(region):
 def is_valid_aws_profile(profile):
     # aws s3 ls 명령어로 프로파일 검증
     try:
-        subprocess.run(f"aws s3 ls --profile {profile}")
+        subprocess.run(f"aws s3 ls --profile {profile}", check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
     except subprocess.CalledProcessError:
         return False
@@ -76,13 +76,16 @@ if type == "create":
     # Container build
     container_command = f"./container_build.sh {region} {awscli_profile} {ecr_uri} {main_suffix}"   
     subprocess.run(container_command)
+    # Terraform init 명령 실행
+    terraform_init_command = f"terraform init"
+    subprocess.run(terraform_init_command)
     # Terraform apply 명령 실행
-    terraform_command = f"terraform apply --auto-approve --var main_suffix={main_suffix}"
-    subprocess.run(terraform_command)
+    terraform_apply_command = f"terraform apply --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
+    subprocess.run(terraform_apply_command)
 elif type == "delete":
     # Terraform destroy 명령 실행
-    terraform_command = f"terraform destroy --auto-approve --var main_suffix={main_suffix}"
-    subprocess.run(terraform_command)
+    terraform_destroy_command = f"terraform destroy --auto-approve --var main_suffix={main_suffix}"
+    subprocess.run(terraform_destroy_command)
     # ecr repo 삭제
     ecr_command = f""
     subprocess.run(ecr_command)
