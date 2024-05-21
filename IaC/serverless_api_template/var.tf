@@ -112,3 +112,8 @@ variable "attach_iam_policy" {
   type    = bool
   default = false
 }
+
+variable "attach_pricing_policy" {
+  type    = bool
+  default = false
+}
