@@ -51,6 +51,14 @@ spec:
       - diffusers==0.19.3
       - transformers==4.30.2
       - accelerate==0.20.3
+      - bitsandbytes==0.40.2
+      - accelerate==0.21.0
+      - peft==0.4.0
+      - pandas==2.2.2
+      - pyarrow==16.0.0
+      - scipy==1.13.0
+      - tensorboardX==2.6.2.2
+      - xformers==0.0.26.post1
       
     env_vars:
       counter_name: "test_counter"
@@ -163,434 +171,186 @@ metadata:
   name: ray-job-code-{uid}
 data:
   train-code.py: |
-    from typing import Dict
-
-    import itertools
-    from diffusers import (
-        AutoencoderKL,
-        DDPMScheduler,
-        DiffusionPipeline,
-        UNet2DConditionModel,
-    )
-
-    from diffusers.loaders import (
-        LoraLoaderMixin,
-        text_encoder_lora_state_dict,
-    )
-    from diffusers.models.attention_processor import (
-        AttnAddedKVProcessor,
-        AttnAddedKVProcessor2_0,
-        LoRAAttnAddedKVProcessor,
-        LoRAAttnProcessor,
-        LoRAAttnProcessor2_0,
-        SlicedAttnAddedKVProcessor,
-    )
-
-    from diffusers.utils.import_utils import is_xformers_available
-    from ray.train import ScalingConfig, Checkpoint, RunConfig, FailureConfig, CheckpointConfig
-    from ray import train
-    from ray.train.torch import TorchTrainer
-
-    from ray.data import read_images
-    from torchvision import transforms
-
-    import torch
-    import numpy as np
-    import pandas as pd
-    import torch.nn.functional as F
-    from torch.nn.utils import clip_grad_norm_
-    from transformers import CLIPTextModel, AutoTokenizer
-    import requests
-    import shutil
-    import zipfile
     import tempfile
     from os import path, makedirs
-    import os
-    import sys
-    import subprocess
+    import torch
+    from torch.utils.data import DataLoader
+    from datasets import Dataset
+    import pandas as pd
 
-    LORA_RANK = 4
+    import ray.train.torch as ray_torch
+    from ray.train.torch import TorchTrainer
+    from ray.train import ScalingConfig, Checkpoint, FailureConfig, RunConfig, CheckpointConfig
+    from ray import train
 
-    def get_train_dataset(config, image_resolution=512):
-        instance_dataset = read_images(config.get("instance_images_dir"))
-        class_dataset = read_images(config.get("class_images_dir"))
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        BitsAndBytesConfig,
+    )
+    from peft import PeftModel, LoraConfig, get_peft_model
 
-        dup_times = class_dataset.count() // instance_dataset.count()
-        instance_dataset = instance_dataset.map_batches(
-            lambda df: pd.concat([df] * dup_times), batch_format="pandas"
-        )
-
-        tokenizer = AutoTokenizer.from_pretrained(
-            pretrained_model_name_or_path=config.get("model_dir"),
-            subfolder="tokenizer",
-        )
-
-        def _tokenize(prompt):
-            return tokenizer(
-                prompt,
-                truncation=True,
-                padding="max_length",
-                max_length=tokenizer.model_max_length,
-                return_tensors="pt",
-            ).input_ids.numpy()
-
-        class_prompt_ids = _tokenize(config.get("class_prompt"))[0]
-        instance_prompt_ids = _tokenize(config.get("instance_prompt"))[0]
-
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Resize(
-                    image_resolution,
-                    interpolation=transforms.InterpolationMode.BILINEAR,
-                    antialias=True,
-                ),
-                transforms.RandomCrop(image_resolution),
-                transforms.Normalize([0.5], [0.5]),
-            ]
-        )
-
-        def transform_image(
-            batch: Dict[str, np.ndarray], output_column_name: str
-        ) -> Dict[str, np.ndarray]:
-            transformed_tensors = [transform(image).numpy() for image in batch["image"]]
-            batch[output_column_name] = transformed_tensors
-            return batch
-
-        instance_dataset = (
-            instance_dataset.map_batches(
-                transform_image, fn_kwargs={{"output_column_name": "instance_image"}}
-            )
-            .drop_columns(["image"])
-            .add_column("instance_prompt_ids", lambda df: [instance_prompt_ids] * len(df))
-        )
-
-        class_dataset = (
-            class_dataset.map_batches(
-                transform_image, fn_kwargs={{"output_column_name": "class_image"}}
-            )
-            .drop_columns(["image"])
-            .add_column("class_prompt_ids", lambda df: [class_prompt_ids] * len(df))
-        )
-
-        final_size = min(instance_dataset.count(), class_dataset.count())
-
-        train_dataset = (
-            instance_dataset.limit(final_size)
-            .repartition(final_size)
-            .zip(class_dataset.limit(final_size).repartition(final_size))
-        )
-
-        print("Training dataset schema after pre-processing:")
-        print(train_dataset.schema())
-
-        return train_dataset.random_shuffle()
-
-
-    def collate(batch, dtype):
-        images = torch.cat([batch["instance_image"], batch["class_image"]], dim=0)
-        images = images.to(memory_format=torch.contiguous_format).to(dtype)
-
-        batch_size = len(batch["instance_prompt_ids"])
-
-        prompt_ids = torch.cat(
-            [batch["instance_prompt_ids"], batch["class_prompt_ids"]], dim=0
-        ).reshape(batch_size * 2, -1)
-
-        return {{
-            "images": images,
-            "prompt_ids": prompt_ids,
+    def create_config(epochs, model_path, data_path):
+        data_size = get_datasets(data_path).num_rows
+        batch_size = 1
+        step = data_size // batch_size * epochs
+        config = {{
+            "model_path": model_path,
+            "data_path" : data_path,
+            "batch_size": batch_size,
+            "lr": 2e-4,
+            "num_epochs": epochs,
+            "step": step,
+            "num_workers": {worker_num},
         }}
+        return config
 
+    def get_datasets(data_path):
+        dataframe = pd.read_parquet(data_path)
+        dataset = Dataset.from_pandas(dataframe)
+        return dataset
 
-    def prior_preserving_loss(model_pred, target, weight):
-        model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
-        target, target_prior = torch.chunk(target, 2, dim=0)
+    def get_parquet_file_paths(directory):
+        parquet_files = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if file.endswith('.parquet'):
+                    parquet_files.append(os.path.join(root, file))
+        return parquet_files
 
-        loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+    def load_model(model_path):
+        model_name = "NousResearch/Llama-2-7b-chat-hf"
+        
+        compute_dtype = getattr(torch, "float16")
 
-        prior_loss = F.mse_loss(
-            model_pred_prior.float(), target_prior.float(), reduction="mean"
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=compute_dtype,
+            bnb_4bit_use_double_quant=False,
         )
 
-        return loss + weight * prior_loss
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            quantization_config=quant_config,
+            device_map={{"":0}}
+        )
+        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
 
-    def get_target(scheduler, noise, latents, timesteps):
-        pred_type = scheduler.config.prediction_type
-        if pred_type == "epsilon":
-            return noise
-        if pred_type == "v_prediction":
-            return scheduler.get_velocity(latents, noise, timesteps)
-        raise ValueError(f"Unknown prediction type {{pred_type}}")
+        # PEFT 모델의 가중치 로드
+        model = PeftModel.from_pretrained(model, model_path)
 
-
-    def add_lora_layers(unet, text_encoder):
-        unet_lora_attn_procs = {{}}
-        unet_lora_parameters = []
-        for name, attn_processor in unet.attn_processors.items():
-            cross_attention_dim = (
-                None
-                if name.endswith("attn1.processor")
-                else unet.config.cross_attention_dim
-            )
-            if name.startswith("mid_block"):
-                hidden_size = unet.config.block_out_channels[-1]
-            elif name.startswith("up_blocks"):
-                block_id = int(name[len("up_blocks.")])
-                hidden_size = list(reversed(unet.config.block_out_channels))[block_id]
-            elif name.startswith("down_blocks"):
-                block_id = int(name[len("down_blocks.")])
-                hidden_size = unet.config.block_out_channels[block_id]
-
-            if isinstance(
-                attn_processor,
-                (AttnAddedKVProcessor, SlicedAttnAddedKVProcessor, AttnAddedKVProcessor2_0),
-            ):
-                lora_attn_processor_class = LoRAAttnAddedKVProcessor
-            else:
-                lora_attn_processor_class = (
-                    LoRAAttnProcessor2_0
-                    if hasattr(F, "scaled_dot_product_attention")
-                    else LoRAAttnProcessor
-                )
-
-            module = lora_attn_processor_class(
-                hidden_size=hidden_size,
-                cross_attention_dim=cross_attention_dim,
-                rank=LORA_RANK,
-            )
-            unet_lora_attn_procs[name] = module
-            unet_lora_parameters.extend(module.parameters())
-
-        unet.set_attn_processor(unet_lora_attn_procs)
-
-        text_lora_parameters = LoraLoaderMixin._modify_text_encoder(
-            text_encoder, dtype=torch.float32, rank=LORA_RANK
+        peft_params = LoraConfig(
+            lora_alpha=16,
+            lora_dropout=0.1,
+            r=64,
+            bias="none",
+            task_type="CAUSAL_LM",
         )
 
-        return unet_lora_parameters, text_lora_parameters
+        model = get_peft_model(model, peft_params)
+
+        # 모델 평가 모드로 전환
+        model.train()
+
+        return model, tokenizer
 
 
-    def load_models(config):
-        dtype = torch.bfloat16
+    def train_func(config):
+        if train.get_context().get_world_rank() == 0:
+            update_data = {{
+                "status": "Running",
+            }}
+            requests.put(url=f"{DB_API_URL}/trains/{uid}", json=update_data)    
+        
+        subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
+        subprocess.run(['unzip', '-o', '/tmp/model.zip', '-d', '/tmp'], check=True)
+        
+        dataset = get_datasets(config.get("data_path"))
+        dataloader = DataLoader(dataset, batch_size=config.get("batch_size"), shuffle=True)
+        dataloader = ray_torch.prepare_data_loader(dataloader)
 
-        text_encoder = CLIPTextModel.from_pretrained(
-            config["model_dir"],
-            subfolder="text_encoder",
-            torch_dtype=dtype,
-        )
-
-        noise_scheduler = DDPMScheduler.from_pretrained(
-            config["model_dir"],
-            subfolder="scheduler",
-            torch_dtype=dtype,
-        )
-
-        vae = AutoencoderKL.from_pretrained(
-            config["model_dir"],
-            subfolder="vae",
-            torch_dtype=dtype,
-        )
-        vae.requires_grad_(False)
-
-        unet = UNet2DConditionModel.from_pretrained(
-            config["model_dir"],
-            subfolder="unet",
-            torch_dtype=dtype,
-        )
-
-        if is_xformers_available():
-            unet.enable_xformers_memory_efficient_attention()
-
-        if not config.get("use_lora"):
-            unet_trainable_parameters = unet.parameters()
-            text_trainable_parameters = text_encoder.parameters()
-        else:
-            text_encoder.requires_grad_(False)
-            unet.requires_grad_(False)
-            unet_trainable_parameters, text_trainable_parameters = add_lora_layers(
-                unet, text_encoder
-            )
-
-        text_encoder.train()
-        unet.train()
+        model, tokenizer = load_model(config.get("model_path"))
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config.get("lr"), weight_decay=1e-2)
 
         torch.cuda.empty_cache()
 
-        return (
-            text_encoder,
-            noise_scheduler,
-            vae,
-            unet,
-            unet_trainable_parameters,
-            text_trainable_parameters,
-        )
-
-
-    def train_fn(config):
-        subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
-        subprocess.run(['unzip', '-o', '/tmp/model.zip', '-d', '/tmp'], check=True)
-
-        model_path = "/tmp/model"
-        (
-            text_encoder,
-            noise_scheduler,
-            vae,
-            unet,
-            unet_trainable_parameters,
-            text_trainable_parameters,
-        ) = load_models({{"model_dir": model_path, "use_lora": config["use_lora"]}})
-
-        optimizer = torch.optim.AdamW(
-            itertools.chain(unet_trainable_parameters, text_trainable_parameters),
-            lr=config["lr"],
-        )
-
-        train_dataset = train.get_dataset_shard("train")
-        num_train_epochs = config["num_epochs"]
-
-        print(f"Running {{num_train_epochs}} epochs.")
-
-        global_step = 0
         start_epoch = 0
+        global_step = 0
         checkpoint = train.get_checkpoint()
         if checkpoint:
             with checkpoint.as_directory() as checkpoint_dir:
-                load_config = {{"model_dir": checkpoint_dir}}
-                (
-                    text_encoder,
-                    noise_scheduler,
-                    vae,
-                    unet,
-                    unet_trainable_parameters,
-                    text_trainable_parameters,
-                ) = load_models(load_config)
                 optimizer.load_state_dict(
                     torch.load(path.join(checkpoint_dir, "optimizer.pt"))
                 )
                 start_epoch = (
-                    torch.load(path.join(checkpoint_dir, "extra_state.pt"))["epoch"] + 1
+                    torch.load(path.join(checkpoint_dir, "extra_state.pt"))["epoch"]
                 )
                 global_step = (
                     torch.load(path.join(checkpoint_dir, "extra_state.pt"))["step"]
                 )
+                if global_step % 1000 == 0:
+                    start_epoch += 1
+                model = PeftModel.from_pretrained(model, checkpoint_dir)
+                tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
 
-        text_encoder = text_encoder.to(train.torch.get_device())
-        vae = vae.to(train.torch.get_device())
-        unet = unet.to(train.torch.get_device())
-        
-        results = {{}}
-        for epoch in range(start_epoch, num_train_epochs):
-            for epoch, batch in enumerate(
-                train_dataset.iter_torch_batches(
-                    batch_size=config["train_batch_size"],
-                    device=train.torch.get_device(),
-                )
-            ):
-                batch = collate(batch, torch.bfloat16)
 
+        for epoch in range(start_epoch, config.get("num_epochs")):
+            for batch in dataloader:
                 optimizer.zero_grad()
+                inputs = tokenizer(batch['text'], return_tensors='pt', padding=True, truncation=True, max_length=1024)
+                inputs = {{k: v.cuda() for k, v in inputs.items()}}
 
-                latents = vae.encode(batch["images"]).latent_dist.sample() * 0.18215
-
-                noise = torch.randn_like(latents)
-                bsz = latents.shape[0]
-                timesteps = torch.randint(
-                    0,
-                    noise_scheduler.config.num_train_timesteps,
-                    (bsz,),
-                    device=latents.device,
-                )
-                timesteps = timesteps.long()
-
-                noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
-
-                encoder_hidden_states = text_encoder(batch["prompt_ids"])[0]
-
-                model_pred = unet(
-                    noisy_latents.to(train.torch.get_device()),
-                    timesteps.to(train.torch.get_device()),
-                    encoder_hidden_states.to(train.torch.get_device()),
-                ).sample
-                target = get_target(noise_scheduler, noise, latents, timesteps)
-
-                loss = prior_preserving_loss(
-                    model_pred, target, config["prior_loss_weight"]
-                )
+                outputs = model(**inputs, labels=inputs["input_ids"])
+                loss = outputs.loss
+                loss.requires_grad_(True)
                 loss.backward()
-
-                clip_grad_norm_(
-                    itertools.chain(unet_trainable_parameters, text_trainable_parameters),
-                    config["max_grad_norm"],
-                )
-
                 optimizer.step()
 
                 global_step += 1
-                results = {{
-                    "epoch": epoch,
-                    "step": global_step,
-                    "loss": loss.detach().item(),
-                }}
-                # train.report(results)
 
-            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-                checkpoint = None
-                if not path.exists(temp_checkpoint_dir):
-                    makedirs(temp_checkpoint_dir)
-                torch.save(
-                    optimizer.state_dict(),
-                    path.join(temp_checkpoint_dir, "optimizer.pt"),
-                )
-                torch.save(
-                    {{"epoch":epoch, "step":global_step}},
-                    path.join(temp_checkpoint_dir, "extra_state.pt"),
-                )
+                if global_step % 500 == 0:
+                    results = {{"epoch": epoch, "step": global_step, "loss": loss.item()}}
+                    with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                        checkpoint = None
+                        if not path.exists(temp_checkpoint_dir):
+                            makedirs(temp_checkpoint_dir)
+                        torch.save(
+                            optimizer.state_dict(),
+                            path.join(temp_checkpoint_dir, "optimizer.pt"),
+                        )
+                        torch.save(
+                            {{"epoch":epoch,"step":global_step}},
+                            path.join(temp_checkpoint_dir, "extra_state.pt"),
+                        )
+                        model.save_pretrained(temp_checkpoint_dir)
+                        tokenizer.save_pretrained(temp_checkpoint_dir)
 
-                if not config.get("use_lora"):
-                    pipeline = DiffusionPipeline.from_pretrained(
-                        config["model_dir"],
-                        text_encoder=text_encoder,
-                        unet=unet,
-                    )
-                    pipeline.save_pretrained(temp_checkpoint_dir)
-                else:
-                    save_lora_weights(unet, text_encoder, temp_checkpoint_dir)
-                
-                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
-                train.report(results, checkpoint=checkpoint)
+                        checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+                        train.report(results, checkpoint=checkpoint)
 
-        save_path = config["output_dir"]
+                if global_step >= config.get("step"):
+                    break
+                    
         if train.get_context().get_world_rank() == 0:
-            print("Start saving : trained model")
-            save_path = save_path+"/model"
-            if not path.exists(save_path):
-                makedirs(save_path)
-            print("Saving optimizer...")
+            local_save_path = "/tmp/savedmodel/savedmodel"
+            if not path.exists(local_save_path):
+                makedirs(local_save_path)
             torch.save(
                 optimizer.state_dict(),
-                path.join(save_path, "optimizer.pt"),
+                path.join(local_save_path, "optimizer.pt"),
             )
-            print("Optimizer saved.")
             torch.save(
-                {{"epoch": {epoch_num}, "step": global_step}},
-                path.join(save_path, "extra_state.pt"),
+                {{"epoch":epoch,"step":global_step}},
+                path.join(local_save_path, "extra_state.pt"),
             )
+            model.save_pretrained(local_save_path)
+            tokenizer.save_pretrained(local_save_path)
 
-            if not config.get("use_lora"):
-                pipeline = DiffusionPipeline.from_pretrained(
-                    config["model_dir"],
-                    text_encoder=text_encoder,
-                    unet=unet,
-                )
-                pipeline.save_pretrained(save_path)
-            else:
-                save_lora_weights(unet, text_encoder, save_path)
-
-            print("Model saved to ", save_path)
+            print("Model informations saved to ", local_save_path)
 
             print("Starting to make model.zip")
-            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir=save_path)
+            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir="/tmp/savedmodel/")
 
             print("Zip complete. model.zip PATH = ", "/tmp/savedmodel.zip")
             
@@ -658,97 +418,44 @@ data:
             update_data = {{
             "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
             }}
-            requests.put(url=f"{DB_API_URL}/models/{uid}", json=update_data)
-            
-    def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
-        attn_processors = unet.attn_processors
+            requests.put(url=f"{DB_API_URL}/models/{model_uid}", json=update_data)
 
-        attn_processors_state_dict = {{}}
-
-        for attn_processor_key, attn_processor in attn_processors.items():
-            for parameter_key, parameter in attn_processor.state_dict().items():
-                param_name = f"{{attn_processor_key}}.{{parameter_key}}"
-                attn_processors_state_dict[param_name] = parameter
-        return attn_processors_state_dict
-
-
-    def save_lora_weights(unet, text_encoder, output_dir):
-        if not path.exists(output_dir):
-            makedirs(output_dir)
-        unet_lora_layers_to_save = None
-        text_encoder_lora_layers_to_save = None
-
-        unet_lora_layers_to_save = unet_attn_processors_state_dict(unet)
-        text_encoder_lora_layers_to_save = text_encoder_lora_state_dict(text_encoder)
-
-        LoraLoaderMixin.save_lora_weights(
-            output_dir,
-            unet_lora_layers=unet_lora_layers_to_save,
-            text_encoder_lora_layers=text_encoder_lora_layers_to_save,
-        )
-
-
-    def set_config(model_path, user_data_path, class_data_path, data_class, epoch, save_path="/tmp/model/result"):
-        data_config = {{
-            "model_dir": model_path,
-            "instance_prompt": f"photo of the {{data_class}} that the user wants",
-            "instance_images_dir": user_data_path,
-            "class_prompt": f"photo of the ordinary {{data_class}}",
-            "class_images_dir": class_data_path,
-        }}
-        train_config = {{
-            "model_dir": model_path,
-            "output_dir": save_path,
-            "use_lora": False,
-            "prior_loss_weight": 1.0,
-            "max_grad_norm": 1.0,
-            "train_batch_size": 1,
-            "lr": 5e-6,
-            "num_epochs": epoch, 
-        }}
-        return data_config, train_config
-
-
-    def tune_model(data_config, train_config):
-        train_dataset = get_train_dataset(data_config)
-
-        print(f"Loaded training dataset (size: {{train_dataset.count()}})")
         
+                    
+    def run_train(config, user_id, model_id):
+        # Train with Ray Train TorchTrainer.
         trainer = TorchTrainer(
-            train_fn,
-            train_loop_config=train_config,
+            train_func,
+            train_loop_config=config,
             scaling_config=ScalingConfig(
                 use_gpu=True,
-                num_workers={worker_num},
-                resources_per_worker={{"GPU":1, "CPU":3}},
+                num_workers=config.get("num_workers"),
+                resources_per_worker={{"GPU":1, "CPU":8}},
             ),
-            datasets={{
-                "train": train_dataset,
-            }},
-            run_config=train.RunConfig(storage_path=f"s3://sskai-model-storage/{user_uid}/model/{model_uid}/",
-                                        name="{model_uid}",
-                                        checkpoint_config=CheckpointConfig(num_to_keep=2,),
-                                        failure_config=FailureConfig(max_failures=-1),
-                                      )
+            run_config=RunConfig(
+                storage_path=f"s3://sskai-model-storage/{user_uid}/model/{model_uid}/",
+                name="{model_uid}",
+                checkpoint_config=CheckpointConfig(num_to_keep=2,),
+                failure_config=FailureConfig(max_failures=-1),
+            ),
         )
         result = trainer.fit()
-        print(result)
+        return result
 
 
     if __name__ == "__main__":
         subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
         subprocess.run(['unzip', '/tmp/model.zip', '-d', '/tmp'], check=True)
-        model_path = '/tmp/model'
-
-        class_data_path = "/tmp/data/class_data"
-        user_data_path = "/tmp/data/user_data"
-        data_class = "{data_class}"
-        user_epoch = {epoch_num}
-        save_path = "/tmp/model/result"
-
-        data_config, train_config = set_config(model_path, user_data_path, class_data_path, data_class, user_epoch, save_path)
         
-        tune_model(data_config, train_config)
+        epochs = {epoch_num}
+        model_path = "/tmp/model"
+
+        data_path = get_parquet_file_paths("/tmp")[0]
+        
+        config = create_config(epochs, model_path, data_path)
+
+        result = run_train(config, '{user_uid}', '{model_uid}')
+        print(result)
 
 
 """
@@ -770,8 +477,7 @@ def handler(event, context):
         model_s3_url = body.get("model_s3_url")
         data_s3_url = body.get("data_s3_url")
         epoch_num = body.get("epoch_num")
-        data_class = body.get("data_class")
-        worker_num = body.get("worker_num")
+        worker_num = 2
 
         rayjob_filename = create_yaml(uid, 
                                       user_uid, 
@@ -779,8 +485,7 @@ def handler(event, context):
                                       model_s3_url, 
                                       data_s3_url, 
                                       worker_num, 
-                                      epoch_num, 
-                                      data_class)
+                                      epoch_num)
       
         print(rayjob_filename)
 
