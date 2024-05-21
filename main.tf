@@ -168,7 +168,7 @@ aws dynamodb put-item --table-name sskai-models --profile ${var.awscli_profile} 
     "S": "llama"
   },
   "deploy_platform": {
-    "S": "nodepool-1"
+    "S": "nodepool-2"
   },
   "inference_time": {
     "N": "0"
@@ -194,7 +194,7 @@ aws dynamodb put-item --table-name sskai-models --profile ${var.awscli_profile} 
     "S": "diffusion"
   },
   "deploy_platform": {
-    "S": "nodepool-1"
+    "S": "nodepool-2"
   },
   "inference_time": {
     "N": "0"
