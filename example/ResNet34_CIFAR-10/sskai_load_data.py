@@ -58,7 +58,7 @@ def sskai_load_data():
     x = []
     y = []
     for data, label in combined_dataset:
-        x.append(data)
-        y.append(label)
-        
+        x = torch.stack(data)
+        y = torch.tensor(label)
+
     return x, y
