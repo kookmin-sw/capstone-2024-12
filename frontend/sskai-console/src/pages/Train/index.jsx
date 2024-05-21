@@ -19,7 +19,7 @@ import {
   SyncOutlined,
   QuestionCircleOutlined
 } from '@ant-design/icons';
-import { calculateDuration } from '../../utils/index.jsx';
+import { calculateCost, calculateDuration } from '../../utils/index.jsx';
 import TrainCreateModal from './TrainCreateModal.jsx';
 
 const STATUS_BADGE_MAPPER = {
@@ -45,9 +45,9 @@ const TRAIN_TABLE_COLUMNS = (now) => [
   },
   {
     title: 'Cost',
-    dataIndex: 'cost',
     key: 'cost',
-    render: (item) => `$ ${item}`,
+    render: (row) =>
+      `$ ${calculateCost(row.start_at, row.end_at || now, row.cost) || 0}`,
     width: 150
   },
   {
@@ -56,10 +56,10 @@ const TRAIN_TABLE_COLUMNS = (now) => [
         Estimated Savings <QuestionCircleOutlined />
       </Space>
     ),
-    dataIndex: 'savings',
     key: 'savings',
     width: 200,
-    render: () => '0%'
+    render: (row) =>
+      `${100 - Math.floor((row.cost / row.original_cost) * 100) || 0}%`
   },
   {
     title: 'Elapsed Time',
@@ -67,8 +67,8 @@ const TRAIN_TABLE_COLUMNS = (now) => [
     width: 300,
     render: (row) =>
       calculateDuration(
-        row.created_at,
-        row.status === 'Completed' ? row.updated_at : now
+        row.start_at,
+        row.status === 'Completed' ? row.end_at : now
       )
   }
 ];

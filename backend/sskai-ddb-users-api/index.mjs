@@ -23,7 +23,7 @@ export const handler = async (event) => {
     const data = JSON.parse(event.body || "{}");
     switch (event.routeKey) {
       case "POST /users":
-        if (!REQUIRED_FIELDS.every((field) => data[field])) {
+        if (!REQUIRED_FIELDS.every((field) => data.hasOwnProperty(field) && data[field] != null)) {
           statusCode = 400;
           body = { message: "Missing required fields" };
           break;

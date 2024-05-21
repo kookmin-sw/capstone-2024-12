@@ -46,7 +46,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import IconRadio from '../../components/IconRadio/index.jsx';
-import { copyToClipBoard } from '../../utils/index.jsx';
+import { calculateCost, copyToClipBoard } from '../../utils/index.jsx';
 import { useNavigate } from 'react-router-dom';
 
 const INFERENCE_TABLE_COLUMNS = [
@@ -102,10 +102,9 @@ const INFERENCE_TABLE_COLUMNS = [
   },
   {
     title: 'Cost',
-    dataIndex: 'cost',
     key: 'cost',
     width: 100,
-    render: (item) => `$ ${item}`
+    render: (row) => `$ ${calculateCost(row.created_at, Date.now(), row.cost)}`
   },
   {
     title: (
@@ -113,10 +112,10 @@ const INFERENCE_TABLE_COLUMNS = [
         Estimated Savings <QuestionCircleOutlined />
       </Space>
     ),
-    dataIndex: 'savings',
     key: 'savings',
     width: 120,
-    render: () => '0%'
+    render: (row) =>
+      `${100 - Math.floor((row.cost / row.original_cost / 6) * 100) || 0}%`
   }
 ];
 
@@ -144,6 +143,7 @@ export default function Inference(props) {
 
   const fetchData = async () => {
     setFetchLoading(true);
+    setSelectedDetail([]);
     setSelectedRowKeys([]);
     // TODO: User UID Value Storing in Storage (browser's)
     setNow(Date.now());
@@ -230,7 +230,7 @@ export default function Inference(props) {
           deployment_type:
             !selectedModel?.deploy_platform ||
             selectedModel.deploy_platform === 'Serverless'
-              ? 'nodepool-3'
+              ? 'nodepool-2'
               : selectedModel.deploy_platform
         })
       }
@@ -249,7 +249,8 @@ export default function Inference(props) {
         content:
           'An error occurred while creating an endpoint. Please try again.'
       });
-
+    setIsModalOpen(false);
+    await fetchData();
     return messageApi.open({
       type: 'success',
       content: 'The endpoint creation request was completed successfully.'

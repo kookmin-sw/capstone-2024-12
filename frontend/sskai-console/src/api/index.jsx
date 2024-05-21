@@ -220,6 +220,8 @@ export const createUserTrain = async (args) => {
     })
     .catch((err) => err);
 
+  await createCost('train', train.uid, 'nodepool-1', 0);
+
   await createLog({
     user: args.user,
     name: args.name,
@@ -281,6 +283,13 @@ export const createSpotInference = async (args) => {
     await axios.delete(`${DB_API}/inferences/${Item.uid}`);
     return false;
   }
+
+  await createCost(
+    'inference',
+    Item.uid,
+    args.model_detail.deployment_type,
+    args.model_detail.max_used_ram
+  );
 
   await createLog({
     user: args.user,
@@ -358,6 +367,13 @@ export const createServerlessInference = async (args) => {
     await axios.delete(`${DB_API}/inferences/${Item.uid}`);
     return false;
   }
+
+  await createCost(
+    'inference',
+    Item.uid,
+    'Serverless',
+    Number(args.model_detail.max_used_ram)
+  );
 
   await createLog({
     user: args.user,
@@ -494,6 +510,8 @@ export const createFMInference = async (type, args) => {
       job: 'Endpoint (Diffusion) Created'
     });
   }
+
+  await createCost('inference', Item.uid, 'nodepool-2', 0);
   return Item;
 };
 
@@ -658,6 +676,19 @@ const createLog = async ({ user, name, kind_of_job, job }) => {
       name,
       kind_of_job,
       job
+    })
+    .catch((err) => err);
+};
+
+// Cost
+
+const createCost = async (type, uid, platform, ram) => {
+  await axios
+    .post(`${DB_API}/cost`, {
+      type,
+      uid,
+      platform,
+      ram
     })
     .catch((err) => err);
 };
