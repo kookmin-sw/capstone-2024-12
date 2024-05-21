@@ -262,9 +262,9 @@ data:
 
     #### 학습 함수
     def train_func(config):
-      subprocess.run(['wget', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
+      subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
       subprocess.run(['unzip', '/tmp/model.zip', '-d', 'model'], check=True)
-      subprocess.run(['wget', '-O', '/tmp/data.zip', '{data_s3_url}'], check=True)
+      subprocess.run(['wget', '-q', '-O', '/tmp/data.zip', '{data_s3_url}'], check=True)
       subprocess.run(['unzip', '/tmp/data.zip', '-d', '/tmp/data'], check=True)
       model_dir = os.getcwd() + "/model"
       sys.path.append(model_dir)
