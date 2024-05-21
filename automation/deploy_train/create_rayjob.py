@@ -330,7 +330,7 @@ data:
           model_state_dict = torch.load(
             os.path.join(checkpoint_dir, "model.pt")
           )
-          model.module.load_state_dict(model_state_dict)
+          model.load_state_dict(model_state_dict)
 
           optimizer_state_dict = torch.load(
             os.path.join(checkpoint_dir, "optimizer.pt")
@@ -373,7 +373,7 @@ data:
           checkpoint = None
           if train.get_context().get_world_rank() == 0:
             torch.save(
-              model.module.state_dict(),  # NOTE: Unwrap the model.
+              model.state_dict(),  # NOTE: Unwrap the model.
               os.path.join(temp_checkpoint_dir, f"model.pt"),
             )
             torch.save(
@@ -394,8 +394,8 @@ data:
           shutil.rmtree('/tmp/save_model')
         os.makedirs('/tmp/save_model')
         shutil.copy(f'{{model_dir}}/model.py', '/tmp/save_model/model.py')
-        model.module.to("cpu")
-        torch.save(model.module.state_dict(), '/tmp/save_model/torch.pt')
+        model.to("cpu")
+        torch.save(model.state_dict(), '/tmp/save_model/torch.pt')
         shutil.make_archive('/tmp/model', 'zip', root_dir='/tmp/save_model')
         if os.path.getsize("/tmp/model.zip")/(1024**3) < 1.5:
           with open('/tmp/model.zip', 'rb') as file:
