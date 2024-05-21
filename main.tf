@@ -198,7 +198,7 @@ aws dynamodb put-item --table-name sskai-models --profile ${var.awscli_profile} 
     "S": "stable-diffusion-v1-4"
   },
   "s3_url": {
-    "S": "https://${module.deploy_db_api.model_storage_bucket_name}.s3.${var.region}.amazonaws.com/stable_diffusion.zip"
+    "S": "https://${module.deploy_db_api.model_storage_bucket_name}.s3.${var.region}.amazonaws.com/stable-diffusion.zip"
   },
   "type": {
     "S": "diffusion"
