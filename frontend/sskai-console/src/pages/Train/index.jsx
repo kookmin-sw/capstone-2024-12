@@ -47,7 +47,7 @@ const TRAIN_TABLE_COLUMNS = (now) => [
     title: 'Cost',
     key: 'cost',
     render: (row) =>
-      `$ ${calculateCost(row.start_at, row.end_at, row.cost) || 0}`,
+      `$ ${calculateCost(row.start_at, row.end_at || now, row.cost) || 0}`,
     width: 150
   },
   {
