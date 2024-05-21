@@ -70,7 +70,7 @@ type = input("Enter TYPE. (create/delete): ")
 
 # AWS ECR 로그인 명령 실행
 ecr_command = f"aws ecr get-login-password --region {region} --profile {awscli_profile} | docker login --username AWS --password-stdin {ecr_uri}"
-# subprocess.run(ecr_command)
+subprocess.run(ecr_command)
 
 print(region)
 print(awscli_profile)
@@ -81,20 +81,16 @@ print(ecr_command)
 if type == "create":
     # Container build
     container_command = f"./container_build.sh {region} {awscli_profile} {ecr_uri} {main_suffix}"   
-    print(container_command) 
-    # subprocess.run(container_command)
+    subprocess.run(container_command)
     # Terraform apply 명령 실행
     terraform_command = f"terraform apply --auto-approve --var main_suffix={main_suffix}"
-    print(terraform_command)
-    # subprocess.run(terraform_command)
+    subprocess.run(terraform_command)
 elif type == "delete":
     # Terraform destroy 명령 실행
     terraform_command = f"terraform destroy --auto-approve --var main_suffix={main_suffix}"
-    print(terraform_command)
-    # subprocess.run(terraform_command)
+    subprocess.run(terraform_command)
     # ecr repo 삭제
     ecr_command = f""
-    print(ecr_command)
-    # subprocess.run(ecr_command)
+    subprocess.run(ecr_command)
 else:
     print("Invalid TYPE.")
