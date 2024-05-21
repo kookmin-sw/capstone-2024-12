@@ -251,10 +251,12 @@ data:
       return x, y
 
     #### 학습 설정 함수
-    def getTrainInfo(ModelClass, optimstr, lossstr, lr):
+    def getTrainInfo(ModelClass, optimstr, lossstr, lr, model_dir):
       import torch.optim as optim
       import torch.nn as nn
       model = ModelClass()
+      if os.path.exists(f'{{model_dir}}/torch.pt'):
+        model.load_state_dict(torch.load("{{model_dir}}/torch.pt"))
 
       optimizer = eval("optim."+optimstr+"(model.parameters(), lr=lr)")
       criterion = eval("nn."+lossstr+"()")
@@ -298,7 +300,7 @@ data:
       test_loader = prepare_data_loader(test_loader)
 
       # 모델, 손실 함수 및 옵티마이저 설정
-      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
+      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"], model_dir)
       model = ray.train.torch.prepare_model(model)
       if torch.cuda.is_available():
         model = model.cuda()
