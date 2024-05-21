@@ -664,7 +664,7 @@ data:
             update_data = {{
             "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
             }}
-            requests.put(url=f"{DB_API_URL}/models/{uid}", json=update_data)
+            requests.put(url=f"{DB_API_URL}/models/{model_uid}", json=update_data)
             
     def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
         attn_processors = unet.attn_processors
