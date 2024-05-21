@@ -17,7 +17,7 @@ EOF
 
 resource "null_resource" "build_react_app" {
   provisioner "local-exec" {
-    command = "yarn && yarn build && aws s3 sync ./dist s3://sskai-s3-web-${random_id.random_string.hex}/ --profile ${var.awscli_profile}"
+    command = "yarn && yarn build && aws s3 sync ./dist s3://sskai-web-${random_id.random_string.hex}/ --profile ${var.awscli_profile}"
     working_dir = "${path.module}/../../frontend/sskai-console"
   }
 
