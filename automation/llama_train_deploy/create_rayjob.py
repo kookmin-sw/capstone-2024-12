@@ -25,7 +25,7 @@ if result_get_kubeconfig.returncode != 0:
     print("kubeconfig 받아오기 returncode != 0")
 
 
-def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, worker_num, epoch_num, data_class):
+def create_yaml(uid, user_uid, model_uid, model_s3_url, data_s3_url, worker_num, epoch_num):
     filename = "rayjob"
 
     content = f"""---
