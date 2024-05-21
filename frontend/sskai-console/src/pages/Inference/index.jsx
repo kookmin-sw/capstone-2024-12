@@ -230,7 +230,7 @@ export default function Inference(props) {
           deployment_type:
             !selectedModel?.deploy_platform ||
             selectedModel.deploy_platform === 'Serverless'
-              ? 'nodepool-3'
+              ? 'nodepool-2'
               : selectedModel.deploy_platform
         })
       }
