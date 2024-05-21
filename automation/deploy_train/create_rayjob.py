@@ -457,24 +457,25 @@ data:
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
         
         parse_model_url = urlparse(MODEL_S3_URL)
-        match_url = re.search(r'sskai-s3-model-\w+', parse_model_url.netloc)
+        match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
         model_bucket_name = match_url.group()
 
         update_data = {{
           "s3_url": f"https://{{model_bucket_name}}.s3.{REGION}.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
         }}
         requests.put(url=f"{{DB_API_URL}}/models/{{MODEL_UID}}", json=update_data)
-        
-      return model.state_dict()
 
     if __name__ == "__main__":
       ray.init()
       print("init done")
+      parse_model_url = urlparse(MODEL_S3_URL)
+      match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+      model_bucket_name = match_url.group()
       trainer = TorchTrainer(
           train_loop_per_worker=train_func,
           train_loop_config={{"lr": LR_VALUE, "epochs": EPOCH_NUM, "batch_size": BATCH_SIZE}},
           scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=True),
-          run_config=train.RunConfig(storage_path=f"s3://sskai-model-storage/{{USER_UID}}/model/{{MODEL_UID}}/",
+          run_config=train.RunConfig(storage_path=f"s3://{{model_bucket_name}}/{{USER_UID}}/model/{{MODEL_UID}}/",
                                     name=f"{{MODEL_UID}}",
                                     checkpoint_config=CheckpointConfig(num_to_keep=2,),
                                     failure_config=FailureConfig(max_failures=-1),
