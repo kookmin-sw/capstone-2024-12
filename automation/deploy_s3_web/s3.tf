@@ -3,7 +3,7 @@ byte_length = 8
 }
 
 resource "aws_s3_bucket" "sskai-s3-web-bucket" {
-  bucket        = "sskai-s3-web-${random_id.random_string.hex}"
+  bucket        = "sskai-web-${random_id.random_string.hex}"
   force_destroy = true
 }
 

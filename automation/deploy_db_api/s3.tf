@@ -1,6 +1,6 @@
 
 resource "aws_s3_bucket" "sskai-s3-model-bucket" {
-  bucket        = "sskai-s3-model-${random_id.random_string.hex}"
+  bucket        = "sskai-model-${random_id.random_string.hex}"
   force_destroy = true
 }
 
