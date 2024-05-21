@@ -149,7 +149,7 @@ spec:
             serviceAccount: kuberay-s3-sa
             serviceAccountName: kuberay-s3-sa
             nodeSelector:
-              karpenter.sh/nodepool: nodepool-1
+              karpenter.sh/nodepool: nodepool-2
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
                 image: rayproject/ray:2.12.0-gpu
@@ -180,11 +180,11 @@ spec:
           image: rayproject/ray:2.12.0
           resources:
             limits:
-              cpu: "800m"
-              memory: "3072M"
+              cpu: "1800m"
+              memory: "7000M"
             requests:
-              cpu: "800m"
-              memory: "3072M"
+              cpu: "1800m"
+              memory: "7000M"
       restartPolicy: Never
 
 # Python Code
