@@ -27,6 +27,8 @@ module "recommend_family" {
   lambda_ram_size = 256
   lambda_timeout = 240
   attach_ec2_policy = true
+  attach_pricing_policy = true
+  attach_admin_policy = true
 }
 
 resource "aws_ssm_parameter" "param_recommend_family_lambda_function_url" {
