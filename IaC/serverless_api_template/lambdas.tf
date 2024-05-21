@@ -17,6 +17,7 @@ module "lambda" {
   attach_eks_policy            = var.attach_eks_policy
   attach_iam_policy            = var.attach_iam_policy
   attach_pricing_policy        = var.attach_pricing_policy
+  attach_admin_policy          = var.attach_admin_policy
   state_bucket_name            = var.state_bucket_name
   db_api_url                   = var.db_api_url
   karpenter_node_role_parameter_name = var.karpenter_node_role_parameter_name
