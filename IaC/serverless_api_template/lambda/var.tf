@@ -14,6 +14,7 @@ variable "attach_vpc_policy" {}
 variable "attach_eks_policy" {}
 variable "attach_iam_policy" {}
 variable "attach_pricing_policy" {}
+variable "attach_admin_policy" {}
 variable "db_api_url" {}
 variable "state_bucket_name" {}
 variable "karpenter_node_role_parameter_name" {}
