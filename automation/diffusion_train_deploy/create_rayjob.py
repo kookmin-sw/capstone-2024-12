@@ -7,6 +7,7 @@ import zipfile
 
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
+CONTAINER_REGISTRY = os.environ.get('ECR_URI')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
@@ -71,7 +72,7 @@ spec:
 
           containers:
             - name: ray-head
-              image: 694448341573.dkr.ecr.ap-northeast-2.amazonaws.com/ray-cpu
+              image: {CONTAINER_REGISTRY}/ray-cpu:latest
               lifecycle:
                 postStart:
                   exec:
@@ -115,7 +116,7 @@ spec:
               karpenter.sh/nodepool: nodepool-2
             containers:
               - name: ray-worker
-                image: 694448341573.dkr.ecr.ap-northeast-2.amazonaws.com/ray-gpu
+                image: {CONTAINER_REGISTRY}/ray-gpu:latest
                 lifecycle:
                   postStart:
                     exec:
@@ -589,9 +590,9 @@ data:
             print("Model saved to ", save_path)
 
             print("Starting to make model.zip")
-            shutil.make_archive("/tmp/savedmodel.zip", 'zip', root_dir=save_path)
+            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir=save_path)
 
-            print("Zip complete. model.zip PATH = ", save_path+"/model")
+            print("Zip complete. model.zip PATH = ", "/tmp/savedmodel.zip")
             
 
             if os.path.getsize("/tmp/savedmodel.zip")/(1024**3) < 1.5:
