@@ -428,6 +428,12 @@ data:
 
 
     def train_fn(config):
+        if train.get_context().get_world_rank() == 0:
+            update_data = {{
+                "status": "Running",
+            }}
+            requests.put(url=f"{DB_API_URL}/trains/{uid}", json=update_data)    
+    
         subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
         subprocess.run(['unzip', '-o', '/tmp/model.zip', '-d', '/tmp'], check=True)
 
