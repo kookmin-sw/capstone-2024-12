@@ -11,12 +11,13 @@ UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
 eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
+region = os.environ.get('REGION')
 
 # get eks cluster kubernetes configuration by aws cli
 result_get_kubeconfig = subprocess.run([
     "aws", "eks", "update-kubeconfig",
     "--name", eks_cluster_name,
-    "--region", "ap-northeast-2",
+    "--region", region,
     "--kubeconfig", kubeconfig
 ])
 if result_get_kubeconfig.returncode != 0:
