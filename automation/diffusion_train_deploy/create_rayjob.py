@@ -590,7 +590,7 @@ data:
             print("Model saved to ", save_path)
 
             print("Starting to make model.zip")
-            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir=save_path)
+            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir="/tmp/model/result")
 
             print("Zip complete. model.zip PATH = ", "/tmp/savedmodel.zip")
             
