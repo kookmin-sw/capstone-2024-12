@@ -1,6 +1,8 @@
-ECR_URI=""
-REGION=""
-AWSCLI_PROFILE=""
+#!/bin/bash
+
+ECR_URI=$1
+REGION=$2
+AWSCLI_PROFILE=$3
 
 # Create ECR repository
 aws ecr create-repository --repository-name deploy-streamlit --region $REGION --profile $AWSCLI_PROFILE
