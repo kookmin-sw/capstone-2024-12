@@ -19,6 +19,9 @@ aws ecr create-repository --repository-name llama2-inference --region $REGION --
 aws ecr create-repository --repository-name diffusion-inference --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name llama2-streamlit --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name sdxl1-streamlit --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name diffusion-train-deploy --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name ray-cpu --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name ray-gpu --region $REGION --profile $AWSCLI_PROFILE
 
 aws ecr get-login-password --region $REGION --profile $AWSCLI_PROFILE | docker login --username AWS --password-stdin $ECR_URI
 
@@ -99,4 +102,19 @@ cd -
 cd ./automation/deploy_streamlit/stable_diffusion
 docker build -t $ECR_URI/sdxl1-streamlit:latest .
 docker push $ECR_URI/sdxl1-streamlit:latest
+cd -
+
+cd ./automation/diffusion_train_deploy
+docker build -t $ECR_URI/diffusion-train-deploy:latest .
+docker push $ECR_URI/diffusion-train-deploy:latest
+cd -
+
+cd ./train/ray/cpu
+docker build -t $ECR_URI/ray-cpu:latest .
+docker push $ECR_URI/ray-cpu:latest
+cd -
+
+cd ./train/ray/gpu
+docker build -t $ECR_URI/ray-gpu:latest .
+docker push $ECR_URI/ray-gpu:latest
 cd -
