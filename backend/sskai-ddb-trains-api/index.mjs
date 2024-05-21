@@ -50,6 +50,7 @@ export const handler = async (event) => {
             worker_num: data.worker_num,
             data_loader_path: data.data_loader_path,
             class: data.class,
+            model_type: data.model_type,
             created_at: new Date().getTime(),
           }
         };

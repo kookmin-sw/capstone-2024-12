@@ -115,7 +115,9 @@ const INFERENCE_TABLE_COLUMNS = [
     key: 'savings',
     width: 120,
     render: (row) =>
-      `${100 - Math.floor((row.cost / row.original_cost / 6) * 100) || 0}%`
+      row.type === 'Serverless'
+        ? `${100 - Math.floor((row.cost / row.original_cost / 6) * 100) || 0}%`
+        : `${100 - Math.floor((row.cost / row.original_cost) * 100) || 0}%`
   }
 ];
 
