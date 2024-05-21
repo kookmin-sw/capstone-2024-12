@@ -56,7 +56,8 @@ def handler(event, context):
 
     ray_nodepool_name = 'ray-ondemand-pool'
     ray_nodepool_family_list = [
-        't3.medium', 't3.large', 'm5.large',
+        't3.medium', 't3.large', 't3.xlarge', 't3.2xlarge',
+        'm5.large', 'm5.xlarge', 'm5.2xlarge', 'm5.4xlarge',
     ]
     ray_nodeclass_name = 'ec2-cpu'
     capacity_type = 'on-demand'
