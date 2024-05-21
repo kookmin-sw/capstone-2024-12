@@ -24,7 +24,7 @@ export const handler = async (event) => {
     const data = JSON.parse(event.body || "{}");
     switch (event.routeKey) {
       case "POST /trains":
-        if (!REQUIRED_FIELDS.every((field) => data[field])) {
+        if (!REQUIRED_FIELDS.every((field) => data.hasOwnProperty(field) && data[field] != null)) {
           statusCode = 400;
           body = { message: "Missing required fields" };
           break;
@@ -110,6 +110,8 @@ export const handler = async (event) => {
             checkpoint_path: data.checkpoint_path || Item.checkpoint_path,
             data_loader_path: data.data_loader_path || Item.data_loader_path,
             updated_at: new Date().getTime(),
+            ...(data?.status === 'Running' && { start_at: new Date().getTime() }),
+            ...(data?.status === 'Completed' && { end_at: new Date().getTime() }),
           }
         };
         await dynamo.send(new PutCommand(command));

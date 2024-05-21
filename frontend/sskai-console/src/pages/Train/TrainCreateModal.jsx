@@ -107,6 +107,7 @@ export default function TrainCreateModal(props) {
     setWorkerNum(4);
     setOptimStr(null);
     setLossStr(null);
+    setDataLoader(null);
   };
 
   const handleCancel = () => {
