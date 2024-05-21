@@ -8,6 +8,7 @@ import zipfile
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
 REGION = os.environ.get('REGION')
+ECR_URI = os.environ.get('ECR_URI')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
@@ -112,7 +113,7 @@ spec:
 
           containers:
             - name: ray-head
-              image: rayproject/ray:2.12.0
+              image: {ECR_URI}/ray-cpu:latest
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -122,12 +123,12 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "800m"
-                  memory: "3072M"
+                  cpu: "3500m"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
                 requests:
-                  cpu: "800m"
-                  memory: "3072M"
+                  cpu: "3500m"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
               volumeMounts:
                 - name: train-code
@@ -152,7 +153,7 @@ spec:
               karpenter.sh/nodepool: nodepool-2
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
-                image: rayproject/ray:2.12.0-gpu
+                image: {ECR_URI}/ray-gpu:latest
                 lifecycle:
                   preStop:
                     exec:
@@ -177,14 +178,14 @@ spec:
         karpenter.sh/nodepool: ray-ondemand-nodepool
       containers:
         - name: ray-job-submitter
-          image: rayproject/ray:2.12.0
+          image: {ECR_URI}/ray-cpu:latest
           resources:
             limits:
-              cpu: "1800m"
-              memory: "7000M"
+              cpu: "800m"
+              memory: "3072M"
             requests:
-              cpu: "1800m"
-              memory: "7000M"
+              cpu: "800m"
+              memory: "3072M"
       restartPolicy: Never
 
 # Python Code
@@ -203,6 +204,7 @@ data:
     import tempfile
     import ray.train
     import ray.train.torch
+    import subprocess
     import requests
     import shutil
     import zipfile
@@ -233,26 +235,6 @@ data:
     USER_UID = "{user_uid}"
     MODEL_UID = "{model_uid}"
 
-    #### 데이터 다운로드
-    def download_and_unzip(s3_url, extract_path):
-      download = requests.get(s3_url)
-      filename = s3_url.split('/')[-1]
-      temp_path = os.path.join('/tmp/tmp', filename)
-
-      os.makedirs('/tmp/tmp', exist_ok=True)
-      with open(temp_path, 'wb') as file:
-        file.write(download.content)
-
-      if os.path.exists(extract_path):
-        shutil.rmtree(extract_path)
-      os.makedirs(extract_path)
-
-      with zipfile.ZipFile(temp_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_path)
-      
-      os.remove(temp_path)
-      shutil.rmtree('/tmp/tmp')
-
     def download_data_loader(s3_url):
       download = requests.get(s3_url)
 
@@ -280,9 +262,11 @@ data:
 
     #### 학습 함수
     def train_func(config):
-      download_and_unzip(MODEL_S3_URL, "model")
+      subprocess.run(['wget', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
+      subprocess.run(['unzip', '/tmp/model.zip', '-d', 'model'], check=True)
+      subprocess.run(['wget', '-O', '/tmp/data.zip', '{data_s3_url}'], check=True)
+      subprocess.run(['unzip', '/tmp/data.zip', '-d', '/tmp/data'], check=True)
       model_dir = os.getcwd() + "/model"
-      download_and_unzip(DATA_S3_URL, "/tmp/data")
       sys.path.append(model_dir)
       sys.path.append("/tmp/data")
       
@@ -296,8 +280,6 @@ data:
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
       
-      
-
       # 데이터 로딩
       x, y = load_data(sskai_load_data)
       if torch.cuda.is_available():
