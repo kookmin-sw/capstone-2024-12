@@ -23,7 +23,7 @@ def create_setup():
         if is_valid_region(region):
             break
         else:
-            print("Invalid REGION format. Please enter a region in the format a-b-c (e.g., us-west-2).")
+            print("Invalid REGION format. Please enter a region in the format a-b-c (e.g., ap-northeast-2).")
 
     while True:
         awscli_profile = input("Enter AWSCLI_PROFILE: ")
@@ -36,8 +36,12 @@ def create_setup():
 
     # ecr_uri 생성
     account_id_command = f"aws sts get-caller-identity --query Account --output text --profile {awscli_profile}"
-    account_id_result = subprocess.run(account_id_command)
-    account_id = account_id_result.stdout.strip()
+    account_id_result = subprocess.run(account_id_command, shell=True, capture_output=True, text=True)
+    
+    if account_id_result.returncode != 0:
+        raise Exception(f"Failed to get account ID: {account_id_result.stderr}")
+    
+    account_id = account_id_result.stdout.strip()  # .strip()을 사용하여 불필요한 공백 제거
     ecr_uri = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
 
     # setup.env 파일에 저장
@@ -66,28 +70,44 @@ if os.path.exists("setup.env"):
 else:
     create_setup()
 
-type = input("Enter TYPE. (create/delete): ")
+print("0. Exit this operation.")
+print("1. Build container image.")
+print("2. Deploy SSKAI infrastructure.")
+while True:
+    job = input("Enter the number.: ").strip()
+    if job == "0":
+        break
+    if job == "1":
+        print("You can build only with x86/64 architecture and Unix kernel (Mac/Linux).\n")
+        build_type = input("Enter the type of operation. (create/delete): ").strip().lower()
+        if build_type == "create":
+            # Container build
+            container_create_command = f"./container_build.sh {ecr_uri} {region} {awscli_profile}"
+            subprocess.run(container_create_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            break
+        elif build_type == "delete":
+            container_delete_command = f"./delete_container.sh {ecr_uri} {region} {awscli_profile}"
+            subprocess.run(container_delete_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            break
+        else:
+            print("Invalid operation type.")
+    elif job == "2":
+        terraform_type = input("Enter the type of operation. (create/delete): ").strip().lower()
+        if terraform_type == "create":
+            # Terraform init 명령 실행
+            terraform_init_command = f"terraform init"
+            subprocess.run(terraform_init_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # Terraform apply 명령 실행
+            terraform_apply_command = f"terraform apply --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
+            subprocess.run(terraform_apply_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            break
+        elif terraform_type == "delete":
+            # Terraform destroy 명령 실행
+            terraform_destroy_command = f"terraform destroy --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
+            subprocess.run(terraform_destroy_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            break
+        else:
+            print("Invalid operation type.")
+    else:
+            print("Invalid operation type.")
 
-# AWS ECR 로그인 명령 실행
-ecr_command = f"aws ecr get-login-password --region {region} --profile {awscli_profile} | docker login --username AWS --password-stdin {ecr_uri}"
-subprocess.run(ecr_command)
-
-if type == "create":
-    # Container build
-    container_command = f"./container_build.sh {region} {awscli_profile} {ecr_uri} {main_suffix}"   
-    subprocess.run(container_command)
-    # Terraform init 명령 실행
-    terraform_init_command = f"terraform init"
-    subprocess.run(terraform_init_command)
-    # Terraform apply 명령 실행
-    terraform_apply_command = f"terraform apply --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
-    subprocess.run(terraform_apply_command)
-elif type == "delete":
-    # Terraform destroy 명령 실행
-    terraform_destroy_command = f"terraform destroy --auto-approve --var main_suffix={main_suffix}"
-    subprocess.run(terraform_destroy_command)
-    # ecr repo 삭제
-    ecr_command = f""
-    subprocess.run(ecr_command)
-else:
-    print("Invalid TYPE.")
