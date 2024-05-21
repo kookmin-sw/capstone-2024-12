@@ -53,12 +53,12 @@ spec:
           value: {model_s3_url}
         resources:
             requests:
-                cpu: 3700m
-                memory: 30720M
+                cpu: 1700m
+                memory: 3800M
                 nvidia.com/gpu: 1
             limits:
-                cpu: 3700m
-                memory: 30720M
+                cpu: 1700m
+                memory: 3800M
                 nvidia.com/gpu: 1
       nodeSelector:
         karpenter.sh/nodepool: {node_pool_name}

@@ -80,6 +80,18 @@ resource "aws_iam_role_policy_attachment" "iam_policy" {
   policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "pricing_policy" {
+  count      = var.attach_pricing_policy ? 1 : 0
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "admin_policy" {
+  count      = var.attach_admin_policy ? 1 : 0
+  role       = aws_iam_role.lambda-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
 resource "aws_lambda_function" "lambda" {
   function_name = "${var.prefix}-aws-lambda-${random_id.random_string.hex}"
   package_type  = "Image"
