@@ -19,7 +19,9 @@ export const calculateDuration = (startTime, endTime) => {
   const paddedMinutes = minutes.toString().padStart(2, '0');
   const paddedSeconds = seconds.toString().padStart(2, '0');
 
-  return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+  return isNaN(paddedSeconds)
+    ? '00:00:00'
+    : `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
 };
 
 export const copyToClipBoard = (text) => {
@@ -38,4 +40,11 @@ export const filterObject = (obj, keys) => {
     }
     return result;
   }, {});
+};
+
+export const calculateCost = (startTime, endTime, cost) => {
+  console.log(startTime, endTime);
+  const elapsedTimeSeconds = Math.floor((endTime - startTime) / 1000);
+  console.log(Math.floor(elapsedTimeSeconds * cost * 10000));
+  return Math.floor(elapsedTimeSeconds * cost * 10000) / 10000;
 };
