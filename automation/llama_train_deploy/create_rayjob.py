@@ -428,12 +428,6 @@ data:
 
 
     def train_fn(config):
-        if train.get_context().get_world_rank() == 0:
-            update_data = {{
-                "status": "Running",
-            }}
-            requests.put(url=f"{DB_API_URL}/trains/{uid}", json=update_data)    
-    
         subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
         subprocess.run(['unzip', '-o', '/tmp/model.zip', '-d', '/tmp'], check=True)
 
@@ -596,7 +590,7 @@ data:
             print("Model saved to ", save_path)
 
             print("Starting to make model.zip")
-            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir="/tmp/model/result")
+            shutil.make_archive("/tmp/savedmodel", 'zip', root_dir=save_path)
 
             print("Zip complete. model.zip PATH = ", "/tmp/savedmodel.zip")
             
@@ -664,7 +658,7 @@ data:
             update_data = {{
             "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
             }}
-            requests.put(url=f"{DB_API_URL}/models/{model_uid}", json=update_data)
+            requests.put(url=f"{DB_API_URL}/models/{uid}", json=update_data)
             
     def unet_attn_processors_state_dict(unet) -> Dict[str, torch.tensor]:
         attn_processors = unet.attn_processors
@@ -777,7 +771,7 @@ def handler(event, context):
         data_s3_url = body.get("data_s3_url")
         epoch_num = body.get("epoch_num")
         data_class = body.get("data_class")
-        worker_num = 2
+        worker_num = body.get("worker_num")
 
         rayjob_filename = create_yaml(uid, 
                                       user_uid, 

@@ -5,15 +5,20 @@ variable "region" {
 
 variable "awscli_profile" {
   type    = string
-  default = "kkmcapstone"
+  default = ""
 }
 
 variable "eks_cluster_name" {
-  type = string
-  default = "kuberay"
+    type = string
+    default = ""
 }
 
 variable "db_api_url" {
-  type = string
-  default = "https://wpcwvjlvkl.execute-api.ap-northeast-2.amazonaws.com/sskai-api-dev"
+    type = string
+    default = "" 
+}
+
+variable "upload_s3_url" {
+    type = string
+    default = "" 
 }
