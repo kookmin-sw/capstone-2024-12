@@ -72,12 +72,6 @@ type = input("Enter TYPE. (create/delete): ")
 ecr_command = f"aws ecr get-login-password --region {region} --profile {awscli_profile} | docker login --username AWS --password-stdin {ecr_uri}"
 subprocess.run(ecr_command)
 
-print(region)
-print(awscli_profile)
-print(ecr_uri)
-print(main_suffix)
-print(ecr_command)
-
 if type == "create":
     # Container build
     container_command = f"./container_build.sh {region} {awscli_profile} {ecr_uri} {main_suffix}"   
