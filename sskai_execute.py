@@ -71,7 +71,7 @@ else:
     create_setup()
 
 print("0. Exit this operation.")
-print("1. Build container image.")
+print("1. Build and Deploy container image.")
 print("2. Deploy SSKAI infrastructure.")
 while True:
     job = input("Enter the number.: ").strip()
@@ -102,6 +102,9 @@ while True:
             subprocess.run(terraform_apply_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             break
         elif terraform_type == "delete":
+            # Terraform init 명령 실행
+            terraform_init_command = f"terraform init"
+            subprocess.run(terraform_init_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Terraform destroy 명령 실행
             terraform_destroy_command = f"terraform destroy --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
             subprocess.run(terraform_destroy_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
