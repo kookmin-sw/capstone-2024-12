@@ -117,3 +117,8 @@ variable "attach_pricing_policy" {
   type    = bool
   default = false
 }
+
+variable "attach_admin_policy" {
+  type    = bool
+  default = false
+}
