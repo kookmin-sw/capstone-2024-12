@@ -149,7 +149,7 @@ module "deploy_s3_web" {
   region = var.region
   db_api_url = module.deploy_db_api.api_endpoint_url
   diffusion_train_api_url = module.diffusion_train_deploy.diffusion_train_deploy_function_url
-  # llama_train_api_url =
+  llama_train_api_url = module.llama_train_deploy.llama_train_deploy_function_url
   inference_diffusion_api_url = module.diffusion_inference_deploy.diffusion_inference_deploy_function_url
   inference_llama_api_url = module.llama_inference_deploy.llama_inference_deploy_function_url
   streamlit_api_url = module.deploy_streamlit.streamlit_function_url
