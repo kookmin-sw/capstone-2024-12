@@ -575,7 +575,7 @@ export const manageStreamlit = async ({
     user,
     name,
     kind_of_job: 'inference',
-    job: `Streamlit ${action === 'create' ? 'Deployed' : 'Un-Deployed'}`
+    job: `Testbed ${action === 'create' ? 'Deployed' : 'Un-Deployed'}`
   });
 
   return res.status === 200;

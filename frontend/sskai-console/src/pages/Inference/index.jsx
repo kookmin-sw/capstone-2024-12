@@ -306,15 +306,15 @@ export default function Inference(props) {
         type: 'error',
         content:
           action === 'create'
-            ? 'Streamlit was not deployed. Please try again later.'
-            : 'Streamlit was not un-deployed. Please try again later.'
+            ? 'Testbed was not deployed. Please try again later.'
+            : 'Testbed was not un-deployed. Please try again later.'
       });
     messageApi.open({
       type: 'success',
       content:
         action === 'create'
-          ? 'Streamlit has been deployed successfully.'
-          : 'Streamlit has been un-deployed successfully.'
+          ? 'Testbed has been deployed successfully.'
+          : 'Testbed has been un-deployed successfully.'
     });
     await fetchData();
   };
@@ -385,7 +385,7 @@ export default function Inference(props) {
                       onClick: () => handleUpdateModalOpen()
                     },
                     {
-                      label: 'Deploy Streamlit',
+                      label: 'Deploy Testbed',
                       key: 'deploy',
                       onClick: () => handleStreamlit('create'),
                       disabled:
@@ -394,7 +394,7 @@ export default function Inference(props) {
                         selectedDetail[0]?.model_type === 'user'
                     },
                     {
-                      label: 'Un-deploy Streamlit',
+                      label: 'Un-deploy Testbed',
                       key: 'undeploy',
                       onClick: () => handleStreamlit('delete'),
                       disabled:
@@ -432,7 +432,7 @@ export default function Inference(props) {
                 }
               >
                 <LinkOutlined />
-                Streamlit
+                Testbed
               </Button>
               <Button type={'primary'} onClick={() => setIsModalOpen(true)}>
                 <PlusOutlined />
