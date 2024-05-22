@@ -166,6 +166,8 @@ metadata:
   name: ray-job-code-{uid}
 data:
   train-code.py: |
+    from urllib.parse import urlparse
+    import re
     import requests
     import shutil
     import tempfile

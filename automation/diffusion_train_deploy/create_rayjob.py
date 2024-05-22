@@ -164,6 +164,8 @@ metadata:
 data:
   train-code.py: |
     from typing import Dict
+    from urllib.parse import urlparse
+    import re
 
     import itertools
     from diffusers import (
