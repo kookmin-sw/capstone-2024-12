@@ -43,14 +43,9 @@ spec:
   runtimeEnvYAML: |
     pip:
       - requests==2.26.0
-      - pendulum==2.1.2
       - torch==2.3.0
-      - torchvision==0.18.0
       - datasets==2.19.1
-      - scikit-learn==1.4.2
-      - diffusers==0.19.3
-      - transformers==4.30.2
-      - accelerate==0.20.3
+      - transformers==4.31.0
       - bitsandbytes==0.40.2
       - accelerate==0.21.0
       - peft==0.4.0
@@ -121,7 +116,7 @@ spec:
             serviceAccount: kuberay-s3-sa
             serviceAccountName: kuberay-s3-sa
             nodeSelector:
-              karpenter.sh/nodepool: nodepool-2
+              karpenter.sh/nodepool: nodepool-3
             containers:
               - name: ray-worker
                 image: {CONTAINER_REGISTRY}/ray-gpu:latest
@@ -171,8 +166,13 @@ metadata:
   name: ray-job-code-{uid}
 data:
   train-code.py: |
+    import requests
+    import shutil
     import tempfile
     from os import path, makedirs
+    import os
+    import subprocess
+    import tempfile
     import torch
     from torch.utils.data import DataLoader
     from datasets import Dataset
@@ -299,8 +299,8 @@ data:
             for batch in dataloader:
                 optimizer.zero_grad()
                 inputs = tokenizer(batch['text'], return_tensors='pt', padding=True, truncation=True, max_length=1024)
-                inputs = {{k: v.cuda() for k, v in inputs.items()}}
-
+                inputs = {{k: v.cuda() for k, v in inputs.items() if k != 'token_type_ids'}}
+                
                 outputs = model(**inputs, labels=inputs["input_ids"])
                 loss = outputs.loss
                 loss.requires_grad_(True)
@@ -430,7 +430,7 @@ data:
             scaling_config=ScalingConfig(
                 use_gpu=True,
                 num_workers=config.get("num_workers"),
-                resources_per_worker={{"GPU":1, "CPU":8}},
+                resources_per_worker={{"GPU":1, "CPU":3}},
             ),
             run_config=RunConfig(
                 storage_path=f"s3://sskai-model-storage/{user_uid}/model/{model_uid}/",
@@ -476,7 +476,7 @@ def handler(event, context):
         model_uid = body.get("model_uid")
         model_s3_url = body.get("model_s3_url")
         data_s3_url = body.get("data_s3_url")
-        epoch_num = body.get("epoch_num")
+        epoch_num = body.get("epoch")
         worker_num = 2
 
         rayjob_filename = create_yaml(uid, 
