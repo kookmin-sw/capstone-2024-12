@@ -123,6 +123,7 @@ module "diffusion_train_deploy" {
   eks_cluster_name = module.kubernetes_cluster.cluster_name
   db_api_url = module.deploy_db_api.api_endpoint_url
   container_registry = var.container_registry
+  upload_s3_url = "${module.deploy_db_api.api_endpoint_url}/upload"
 
   depends_on = [ module.kubernetes_cluster, module.deploy_db_api ]
 }
@@ -134,6 +135,7 @@ module "llama_train_deploy" {
   eks_cluster_name = module.kubernetes_cluster.cluster_name
   db_api_url = module.deploy_db_api.api_endpoint_url
   container_registry = var.container_registry
+  upload_s3_url = "${module.deploy_db_api.api_endpoint_url}/upload"
 
   depends_on = [ module.kubernetes_cluster, module.deploy_db_api ]
 }
