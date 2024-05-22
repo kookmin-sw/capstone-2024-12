@@ -256,7 +256,7 @@ data:
       import torch.nn as nn
       model = ModelClass()
       if os.path.exists(f'{{model_dir}}/torch.pt'):
-        model.load_state_dict(torch.load("{{model_dir}}/torch.pt"))
+        model.load_state_dict(torch.load(f"{{model_dir}}/torch.pt"))
 
       optimizer = eval("optim."+optimstr+"(model.parameters(), lr=lr)")
       criterion = eval("nn."+lossstr+"()")
