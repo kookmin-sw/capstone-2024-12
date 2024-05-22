@@ -96,54 +96,46 @@ const LOG_TABLE_COLUMNS = [
 const EXAMPLE_SAVINGS = [
   {
     month: 'Jan',
-    savings: 94
+    savings: 53.76
   },
   {
     month: 'Feb',
-    savings: 38
+    savings: 54.12
   },
   {
     month: 'Mar',
-    savings: 68
+    savings: 52.88
   },
   {
     month: 'Apr',
-    savings: 75
+    savings: 55.34
   },
   {
     month: 'May',
-    savings: 89
-  },
-  {
-    month: 'Jun',
-    savings: 91
+    savings: 53.9
   }
 ];
 
 const EXAMPLE_COST = [
   {
     month: 'Jan',
-    cost: 935.42
+    cost: 93.54
   },
   {
     month: 'Feb',
-    cost: 854.71
+    cost: 85.471
   },
   {
     month: 'Mar',
-    cost: 905.16
+    cost: 90.516
   },
   {
     month: 'Apr',
-    cost: 836.29
+    cost: 83.629
   },
   {
     month: 'May',
-    cost: 921.83
-  },
-  {
-    month: 'Jun',
-    cost: 992.15
+    cost: 46.09
   }
 ];
 
@@ -169,8 +161,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     setSavingsPercent({
-      time: 95,
-      cost: 95
+      time: 54,
+      cost: 63
     });
     fetchData();
   }, []);
@@ -193,12 +185,12 @@ export default function Dashboard() {
           <ProgressWrapper>
             <SubTitle>Time Savings</SubTitle>
             <Progress percent={savingsPercent.time} />
-            <span>Total usage time: 99:99:99</span>
+            <span>Total usage time: 01:32:51</span>
           </ProgressWrapper>
           <ProgressWrapper>
             <SubTitle>Cost Savings</SubTitle>
             <Progress percent={savingsPercent.cost} />
-            <span>Total usage cost: $999.99</span>
+            <span>Total usage cost: $339.25</span>
           </ProgressWrapper>
           <ResponsiveContainer height={180}>
             <LineChart data={EXAMPLE_SAVINGS} margin={{ top: 30 }}>
@@ -230,8 +222,9 @@ export default function Dashboard() {
               />
             </Flex>
             <Cost>
-              $ <CountUp end={999} duration={1} />.
-              <CountUp end={99} duration={2} />
+              $ <CountUp end={46} duration={1} />
+              .0
+              <CountUp end={9} duration={2} />
             </Cost>
             <ResponsiveContainer height={280}>
               <BarChart data={EXAMPLE_COST} margin={{ top: 30 }}>

@@ -56,6 +56,7 @@ export default function Data() {
   const [messageApi, contextHolder] = message.useMessage();
   const [fetchLoading, setFetchLoading] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const uploadSettings = {
     maxCount: 1,
@@ -236,6 +237,13 @@ export default function Data() {
                 menu={{
                   items: [
                     {
+                      label: 'Download',
+                      key: 'download',
+                      disabled: selected.length >= 2,
+                      onClick: () =>
+                        window.open(selectedRows[0]?.s3_url, '_blank')
+                    },
+                    {
                       label: 'Edit',
                       key: 'update',
                       disabled: selected.length >= 2,
@@ -271,8 +279,9 @@ export default function Data() {
             dataSource={filterInput ? filteredData : data}
             rowSelection={{
               type: 'checkbox',
-              onChange: (selectedRowKeys) => {
+              onChange: (selectedRowKeys, selectedRows) => {
                 setSelected(selectedRowKeys);
+                setSelectedRows(selectedRows);
               }
             }}
           />

@@ -43,6 +43,7 @@ export const filterObject = (obj, keys) => {
 };
 
 export const calculateCost = (startTime, endTime, cost) => {
+  console.log(cost);
   const elapsedTimeSeconds = Math.floor((endTime - startTime) / 1000);
   return Math.floor(elapsedTimeSeconds * cost * 10000) / 10000;
 };

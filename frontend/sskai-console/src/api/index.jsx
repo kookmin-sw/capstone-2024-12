@@ -287,6 +287,58 @@ export const createDiffusionTrain = async (args) => {
   return model;
 };
 
+export const createLlamaTrain = async (args) => {
+  const res = await axios
+    .post(`${DB_API}/trains`, {
+      user: args.user,
+      name: args.name,
+      model: args.model.uid,
+      data: args.data.uid,
+      epoch_num: args.epochNum,
+      model_type: 'llama'
+    })
+    .catch((err) => err);
+
+  if (!res?.data) {
+    console.log(res);
+    return false;
+  }
+
+  const { train } = res.data;
+
+  const model = await createModel({
+    user: args.user,
+    name: args.name,
+    type: 'llama',
+    deploy_platform: 'nodepool-2'
+  }).catch((err) => err);
+
+  if (!model) return false;
+
+  await axios
+    .post(LLAMA_TRAIN_API, {
+      action: 'create',
+      uid: train.uid,
+      user_uid: args.user,
+      model_uid: model.uid,
+      model_s3_url: args.model.s3_url,
+      data_s3_url: args.data.s3_url,
+      epoch: args.epochNum
+    })
+    .catch((err) => err);
+
+  await createCost('train', train.uid, 'nodepool-2', 0);
+
+  await createLog({
+    user: args.user,
+    name: args.name,
+    kind_of_job: 'train',
+    job: 'Train Created'
+  });
+
+  return model;
+};
+
 export const deleteTrain = async (uid, type, status, user, name) => {
   if (status !== 'Completed') {
     if (type === 'diffusion') await stopDiffusionTrain(uid);

@@ -104,7 +104,8 @@ const INFERENCE_TABLE_COLUMNS = [
     title: 'Cost',
     key: 'cost',
     width: 100,
-    render: (row) => `$ ${calculateCost(row.created_at, Date.now(), row.cost)}`
+    render: (row) =>
+      `$ ${calculateCost(row.created_at, Date.now(), row.type === 'Serverless' ? row.cost / 6 : row.cost)}`
   },
   {
     title: (
