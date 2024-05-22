@@ -336,7 +336,7 @@ data:
                     break
                     
         if train.get_context().get_world_rank() == 0:
-            local_save_path = "/tmp/savedmodel/savedmodel"
+            local_save_path = "/tmp/savedmodel/model"
             if not path.exists(local_save_path):
                 makedirs(local_save_path)
             torch.save(
@@ -344,7 +344,7 @@ data:
                 path.join(local_save_path, "optimizer.pt"),
             )
             torch.save(
-                {{"epoch":epoch,"step":global_step}},
+                {{"epoch":{epoch_num},"step":global_step}},
                 path.join(local_save_path, "extra_state.pt"),
             )
             model.save_pretrained(local_save_path)
@@ -381,37 +381,37 @@ data:
                 part_list = []
                 part_number = 1
 
-            with open('/tmp/savedmodel.zip', 'rb') as file:
-                while True:
-                    data = file.read(int(chunk_size))
-                    if not data:
-                        break
-                    generate_url_json = {{
-                        "upload_type": "model",
-                        "user_uid": '{user_uid}',
-                        "uid": '{model_uid}',
-                        "filename": "model.zip",
-                        "UploadId": start_multipart['UploadId'],
-                        "PartNumber": str(part_number)
-                    }}
-                    generate_put_url = requests.post(url=f"{UPLOAD_S3_API_URL}/url", json=generate_url_json).text
-                    response = requests.put(url=generate_put_url.strip('"'), data=data)
-                    part_object = {{
-                        "ETag": response.headers.get('etag'),
-                        "PartNumber": str(part_number)
-                    }}
-                    part_list.append(part_object)
-                    part_number += 1
+                with open('/tmp/savedmodel.zip', 'rb') as file:
+                    while True:
+                        data = file.read(int(chunk_size))
+                        if not data:
+                            break
+                        generate_url_json = {{
+                            "upload_type": "model",
+                            "user_uid": '{user_uid}',
+                            "uid": '{model_uid}',
+                            "filename": "model.zip",
+                            "UploadId": start_multipart['UploadId'],
+                            "PartNumber": str(part_number)
+                        }}
+                        generate_put_url = requests.post(url=f"{UPLOAD_S3_API_URL}/url", json=generate_url_json).text
+                        response = requests.put(url=generate_put_url.strip('"'), data=data)
+                        part_object = {{
+                            "ETag": response.headers.get('etag'),
+                            "PartNumber": str(part_number)
+                        }}
+                        part_list.append(part_object)
+                        part_number += 1
 
-                complete_url_json = {{
-                "upload_type": "model",
-                "user_uid": '{user_uid}',
-                "uid": '{model_uid}',
-                "filename": "model.zip",
-                "UploadId": start_multipart['UploadId'],
-                "Parts": part_list
-                }}
-                complete_url = requests.post(url=f"{UPLOAD_S3_API_URL}/complete", json=complete_url_json)
+                    complete_url_json = {{
+                    "upload_type": "model",
+                    "user_uid": '{user_uid}',
+                    "uid": '{model_uid}',
+                    "filename": "model.zip",
+                    "UploadId": start_multipart['UploadId'],
+                    "Parts": part_list
+                    }}
+                    complete_url = requests.post(url=f"{UPLOAD_S3_API_URL}/complete", json=complete_url_json)
 
             update_data = {{
             "status": "Completed"
@@ -444,7 +444,7 @@ data:
                 resources_per_worker={{"GPU":1, "CPU":3}},
             ),
             run_config=RunConfig(
-                storage_path=f"s3://{{model-bucket-name}}/{user_uid}/model/{model_uid}/",
+                storage_path=f"s3://{{model_bucket_name}}/{user_uid}/model/{model_uid}/",
                 name="{model_uid}",
                 checkpoint_config=CheckpointConfig(num_to_keep=2,),
                 failure_config=FailureConfig(max_failures=-1),
