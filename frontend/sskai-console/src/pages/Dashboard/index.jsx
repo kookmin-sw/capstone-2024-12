@@ -1,6 +1,6 @@
 import { PageLayout } from '../styles.jsx';
 import styled from 'styled-components';
-import { Flex, Progress, Table, Tag } from 'antd';
+import { Flex, Progress, Table, Tag, Tooltip as AntTooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { Section } from '../../components/Section/index.jsx';
@@ -11,9 +11,9 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
-  YAxis
+  YAxis,
+  Tooltip
 } from 'recharts';
 import CountUp from 'react-countup';
 import { formatTimestamp } from '../../utils/index.jsx';
@@ -177,9 +177,16 @@ export default function Dashboard() {
               justify={'space-between'}
             >
               <Title>Savings</Title>
-              <QuestionCircleOutlined
-                style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
-              />
+              <AntTooltip
+                placement={'leftTop'}
+                title={
+                  'Savings represents the time and cost saved so far by using our service.'
+                }
+              >
+                <QuestionCircleOutlined
+                  style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
+                />
+              </AntTooltip>
             </Flex>
           </Flex>
           <ProgressWrapper>
@@ -217,9 +224,16 @@ export default function Dashboard() {
               style={{ marginBottom: '8px' }}
             >
               <SubTitle>Month-to-date cost</SubTitle>
-              <QuestionCircleOutlined
-                style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
-              />
+              <AntTooltip
+                placement={'right'}
+                title={
+                  "Month-to-date costs shows how much you're estimated to have incurred in charges so far this month and compares it to this time last month."
+                }
+              >
+                <QuestionCircleOutlined
+                  style={{ fontSize: '16px', color: 'rgba(0, 0, 0, 0.45)' }}
+                />
+              </AntTooltip>
             </Flex>
             <Cost>
               $ <CountUp end={46} duration={1} />

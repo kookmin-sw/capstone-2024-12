@@ -66,6 +66,12 @@ export default function Header(props) {
             size={'small'}
             type={'text'}
             icon={<QuestionCircleOutlined className={'outline-white'} />}
+            onClick={() =>
+              window.open(
+                'https://github.com/kookmin-sw/capstone-2024-12',
+                '_blank'
+              )
+            }
           />
           <Button
             size={'small'}
