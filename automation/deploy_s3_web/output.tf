@@ -5,7 +5,3 @@ output "s3_website_url" {
 output "website_bucket_name" {
   value = aws_s3_bucket.sskai-s3-web-bucket.bucket
 }
-
-output "model_bucket_name" {
-  value = aws_s3_bucket.sskai-s3-model-bucket.bucket
-}

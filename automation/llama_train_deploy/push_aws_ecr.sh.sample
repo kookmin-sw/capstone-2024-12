@@ -3,5 +3,5 @@
 ECR_URI=""
 
 aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $ECR_URI
-docker build -t $ECR_URI/train-deploy:latest .
-docker push $ECR_URI/train-deploy:latest
+docker build -t $ECR_URI/llama-train-deploy:latest .
+docker push $ECR_URI/llama-train-deploy:latest

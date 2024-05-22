@@ -54,11 +54,11 @@ spec:
         resources:
             requests:
                 cpu: 1700m
-                memory: 3800M
+                memory: 7700M
                 nvidia.com/gpu: 1
             limits:
                 cpu: 1700m
-                memory: 3800M
+                memory: 7700M
                 nvidia.com/gpu: 1
       nodeSelector:
         karpenter.sh/nodepool: {node_pool_name}

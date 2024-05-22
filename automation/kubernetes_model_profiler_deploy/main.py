@@ -4,6 +4,7 @@ import json
 import subprocess
 
 eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
+REGION = os.environ.get('REGION')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
@@ -12,7 +13,7 @@ kubeconfig = '/tmp/kubeconfig'
 result_get_kubeconfig = subprocess.run([
     "aws", "eks", "update-kubeconfig",
     "--name", eks_cluster_name,
-    "--region", "ap-northeast-2",
+    "--region", REGION,
     "--kubeconfig", kubeconfig
 ])
 
@@ -66,16 +67,16 @@ def apply_job_yaml(job_filename):
     return result_create_job
 
 def handler(event, context):
-    body = json.loads(event['body'])
+    body = json.loads(event.get("body", "{}"))
     try:
-        uid = body['uid']
+        uid = body.get('uid').lower()
     except Exception as e:
         return {
             'statusCode': 404,
             'message': "error at get uid from requestbody",
             'errorMessage': e
         }
-    model_api_url = f"{db_api_url}models/"
+    model_api_url = f"{db_api_url}/models/"
     model_api_url = f"{model_api_url}{uid}"
     response = requests.get(model_api_url)
     if response.status_code != 200:

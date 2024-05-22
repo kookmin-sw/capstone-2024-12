@@ -91,7 +91,7 @@ spec:
 if __name__ == "__main__":
     region = 'ap-northeast-2'
     ssm = boto3.client('ssm', region_name=region)
-    param_lambda_url = ssm.get_parameter(Name="recocommend_family_lambda_function_url", WithDecryption=False)
+    param_lambda_url = ssm.get_parameter(Name="recommend_family_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']
 
     family_dict = get_instance_family(recommend_lambda_url, region)

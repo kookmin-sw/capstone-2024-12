@@ -7,17 +7,18 @@ import zipfile
 
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
+REGION = os.environ.get('REGION')
+ECR_URI = os.environ.get('ECR_URI')
 
 kubectl = '/var/task/kubectl'
 kubeconfig = '/tmp/kubeconfig'
 eks_cluster_name = os.environ.get('EKS_CLUSTER_NAME')
-region = os.environ.get('REGION')
 
 # get eks cluster kubernetes configuration by aws cli
 result_get_kubeconfig = subprocess.run([
     "aws", "eks", "update-kubeconfig",
     "--name", eks_cluster_name,
-    "--region", region,
+    "--region", REGION,
     "--kubeconfig", kubeconfig
 ])
 if result_get_kubeconfig.returncode != 0:
@@ -112,7 +113,7 @@ spec:
 
           containers:
             - name: ray-head
-              image: rayproject/ray:2.12.0
+              image: {ECR_URI}/ray-cpu:latest
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -122,12 +123,12 @@ spec:
                   name: client
               resources:
                 limits:
-                  cpu: "800m"
-                  memory: "3072M"
+                  cpu: "3500m"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
                 requests:
-                  cpu: "800m"
-                  memory: "3072M"
+                  cpu: "3500m"
+                  memory: "12288M"
                   ephemeral-storage: "50Gi"
               volumeMounts:
                 - name: train-code
@@ -149,10 +150,10 @@ spec:
             serviceAccount: kuberay-s3-sa
             serviceAccountName: kuberay-s3-sa
             nodeSelector:
-              karpenter.sh/nodepool: nodepool-1
+              karpenter.sh/nodepool: nodepool-2
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
-                image: rayproject/ray:2.12.0-gpu
+                image: {ECR_URI}/ray-gpu:latest
                 lifecycle:
                   preStop:
                     exec:
@@ -177,7 +178,7 @@ spec:
         karpenter.sh/nodepool: ray-ondemand-nodepool
       containers:
         - name: ray-job-submitter
-          image: rayproject/ray:2.12.0
+          image: {ECR_URI}/ray-cpu:latest
           resources:
             limits:
               cpu: "800m"
@@ -197,10 +198,13 @@ metadata:
 data:
   train-code.py: |
     import sys
+    import re
+    from urllib.parse import urlparse
     import os
     import tempfile
     import ray.train
     import ray.train.torch
+    import subprocess
     import requests
     import shutil
     import zipfile
@@ -231,26 +235,6 @@ data:
     USER_UID = "{user_uid}"
     MODEL_UID = "{model_uid}"
 
-    #### 데이터 다운로드
-    def download_and_unzip(s3_url, extract_path):
-      download = requests.get(s3_url)
-      filename = s3_url.split('/')[-1]
-      temp_path = os.path.join('/tmp/tmp', filename)
-
-      os.makedirs('/tmp/tmp', exist_ok=True)
-      with open(temp_path, 'wb') as file:
-        file.write(download.content)
-
-      if os.path.exists(extract_path):
-        shutil.rmtree(extract_path)
-      os.makedirs(extract_path)
-
-      with zipfile.ZipFile(temp_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_path)
-      
-      os.remove(temp_path)
-      shutil.rmtree('/tmp/tmp')
-
     def download_data_loader(s3_url):
       download = requests.get(s3_url)
 
@@ -267,10 +251,12 @@ data:
       return x, y
 
     #### 학습 설정 함수
-    def getTrainInfo(ModelClass, optimstr, lossstr, lr):
+    def getTrainInfo(ModelClass, optimstr, lossstr, lr, model_dir):
       import torch.optim as optim
       import torch.nn as nn
       model = ModelClass()
+      if os.path.exists(f'{{model_dir}}/torch.pt'):
+        model.load_state_dict(torch.load("{{model_dir}}/torch.pt"))
 
       optimizer = eval("optim."+optimstr+"(model.parameters(), lr=lr)")
       criterion = eval("nn."+lossstr+"()")
@@ -278,9 +264,11 @@ data:
 
     #### 학습 함수
     def train_func(config):
-      download_and_unzip(MODEL_S3_URL, "model")
+      subprocess.run(['wget', '-q', '-O', '/tmp/model.zip', '{model_s3_url}'], check=True)
+      subprocess.run(['unzip', '/tmp/model.zip', '-d', 'model'], check=True)
+      subprocess.run(['wget', '-q', '-O', '/tmp/data.zip', '{data_s3_url}'], check=True)
+      subprocess.run(['unzip', '/tmp/data.zip', '-d', '/tmp/data'], check=True)
       model_dir = os.getcwd() + "/model"
-      download_and_unzip(DATA_S3_URL, "/tmp/data")
       sys.path.append(model_dir)
       sys.path.append("/tmp/data")
       
@@ -294,8 +282,6 @@ data:
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
       
-      
-
       # 데이터 로딩
       x, y = load_data(sskai_load_data)
       if torch.cuda.is_available():
@@ -314,7 +300,7 @@ data:
       test_loader = prepare_data_loader(test_loader)
 
       # 모델, 손실 함수 및 옵티마이저 설정
-      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"])
+      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"], model_dir)
       model = ray.train.torch.prepare_model(model)
       if torch.cuda.is_available():
         model = model.cuda()
@@ -328,7 +314,7 @@ data:
           model_state_dict = torch.load(
             os.path.join(checkpoint_dir, "model.pt")
           )
-          model.module.load_state_dict(model_state_dict)
+          model.load_state_dict(model_state_dict)
 
           optimizer_state_dict = torch.load(
             os.path.join(checkpoint_dir, "optimizer.pt")
@@ -371,7 +357,7 @@ data:
           checkpoint = None
           if train.get_context().get_world_rank() == 0:
             torch.save(
-              model.module.state_dict(),  # NOTE: Unwrap the model.
+              model.state_dict(),  # NOTE: Unwrap the model.
               os.path.join(temp_checkpoint_dir, f"model.pt"),
             )
             torch.save(
@@ -392,8 +378,8 @@ data:
           shutil.rmtree('/tmp/save_model')
         os.makedirs('/tmp/save_model')
         shutil.copy(f'{{model_dir}}/model.py', '/tmp/save_model/model.py')
-        model.module.to("cpu")
-        torch.save(model.module.state_dict(), '/tmp/save_model/torch.pt')
+        model.to("cpu")
+        torch.save(model.state_dict(), '/tmp/save_model/torch.pt')
         shutil.make_archive('/tmp/model', 'zip', root_dir='/tmp/save_model')
         if os.path.getsize("/tmp/model.zip")/(1024**3) < 1.5:
           with open('/tmp/model.zip', 'rb') as file:
@@ -454,21 +440,26 @@ data:
         }}
         requests.put(url=f"{{DB_API_URL}}/trains/{{TRAIN_UID}}", json=update_data)
         
+        parse_model_url = urlparse(MODEL_S3_URL)
+        match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+        model_bucket_name = match_url.group()
+
         update_data = {{
-          "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
+          "s3_url": f"https://{{model_bucket_name}}.s3.{REGION}.amazonaws.com/{{USER_UID}}/model/{{MODEL_UID}}/model.zip"
         }}
         requests.put(url=f"{{DB_API_URL}}/models/{{MODEL_UID}}", json=update_data)
-        
-      return model.state_dict()
 
     if __name__ == "__main__":
       ray.init()
       print("init done")
+      parse_model_url = urlparse(MODEL_S3_URL)
+      match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+      model_bucket_name = match_url.group()
       trainer = TorchTrainer(
           train_loop_per_worker=train_func,
           train_loop_config={{"lr": LR_VALUE, "epochs": EPOCH_NUM, "batch_size": BATCH_SIZE}},
           scaling_config=train.ScalingConfig(num_workers=WORKER_NUM, use_gpu=True),
-          run_config=train.RunConfig(storage_path=f"s3://sskai-model-storage/{{USER_UID}}/model/{{MODEL_UID}}/",
+          run_config=train.RunConfig(storage_path=f"s3://{{model_bucket_name}}/{{USER_UID}}/model/{{MODEL_UID}}/",
                                     name=f"{{MODEL_UID}}",
                                     checkpoint_config=CheckpointConfig(num_to_keep=2,),
                                     failure_config=FailureConfig(max_failures=-1),

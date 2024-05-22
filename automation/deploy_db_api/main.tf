@@ -1,3 +1,9 @@
+provider "random" {}
+
+resource "random_id" "random_string" {
+  byte_length = 8
+}
+
 resource "null_resource" "download_lambda_codes" {
     count = length(var.api_list)
   provisioner "local-exec" {
@@ -10,7 +16,7 @@ EOT
 }
 
 resource "aws_iam_role" "lambda_api_role" {
-  name = "${var.region}-sskai-db-api-lambda-role"
+  name = "${var.region}-sskai-db-api-lambda-role-${random_id.random_string.hex}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -49,4 +55,9 @@ resource "aws_iam_role_policy_attachment" "s3_policy" {
 resource "aws_iam_role_policy_attachment" "dynamodb_policy" {
   role       = aws_iam_role.lambda_api_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.lambda_api_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }

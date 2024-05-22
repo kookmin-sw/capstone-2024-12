@@ -5,6 +5,7 @@ import requests
 
 db_api_url = os.getenv("DB_API_URL")
 container_registry = os.getenv("ECR_URI")
+REGION = os.getenv("REGION")
 
 # Terraform 바이너리의 전체 경로 설정
 terraform_binary = '/var/task/terraform'
@@ -26,30 +27,17 @@ def create_backend(user_uid, endpoint_uid):
     backend "s3" {{
         bucket = "{bucket_name}"
         key = "{user_uid}/{endpoint_uid}/terraform.state"
-        region = "ap-northeast-2"
+        region = "{REGION}"
         encrypt = true
     }}
     }}
+
+
     """
 
     # 파일 저장
     with open("backend.tf", "w") as f:
         f.write(terraform_backend)
-
-def create_var_json(prefix, container_registry, ram_size, model_s3_url):
-    terraform_vars = {
-        "prefix": prefix,
-        "container_registry": container_registry,
-        "lambda_ram_size": ram_size,
-        "model_s3_url": model_s3_url
-    }
-    
-    var_file_path = f"/tmp/{prefix}.tfvars.json"
-    
-    with open(var_file_path, 'w') as json_file:
-        json.dump(terraform_vars, json_file, indent=4)
-    
-    return var_file_path
 
 def handler(event, context):
     body = json.loads(event.get("body", "{}"))
@@ -62,14 +50,12 @@ def handler(event, context):
     # backend 생성
     create_backend(user_uid, endpoint_uid)
 
-    var_file_path = create_var_json(endpoint_uid, container_registry, ram_size, model_s3_url)
-
     # Terraform init
     subprocess.run([terraform_binary, "init", "-reconfigure"])    
     
     # Terraform apply
     if action == 'create':
-        subprocess.run([terraform_binary, "apply", "--var", f"prefix={endpoint_uid}", "--var", f"container_registry={container_registry}", "--var", f"lambda_ram_size={ram_size}", "--var", f"model_s3_url={model_s3_url}", "-auto-approve"])
+        subprocess.run([terraform_binary, "apply", "--var", f"prefix={endpoint_uid}", "--var", f"container_registry={container_registry}", "--var", f"lambda_ram_size={ram_size}", "--var", f"model_s3_url={model_s3_url}", "--var", f"region={REGION}", "-auto-approve"])
 
         # Terraform 출력값 가져오기
         output = subprocess.check_output([terraform_binary, "output", "-json"])

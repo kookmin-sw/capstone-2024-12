@@ -1,7 +1,7 @@
 module "deploy_streamlit" {
   source                     = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix                     = "deploy_streamlit"
-  container_registry         = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+  container_registry         = var.container_registry
   container_repository       = "deploy-streamlit"
   container_image_tag        = "latest"
   lambda_ram_size            = 256
@@ -18,10 +18,10 @@ output "streamlit_function_url" {
   value = module.deploy_streamlit.function_url
 }
 
-provider "aws" {
-  region  = var.region
-  profile = var.awscli_profile
-}
+# provider "aws" {
+#   region  = var.region
+#   profile = var.awscli_profile
+# }
 
 terraform {
   backend "s3" {

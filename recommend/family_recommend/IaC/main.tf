@@ -27,13 +27,15 @@ module "recommend_family" {
   lambda_ram_size = 256
   lambda_timeout = 240
   attach_ec2_policy = true
+  attach_pricing_policy = true
+  attach_admin_policy = true
 }
 
 resource "aws_ssm_parameter" "param_recommend_family_lambda_function_url" {
   name = "recommend_family_lambda_function_url"
   type = "String"
   value = module.recommend_family.function_url
-
+  overwrite = true
   depends_on = [ module.recommend_family ]
 }
 
@@ -44,7 +46,7 @@ variable "nodepool_numbers" {
 
 resource "aws_ssm_parameter" "nodepool_ondemand_price" {
   for_each = toset(var.nodepool_numbers)
-  
+  overwrite = true
   name  = "nodepool_${each.value}_ondemand_price"
   type  = "String"
   value = "9999"
@@ -52,7 +54,7 @@ resource "aws_ssm_parameter" "nodepool_ondemand_price" {
 
 resource "aws_ssm_parameter" "nodepool_spot_price" {
   for_each = toset(var.nodepool_numbers)
-  
+  overwrite = true
   name  = "nodepool_${each.value}_spot_price"
   type  = "String"
   value = "9999"

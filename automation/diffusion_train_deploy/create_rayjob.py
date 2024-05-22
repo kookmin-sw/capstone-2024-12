@@ -7,6 +7,7 @@ import zipfile
 
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
+REGION = os.environ.get('REGION')
 CONTAINER_REGISTRY = os.environ.get('ECR_URI')
 
 kubectl = '/var/task/kubectl'
@@ -164,6 +165,8 @@ metadata:
 data:
   train-code.py: |
     from typing import Dict
+    from urllib.parse import urlparse
+    import re
 
     import itertools
     from diffusers import (
@@ -661,8 +664,12 @@ data:
             }}
             requests.put(url=f"{DB_API_URL}/trains/{uid}", json=update_data)
             
+            parse_model_url = urlparse('{model_s3_url}')
+            match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+            model_bucket_name = match_url.group()
+
             update_data = {{
-            "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
+            "s3_url": f"https://{{model_bucket_name}}.s3.{REGION}.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
             }}
             requests.put(url=f"{DB_API_URL}/models/{model_uid}", json=update_data)
             
@@ -720,6 +727,10 @@ data:
 
         print(f"Loaded training dataset (size: {{train_dataset.count()}})")
         
+        parse_model_url = urlparse('{model_s3_url}')
+        match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+        model_bucket_name = match_url.group()
+
         trainer = TorchTrainer(
             train_fn,
             train_loop_config=train_config,
@@ -731,7 +742,7 @@ data:
             datasets={{
                 "train": train_dataset,
             }},
-            run_config=train.RunConfig(storage_path=f"s3://sskai-model-storage/{user_uid}/model/{model_uid}/",
+            run_config=train.RunConfig(storage_path=f"s3://{{model_bucket_name}}/{user_uid}/model/{model_uid}/",
                                         name="{model_uid}",
                                         checkpoint_config=CheckpointConfig(num_to_keep=2,),
                                         failure_config=FailureConfig(max_failures=-1),

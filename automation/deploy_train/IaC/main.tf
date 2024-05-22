@@ -1,7 +1,7 @@
 module "train_deploy" {
   source                     = "github.com/kookmin-sw/capstone-2024-12//IaC/serverless_api_template"
   prefix                     = "train_deploy"
-  container_registry         = "694448341573.dkr.ecr.ap-northeast-2.amazonaws.com"
+  container_registry         = var.container_registry
   container_repository       = "train-deploy"
   container_image_tag        = "latest"
   lambda_ram_size            = 256
@@ -19,10 +19,10 @@ output "train_deploy_function_url" {
   value = module.train_deploy.function_url
 }
 
-provider "aws" {
-  region  = var.region
-  profile = var.awscli_profile
-}
+# provider "aws" {
+#   region  = var.region
+#   profile = var.awscli_profile
+# }
 
 terraform {
   backend "s3" {

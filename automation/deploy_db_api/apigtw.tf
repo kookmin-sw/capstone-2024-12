@@ -1,5 +1,5 @@
 resource "aws_apigatewayv2_api" "sskai_api" {
-  name = "SSKAI REST-API"
+  name = "SSKAI REST-API-${random_id.random_string.hex}"
   protocol_type = "HTTP"
   cors_configuration {
     allow_methods = ["*"]
@@ -25,13 +25,13 @@ resource "aws_lambda_permission" "sskai_ddb_inferences_api_permission" {
   source_arn = "${aws_apigatewayv2_api.sskai_api.execution_arn}/*/*"
 }
 
-# resource "aws_lambda_permission" "sskai_ddb_logs_api_permission" {
-#   statement_id = "AllowAPIGatewayInvoke"
-#   action = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.sskai-ddb-logs-api.function_name
-#   principal = "apigateway.amazonaws.com"
-#   source_arn = "${aws_apigatewayv2_api.sskai_api.execution_arn}/*/*"
-# }
+resource "aws_lambda_permission" "sskai_ddb_logs_api_permission" {
+  statement_id = "AllowAPIGatewayInvoke"
+  action = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sskai-ddb-logs-api.function_name
+  principal = "apigateway.amazonaws.com"
+  source_arn = "${aws_apigatewayv2_api.sskai_api.execution_arn}/*/*"
+}
 
 resource "aws_lambda_permission" "sskai_ddb_models_api_permission" {
   statement_id = "AllowAPIGatewayInvoke"
@@ -73,6 +73,14 @@ resource "aws_lambda_permission" "sskai_s3_api_permission" {
   source_arn = "${aws_apigatewayv2_api.sskai_api.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "sskai_cost_permission" {
+  statement_id = "AllowAPIGatewayInvoke"
+  action = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sskai-cost-calculate-api.function_name
+  principal = "apigateway.amazonaws.com"
+  source_arn = "${aws_apigatewayv2_api.sskai_api.execution_arn}/*/*"
+}
+
 ### integrations
 resource "aws_apigatewayv2_integration" "data_integration" {
     api_id = aws_apigatewayv2_api.sskai_api.id
@@ -90,13 +98,13 @@ resource "aws_apigatewayv2_integration" "inferences_integration" {
     payload_format_version = "2.0"
 }
 
-# resource "aws_apigatewayv2_integration" "logs_integration" {
-#     api_id = aws_apigatewayv2_api.sskai_api.id
-#     integration_type = "AWS_PROXY"
-#     integration_method = "POST"
-#     integration_uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.sskai-ddb-logs-api.arn}/invocations"
-#     payload_format_version = "2.0"
-# }
+resource "aws_apigatewayv2_integration" "logs_integration" {
+    api_id = aws_apigatewayv2_api.sskai_api.id
+    integration_type = "AWS_PROXY"
+    integration_method = "POST"
+    integration_uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.sskai-ddb-logs-api.arn}/invocations"
+    payload_format_version = "2.0"
+}
 
 resource "aws_apigatewayv2_integration" "models_integration" {
     api_id = aws_apigatewayv2_api.sskai_api.id
@@ -135,6 +143,14 @@ resource "aws_apigatewayv2_integration" "s3_integration" {
     integration_type = "AWS_PROXY"
     integration_method = "POST"
     integration_uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.sskai-s3-presigned-url-api.arn}/invocations"
+    payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "cost_integration" {
+    api_id = aws_apigatewayv2_api.sskai_api.id
+    integration_type = "AWS_PROXY"
+    integration_method = "POST"
+    integration_uri = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.sskai-cost-calculate-api.arn}/invocations"
     payload_format_version = "2.0"
 }
 
@@ -201,36 +217,18 @@ resource "aws_apigatewayv2_route" "inferences_delete_id_route" {
   target = "integrations/${aws_apigatewayv2_integration.inferences_integration.id}"
 }
 
-# # /logs
-# resource "aws_apigatewayv2_route" "logs_post_route" {
-#   api_id = aws_apigatewayv2_api.sskai_api.id
-#   route_key = "POST /logs"
-#   target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
-# }
+# /logs
+resource "aws_apigatewayv2_route" "logs_post_route" {
+  api_id = aws_apigatewayv2_api.sskai_api.id
+  route_key = "POST /logs"
+  target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
+}
 
-# resource "aws_apigatewayv2_route" "logs_get_route" {
-#   api_id = aws_apigatewayv2_api.sskai_api.id
-#   route_key = "GET /logs"
-#   target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
-# }
-
-# resource "aws_apigatewayv2_route" "logs_put_id_route" {
-#   api_id = aws_apigatewayv2_api.sskai_api.id
-#   route_key = "PUT /logs/{id}"
-#   target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
-# }
-
-# resource "aws_apigatewayv2_route" "logs_get_id_route" {
-#   api_id = aws_apigatewayv2_api.sskai_api.id
-#   route_key = "GET /logs/{id}"
-#   target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
-# }
-
-# resource "aws_apigatewayv2_route" "logs_delete_id_route" {
-#   api_id = aws_apigatewayv2_api.sskai_api.id
-#   route_key = "DELETE /logs/{id}"
-#   target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
-# }
+resource "aws_apigatewayv2_route" "logs_get_route" {
+  api_id = aws_apigatewayv2_api.sskai_api.id
+  route_key = "GET /logs"
+  target = "integrations/${aws_apigatewayv2_integration.logs_integration.id}"
+}
 
 # /models
 resource "aws_apigatewayv2_route" "models_post_route" {
@@ -350,8 +348,17 @@ resource "aws_apigatewayv2_route" "upload_complete_route" {
   target = "integrations/${aws_apigatewayv2_integration.s3_multipart_integration.id}"
 }
 
+# /cost
+resource "aws_apigatewayv2_route" "cost_route" {
+  api_id = aws_apigatewayv2_api.sskai_api.id
+  route_key = "POST /cost"
+  target = "integrations/${aws_apigatewayv2_integration.cost_integration.id}"
+}
+
+### stage deploy
 resource "aws_apigatewayv2_stage" "apigtw_stage" {
   api_id = aws_apigatewayv2_api.sskai_api.id
   name = "sskai-api-dev"
   auto_deploy = true
 }
+

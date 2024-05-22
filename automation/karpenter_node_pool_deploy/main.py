@@ -27,7 +27,7 @@ def apply_nodepool_yaml(eks_cluster_name, region_name, nodepool_name, nodeclass_
 
 def handler(event, context):
     ssm = boto3.client('ssm', region_name=eks_region)
-    param_lambda_url = ssm.get_parameter(Name="recocommend_family_lambda_function_url", WithDecryption=False)
+    param_lambda_url = ssm.get_parameter(Name="recommend_family_lambda_function_url", WithDecryption=False)
     recommend_lambda_url = param_lambda_url['Parameter']['Value']
 
     region = eks_region
@@ -54,7 +54,7 @@ def handler(event, context):
     capacity_type = 'on-demand'
     result = apply_nodepool_yaml(eks_cluster_name, region, profiler_nodepool_name, profiler_nodeclass_name, profiler_nodepool_family_list, capacity_type)
 
-    ray_nodepool_name = 'ray-ondemand-pool'
+    ray_nodepool_name = 'ray-ondemand-nodepool'
     ray_nodepool_family_list = [
         't3.medium', 't3.large', 't3.xlarge', 't3.2xlarge',
         'm4.large', 'm4.xlarge', 'm4.2xlarge', 'm4.4xlarge',
