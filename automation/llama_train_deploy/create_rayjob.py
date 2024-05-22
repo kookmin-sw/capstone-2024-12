@@ -7,6 +7,7 @@ import zipfile
 
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
+REGION = os.environ.get('REGION')
 CONTAINER_REGISTRY = os.environ.get('ECR_URI')
 
 kubectl = '/var/task/kubectl'
@@ -422,7 +423,7 @@ data:
             model_bucket_name = match_url.group()
 
             update_data = {{
-            "s3_url": f"https://{{model_bucket_name}}.s3.ap-northeast-2.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
+            "s3_url": f"https://{{model_bucket_name}}.s3.{REGION}.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
             }}
             requests.put(url=f"{DB_API_URL}/models/{model_uid}", json=update_data)
 
