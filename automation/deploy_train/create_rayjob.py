@@ -300,7 +300,7 @@ data:
       test_loader = prepare_data_loader(test_loader)
 
       # 모델, 손실 함수 및 옵티마이저 설정
-      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"], model_dir)
+      model, criterion, optimizer = getTrainInfo(ModelClass, optimstr=OPTIMIZER_STR, lossstr=LOSS_STR, lr=config["lr"], model_dir=model_dir)
       model = ray.train.torch.prepare_model(model)
       if torch.cuda.is_available():
         model = model.cuda()
