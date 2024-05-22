@@ -13,6 +13,7 @@ import { ErrorMessage, InputTitle, Title } from '../styles.jsx';
 import { InboxOutlined } from '@ant-design/icons';
 import {
   createDiffusionTrain,
+  createLlamaTrain,
   createUserTrain,
   getData,
   getModels
@@ -220,6 +221,13 @@ export default function TrainCreateModal(props) {
     ]);
     setLoading(true);
     if (selectedModel?.type === 'llama') {
+      newModel = await createLlamaTrain({
+        user,
+        name: trainName,
+        model,
+        data,
+        epochNum
+      });
     } else if (selectedModel?.type === 'diffusion')
       newModel = await createDiffusionTrain({
         user,
@@ -237,6 +245,10 @@ export default function TrainCreateModal(props) {
         content:
           'Sorry, an error occurred while training the your model. Please try again in a few minutes.'
       });
+    messageApi.open({
+      type: 'success',
+      content: 'The train has been started successfully.'
+    });
     handleCancel();
   };
 

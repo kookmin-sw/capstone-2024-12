@@ -62,6 +62,7 @@ export default function Model(props) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const fetchData = async () => {
     setFetchLoading(true);
@@ -141,6 +142,13 @@ export default function Model(props) {
                 menu={{
                   items: [
                     {
+                      label: 'Download',
+                      key: 'download',
+                      disabled: selected.length >= 2,
+                      onClick: () =>
+                        window.open(selectedRows[0]?.s3_url, '_blank')
+                    },
+                    {
                       label: 'Edit',
                       key: 'update',
                       onClick: () => handleUpdateModalOpen(selected[0])
@@ -175,8 +183,9 @@ export default function Model(props) {
             dataSource={filterInput ? filteredModel : models}
             rowSelection={{
               type: 'radio',
-              onChange: (selectedRowKeys) => {
+              onChange: (selectedRowKeys, selectedRows) => {
                 setSelected(selectedRowKeys);
+                setSelectedRows(selectedRows);
               }
             }}
           />
