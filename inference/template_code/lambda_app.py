@@ -34,19 +34,25 @@ try:
 
     if os.path.exists(model_path):
         try:
-            # Try to load the model assuming it might be wrapped in a DataParallel module
             state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-            if 'module' in state_dict:
-                model.load_state_dict(state_dict['module'])
+            
+            # DataParallel로 래핑된 모델인지 확인
+            if 'module.' in list(state_dict.keys())[0]:
+                # 키에서 'module.'을 제거
+                from collections import OrderedDict
+                new_state_dict = OrderedDict()
+                for k, v in state_dict.items():
+                    new_state_dict[k.replace('module.', '')] = v
+                model.load_state_dict(new_state_dict)
             else:
                 model.load_state_dict(state_dict)
         except Exception as e:
-            # If there's any error, try loading without assuming DataParallel wrapping
-            model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+            print(f"모델 상태 딕셔너리를 로드하는 중 오류 발생: {e}")
+            os._exit(0)
     else:
-        raise FileNotFoundError(f"Model file not found: {model_path}")
+        raise FileNotFoundError(f"모델 파일을 찾을 수 없습니다: {model_path}")
 except Exception as e:
-    print(f"Model load failed: {e}")
+    print(f"모델 로드 실패: {e}")
     os._exit(0)
 
 def handler(event, context):
