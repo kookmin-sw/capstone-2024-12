@@ -22,3 +22,8 @@ variable "upload_s3_url" {
     type = string
     default = "" 
 }
+
+variable "container_registry" {
+    type = string
+    default = "609174368731.dkr.ecr.ap-northeast-2.amazonaws.com"
+}

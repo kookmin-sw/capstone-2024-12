@@ -20,6 +20,7 @@ aws ecr delete-repository --force --repository-name llama2-inference --region $R
 aws ecr delete-repository --force --repository-name diffusion-inference --region $REGION --profile $AWSCLI_PROFILE
 aws ecr delete-repository --force --repository-name llama2-streamlit --region $REGION --profile $AWSCLI_PROFILE
 aws ecr delete-repository --force --repository-name sdxl1-streamlit --region $REGION --profile $AWSCLI_PROFILE
+aws ecr delete-repository --force --repository-name llama-train-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr delete-repository --force --repository-name diffusion-train-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr delete-repository --force --repository-name ray-cpu --region $REGION --profile $AWSCLI_PROFILE
 aws ecr delete-repository --force --repository-name ray-gpu --region $REGION --profile $AWSCLI_PROFILE

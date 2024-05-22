@@ -21,6 +21,7 @@ aws ecr create-repository --repository-name llama2-inference --region $REGION --
 aws ecr create-repository --repository-name diffusion-inference --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name llama2-streamlit --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name sdxl1-streamlit --region $REGION --profile $AWSCLI_PROFILE
+aws ecr create-repository --repository-name llama-train-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name diffusion-train-deploy --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name ray-cpu --region $REGION --profile $AWSCLI_PROFILE
 aws ecr create-repository --repository-name ray-gpu --region $REGION --profile $AWSCLI_PROFILE
@@ -104,6 +105,11 @@ cd -
 cd ./automation/deploy_streamlit/stable_diffusion
 docker build -t $ECR_URI/sdxl1-streamlit:latest .
 docker push $ECR_URI/sdxl1-streamlit:latest
+cd -
+
+cd ./automation/llama_train_deploy
+docker build -t $ECR_URI/llama-train-deploy:latest .
+docker push $ECR_URI/llama-train-deploy:latest
 cd -
 
 cd ./automation/diffusion_train_deploy
