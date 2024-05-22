@@ -1,5 +1,5 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Layout } from 'antd';
+import { Button, Layout, message } from 'antd';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import LogoSVG from '/logo.svg';
@@ -77,6 +77,12 @@ export default function Header(props) {
             size={'small'}
             type={'text'}
             icon={<SettingOutlined className={'outline-white'} />}
+            onClick={() => {
+              message.open({
+                type: 'error',
+                content: "You're not authorized. Please check your permission."
+              });
+            }}
           />
         </ButtonGroup>
         <User>
