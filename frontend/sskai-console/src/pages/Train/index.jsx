@@ -9,7 +9,8 @@ import {
   message,
   Popconfirm,
   Space,
-  Table
+  Table,
+  Tooltip
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { deleteTrain, getTrains } from '../../api/index.jsx';
@@ -53,7 +54,15 @@ const TRAIN_TABLE_COLUMNS = (now) => [
   {
     title: (
       <Space>
-        Estimated Savings <QuestionCircleOutlined />
+        Estimated Savings
+        <Tooltip
+          placement={'right'}
+          title={
+            'Estimated Savings indicates how much cheaper our service is compared to other cloud vendor services.'
+          }
+        >
+          <QuestionCircleOutlined />
+        </Tooltip>
       </Space>
     ),
     key: 'savings',
