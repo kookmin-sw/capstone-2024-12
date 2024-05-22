@@ -7,6 +7,7 @@ import zipfile
 
 DB_API_URL = os.environ.get('DB_API_URL')
 UPLOAD_S3_API_URL = os.environ.get('UPLOAD_S3_URL')
+REGION = os.environ.get('REGION')
 CONTAINER_REGISTRY = os.environ.get('ECR_URI')
 
 kubectl = '/var/task/kubectl'
@@ -166,6 +167,8 @@ metadata:
   name: ray-job-code-{uid}
 data:
   train-code.py: |
+    from urllib.parse import urlparse
+    import re
     import requests
     import shutil
     import tempfile
@@ -333,7 +336,7 @@ data:
                     break
                     
         if train.get_context().get_world_rank() == 0:
-            local_save_path = "/tmp/savedmodel/savedmodel"
+            local_save_path = "/tmp/savedmodel/model"
             if not path.exists(local_save_path):
                 makedirs(local_save_path)
             torch.save(
@@ -341,7 +344,7 @@ data:
                 path.join(local_save_path, "optimizer.pt"),
             )
             torch.save(
-                {{"epoch":epoch,"step":global_step}},
+                {{"epoch":{epoch_num},"step":global_step}},
                 path.join(local_save_path, "extra_state.pt"),
             )
             model.save_pretrained(local_save_path)
@@ -378,45 +381,49 @@ data:
                 part_list = []
                 part_number = 1
 
-            with open('/tmp/savedmodel.zip', 'rb') as file:
-                while True:
-                    data = file.read(int(chunk_size))
-                    if not data:
-                        break
-                    generate_url_json = {{
-                        "upload_type": "model",
-                        "user_uid": '{user_uid}',
-                        "uid": '{model_uid}',
-                        "filename": "model.zip",
-                        "UploadId": start_multipart['UploadId'],
-                        "PartNumber": str(part_number)
-                    }}
-                    generate_put_url = requests.post(url=f"{UPLOAD_S3_API_URL}/url", json=generate_url_json).text
-                    response = requests.put(url=generate_put_url.strip('"'), data=data)
-                    part_object = {{
-                        "ETag": response.headers.get('etag'),
-                        "PartNumber": str(part_number)
-                    }}
-                    part_list.append(part_object)
-                    part_number += 1
+                with open('/tmp/savedmodel.zip', 'rb') as file:
+                    while True:
+                        data = file.read(int(chunk_size))
+                        if not data:
+                            break
+                        generate_url_json = {{
+                            "upload_type": "model",
+                            "user_uid": '{user_uid}',
+                            "uid": '{model_uid}',
+                            "filename": "model.zip",
+                            "UploadId": start_multipart['UploadId'],
+                            "PartNumber": str(part_number)
+                        }}
+                        generate_put_url = requests.post(url=f"{UPLOAD_S3_API_URL}/url", json=generate_url_json).text
+                        response = requests.put(url=generate_put_url.strip('"'), data=data)
+                        part_object = {{
+                            "ETag": response.headers.get('etag'),
+                            "PartNumber": str(part_number)
+                        }}
+                        part_list.append(part_object)
+                        part_number += 1
 
-                complete_url_json = {{
-                "upload_type": "model",
-                "user_uid": '{user_uid}',
-                "uid": '{model_uid}',
-                "filename": "model.zip",
-                "UploadId": start_multipart['UploadId'],
-                "Parts": part_list
-                }}
-                complete_url = requests.post(url=f"{UPLOAD_S3_API_URL}/complete", json=complete_url_json)
+                    complete_url_json = {{
+                    "upload_type": "model",
+                    "user_uid": '{user_uid}',
+                    "uid": '{model_uid}',
+                    "filename": "model.zip",
+                    "UploadId": start_multipart['UploadId'],
+                    "Parts": part_list
+                    }}
+                    complete_url = requests.post(url=f"{UPLOAD_S3_API_URL}/complete", json=complete_url_json)
 
             update_data = {{
             "status": "Completed"
             }}
             requests.put(url=f"{DB_API_URL}/trains/{uid}", json=update_data)
-            
+
+            parse_model_url = urlparse('{model_s3_url}')
+            match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+            model_bucket_name = match_url.group()
+
             update_data = {{
-            "s3_url": f"https://sskai-model-storage.s3.ap-northeast-2.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
+            "s3_url": f"https://{{model_bucket_name}}.s3.{REGION}.amazonaws.com/{user_uid}/model/{model_uid}/model.zip"
             }}
             requests.put(url=f"{DB_API_URL}/models/{model_uid}", json=update_data)
 
@@ -424,6 +431,10 @@ data:
                     
     def run_train(config, user_id, model_id):
         # Train with Ray Train TorchTrainer.
+        parse_model_url = urlparse('{model_s3_url}')
+        match_url = re.search(r'sskai-model-\w+', parse_model_url.netloc)
+        model_bucket_name = match_url.group()
+
         trainer = TorchTrainer(
             train_func,
             train_loop_config=config,
@@ -433,7 +444,7 @@ data:
                 resources_per_worker={{"GPU":1, "CPU":3}},
             ),
             run_config=RunConfig(
-                storage_path=f"s3://sskai-model-storage/{user_uid}/model/{model_uid}/",
+                storage_path=f"s3://{{model_bucket_name}}/{user_uid}/model/{model_uid}/",
                 name="{model_uid}",
                 checkpoint_config=CheckpointConfig(num_to_keep=2,),
                 failure_config=FailureConfig(max_failures=-1),
