@@ -30,11 +30,21 @@ from model import ModelClass
 
 try:
     model = ModelClass()
-    if os.path.exists('/tmp/model/torch.pt'):
+    model_path = '/tmp/model/torch.pt'
+
+    if os.path.exists(model_path):
         try:
-            model.load_state_dict(torch.load("/tmp/model/torch.pt", map_location=torch.device('cpu')).module)
-        except:
-            model.load_state_dict(torch.load("/tmp/model/torch.pt", map_location=torch.device('cpu')))
+            # Try to load the model assuming it might be wrapped in a DataParallel module
+            state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+            if 'module' in state_dict:
+                model.load_state_dict(state_dict['module'])
+            else:
+                model.load_state_dict(state_dict)
+        except Exception as e:
+            # If there's any error, try loading without assuming DataParallel wrapping
+            model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    else:
+        raise FileNotFoundError(f"Model file not found: {model_path}")
 except Exception as e:
     print(f"Model load failed: {e}")
     os._exit(0)
