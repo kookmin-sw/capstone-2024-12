@@ -101,6 +101,7 @@ export default function Train(props) {
     if (!selected.length) return;
     await deleteTrain(
       selected[0],
+      selectedDetail[0]?.type || 'user',
       selectedDetail[0]?.status,
       user,
       selectedDetail[0]?.name

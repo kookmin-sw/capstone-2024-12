@@ -255,3 +255,6 @@ frontend/*/.env
 frontend/*/.vite/
 # test file
 **/*test*
+
+# env file
+setup.env

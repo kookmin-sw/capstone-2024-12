@@ -5,12 +5,12 @@ variable "region" {
 
 variable "awscli_profile" {
   type    = string
-  default = ""
+  default = "kkmcapstone"
 }
 
 variable "eks_cluster_name" {
   type = string
-  default = "mjh-test"
+  default = "kuberay"
 }
 
 variable "db_api_url" {

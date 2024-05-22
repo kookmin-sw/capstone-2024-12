@@ -11,7 +11,12 @@ import {
 } from 'antd';
 import { ErrorMessage, InputTitle, Title } from '../styles.jsx';
 import { InboxOutlined } from '@ant-design/icons';
-import { createUserTrain, getData, getModels } from '../../api/index.jsx';
+import {
+  createDiffusionTrain,
+  createUserTrain,
+  getData,
+  getModels
+} from '../../api/index.jsx';
 import { useEffect, useState } from 'react';
 import { filterObject } from '../../utils/index.jsx';
 
@@ -38,6 +43,9 @@ export default function TrainCreateModal(props) {
   const [optimStr, setOptimStr] = useState(null);
   const [lossStr, setLossStr] = useState(null);
   const [dataLoader, setDataLoader] = useState([]);
+
+  // Diffusion Model State
+  const [dataClass, setDataClass] = useState(null);
 
   const uploadSettings = {
     maxCount: 1,
@@ -108,6 +116,7 @@ export default function TrainCreateModal(props) {
     setOptimStr(null);
     setLossStr(null);
     setDataLoader(null);
+    setDataClass(null);
   };
 
   const handleCancel = () => {
@@ -151,7 +160,8 @@ export default function TrainCreateModal(props) {
       'max_used_ram',
       'deploy_platform',
       'max_used_gpu_mem',
-      'inference_time'
+      'inference_time',
+      'type'
     ]);
 
     const args = {
@@ -185,7 +195,50 @@ export default function TrainCreateModal(props) {
     handleCancel();
   };
 
-  const handleCreateFMTrain = async () => {};
+  const handleCreateFMTrain = async () => {
+    if (
+      !trainName ||
+      !selectedModel ||
+      !selectedData ||
+      (selectedModel?.type === 'diffusion' && !dataClass)
+    )
+      return messageApi.open({
+        type: 'error',
+        content:
+          'Please check that you have entered all items according to the entry conditions.'
+      });
+
+    // TODO: User UID Value Storing in Storage (browser's)
+    const user = import.meta.env.VITE_TMP_USER_UID;
+    let newModel;
+    const data = filterObject(selectedData, ['s3_url', 'uid']);
+    const model = filterObject(selectedModel, [
+      'uid',
+      'name',
+      's3_url',
+      'type'
+    ]);
+    setLoading(true);
+    if (selectedModel?.type === 'llama') {
+    } else if (selectedModel?.type === 'diffusion')
+      newModel = await createDiffusionTrain({
+        user,
+        name: trainName,
+        model,
+        data,
+        epochNum,
+        dataClass
+      });
+    setLoading(false);
+
+    if (!newModel)
+      return messageApi.open({
+        type: 'error',
+        content:
+          'Sorry, an error occurred while training the your model. Please try again in a few minutes.'
+      });
+    handleCancel();
+  };
 
   const handleChangeModel = (value) => {
     setSelectedModel(modelList.filter(({ uid }) => uid === value).pop());
@@ -526,7 +579,11 @@ export default function TrainCreateModal(props) {
                 }
                 style={{ marginBottom: '10px' }}
               />
-              <Input placeholder={'Class'} />
+              <Input
+                placeholder={'Class'}
+                value={dataClass}
+                onChange={(e) => setDataClass(e.target.value)}
+              />
               <InputTitle size={'xs'}>Epochs</InputTitle>
               <InputNumber
                 style={{ width: '100%' }}
