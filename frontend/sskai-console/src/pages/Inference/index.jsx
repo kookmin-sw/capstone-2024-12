@@ -18,7 +18,8 @@ import {
   Space,
   Spin,
   Table,
-  Tag
+  Tag,
+  Tooltip
 } from 'antd';
 import { useEffect, useState } from 'react';
 import {
@@ -110,7 +111,15 @@ const INFERENCE_TABLE_COLUMNS = [
   {
     title: (
       <Space>
-        Estimated Savings <QuestionCircleOutlined />
+        Estimated Savings
+        <Tooltip
+          placement={'left'}
+          title={
+            'Estimated Savings indicates how much cheaper our service is compared to other cloud vendor services.'
+          }
+        >
+          <QuestionCircleOutlined />
+        </Tooltip>
       </Space>
     ),
     key: 'savings',
