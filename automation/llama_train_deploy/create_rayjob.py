@@ -444,7 +444,7 @@ data:
                 resources_per_worker={{"GPU":1, "CPU":3}},
             ),
             run_config=RunConfig(
-                storage_path=f"s3://{{model-bucket-name}}/{user_uid}/model/{model_uid}/",
+                storage_path=f"s3://{{model_bucket_name}}/{user_uid}/model/{model_uid}/",
                 name="{model_uid}",
                 checkpoint_config=CheckpointConfig(num_to_keep=2,),
                 failure_config=FailureConfig(max_failures=-1),
