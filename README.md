@@ -26,7 +26,7 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 ### 2. 소개 영상
 
 추후 추가 예정. -->
-#### 기술 스택
+#### 사용 기술 스택
 <img src="./.github/assets/tech_stack.png" width=640px/>
 
 ### 2. 팀 소개
