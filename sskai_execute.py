@@ -1,6 +1,7 @@
 import subprocess
 import os
 import re
+import time
 
 def is_valid_region(region):
     # region 형식이 올바른지 확인 (a-b-c 형식)
@@ -26,13 +27,13 @@ def create_setup():
             print("Invalid REGION format. Please enter a region in the format a-b-c (e.g., ap-northeast-2).")
 
     while True:
-        awscli_profile = input("Enter AWSCLI_PROFILE: ")
+        awscli_profile = input("Enter AWSCLI PROFILE: ")
         if is_valid_aws_profile(awscli_profile):
             break
         else:
             print("Invalid AWSCLI_PROFILE. Please enter a valid AWS CLI profile name.")
     
-    main_suffix = input("Enter MAIN_SUFFIX: ")
+    main_suffix = input("Enter MAIN SUFFIX: ")
 
     # ecr_uri 생성
     account_id_command = f"aws sts get-caller-identity --query Account --output text --profile {awscli_profile}"
@@ -74,40 +75,56 @@ print("0. Exit this operation.")
 print("1. Build and Deploy container image.")
 print("2. Deploy SSKAI infrastructure.")
 while True:
-    job = input("Enter the number.: ").strip()
+    job = input("Enter the number: ").strip()
     if job == "0":
         break
     if job == "1":
         print("You can build only with x86/64 architecture and Unix kernel (Mac/Linux).\n")
-        build_type = input("Enter the type of operation. (create/delete): ").strip().lower()
+        build_type = input("Enter the type of operation (create/delete): ").strip().lower()
         if build_type == "create":
             # Container build
             container_create_command = f"./container_build.sh {ecr_uri} {region} {awscli_profile}"
+            print("Building and Deploying in progress.")
+            print("It takes about 15 minutes.")
+            print("Processing...\n")
             subprocess.run(container_create_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print("Complete.")
             break
         elif build_type == "delete":
             container_delete_command = f"./delete_container.sh {ecr_uri} {region} {awscli_profile}"
+            print("Deleting in progress.")
+            print("It takes about 5 minutes.")
+            print("Processing...\n")
             subprocess.run(container_delete_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print("Complete.")
             break
         else:
             print("Invalid operation type.")
     elif job == "2":
-        terraform_type = input("Enter the type of operation. (create/delete): ").strip().lower()
+        terraform_type = input("Enter the type of operation (create/delete): ").strip().lower()
+        result = subprocess.run(['which', 'terraform'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        terraform_path = result.stdout.strip()
         if terraform_type == "create":
+            print("It takes about 20 minutes to create.")
+            print("Processing...\n")
+            time.sleep(5)
             # Terraform init 명령 실행
-            terraform_init_command = f"terraform init"
-            subprocess.run(terraform_init_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run([terraform_path, "init"])
             # Terraform apply 명령 실행
-            terraform_apply_command = f"terraform apply --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
-            subprocess.run(terraform_apply_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            terraform_apply_command = f"{terraform_path}, apply, --auto-approve, --var, region={region}, --var, awscli_profile={awscli_profile}, --var, container_registry={ecr_uri}, --var, main_suffix={main_suffix}"
+            subprocess.run([terraform_path, "apply", "--auto-approve", "--var", f"region={region}", "--var", f"awscli_profile={awscli_profile}", "--var", f"container_registry={ecr_uri}", "--var", f"main_suffix={main_suffix}"])
+            print("Complete.")
             break
         elif terraform_type == "delete":
+            print("It takes about 20 minutes to delete.") 
+            print("Processing...\n")          
+            time.sleep(5)
             # Terraform init 명령 실행
-            terraform_init_command = f"terraform init"
-            subprocess.run(terraform_init_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run([terraform_path, "init"])
             # Terraform destroy 명령 실행
-            terraform_destroy_command = f"terraform destroy --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
-            subprocess.run(terraform_destroy_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            terraform_destroy_command = f"terraform, destroy, --auto-approve, --var, region={region}, --var, awscli_profile={awscli_profile}, --var, container_registry={ecr_uri}, --var main_suffix={main_suffix}"
+            subprocess.run([terraform_path, "destroy", "--auto-approve", "--var", f"region={region}", "--var", f"awscli_profile={awscli_profile}", "--var", f"container_registry={ecr_uri}", "--var", f"main_suffix={main_suffix}"])
+            print("Complete.")
             break
         else:
             print("Invalid operation type.")

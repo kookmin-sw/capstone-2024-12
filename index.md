@@ -15,7 +15,7 @@ Amazon Web Service (AWS)는 컴퓨팅, 스토리지, 데이터베이스, 분석,
 
 ---
 
-### 1. 프로잭트 소개
+### 1. 프로젝트 소개
 Team SSKAI(Serverless Spot Kubernetes AI)는 최적의 클라우드 컴퓨팅 환경에서의 AI를 제공한다는 의미로 Sky에서 본따 지어졌습니다.
 
 SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`은 기존에 존재하는 MLOps/GenAIOps Solution의 단점과 불편한 점을 보완하여 사용자가 손쉽게 머신러닝 모델을 개발하고 배포할 수 있도록 하는 것을 목표로 합니다.
@@ -30,7 +30,14 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 3. 지속적 Monitoring 및 CI/CD 환경 제공
     - 훈련, Fine-tuning과 추론 서비스 배포로 운영 중 지속적인 Monitoring을 통해 사용자는 GenAIOps Workflow를 이용하여 CI/CD를 달성할 수 있다.
 
-### 2. 팀 소개
+
+#### 사용 기술 스택
+<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/tech_stack.png?raw=true' width=640px/>
+
+### 2. 소개 영상
+<iframe width="560" height="315" src="https://www.youtube.com/embed/KEHOGjD0qaQ?si=_F6H0m8v_3_2KZqM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+### 3. 팀 소개
 
 | 송무현 | 김규민 | 김유림 |
 |:------:|:------:|:------:|
@@ -49,7 +56,7 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 |[@jhM00n](https://github.com/jhM00n)|[@j-myeong](https://github.com/j-myeong)|[@seungwoo1124](https://github.com/seungwoo1124)|
 
 
-### 3. 배포 방법
+### 4. 배포 방법
 
 사용자는 이 오픈 소스를 사용하여 본인의 클라우드 계정에 직접 플랫폼을 구축하여 최적의 가격의 머신러닝 환경을 사용할 수 있다.
 
@@ -91,9 +98,9 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
     terraform destroy --auto-approve
     ```
 
-### 4. 사용법
-
-사용자는 웹 브라우저를 통해 플랫폼에 접근할 수 있다.
-![webpage-overview](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-overview.png?raw=true)
+### 5. 결과물 예시
+![webpage-dashboard](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-dashboard.png?raw=true)
+![webpage-data](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-data.png?raw=true)
+![webpage-model](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-model.png?raw=true)
 ![webpage-train](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-train.png?raw=true)
 ![webpage-inference](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-inference.png?raw=true)
