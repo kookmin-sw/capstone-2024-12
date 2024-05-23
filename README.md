@@ -27,7 +27,7 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
     - 이를 통해 사용자는 과금이 많이 발생할 경우, 현재 운영중인 인프라의 배포 수준을 재검토할 수 있게된다. 또한,모델을 지속적으로 학습 후 배포하여 모델 개발 및 운영의 안정성, 지속성을 손쉽게 확보할 수 있다.
  
 ### 2. 소개 영상
-<iframe width="560" height="315" src="https://www.youtube.com/embed/KEHOGjD0qaQ?si=_F6H0m8v_3_2KZqM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+![Video Label](http://img.youtube.com/vi/KEHOGjD0qaQ/0.jpg)
 
 #### 사용 기술 스택
 <img src="./.github/assets/tech_stack.png" width=640px/>
