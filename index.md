@@ -1,3 +1,5 @@
+## Team SSKAI  <img src="https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/teamlogo.png?raw=true" width=100px/>
+
 ### 최적의 GenAIOps 환경을 제공하는 플랫폼
 
 ---
