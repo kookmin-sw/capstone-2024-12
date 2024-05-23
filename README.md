@@ -155,3 +155,8 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 ![webpage-data](./.github/assets/webpage-data.png)
 ![webpage-train](./.github/assets/webpage-train.png)
 ![webpage-inference](./.github/assets/webpage-inference.png)
+
+---
+
+### 포스터
+![poster](./.github/assets/poster.jpg)

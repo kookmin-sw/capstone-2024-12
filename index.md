@@ -162,3 +162,7 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 ![webpage-model](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-model.png?raw=true)
 ![webpage-train](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-train.png?raw=true)
 ![webpage-inference](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/webpage-inference.png?raw=true)
+
+---
+### 포스터
+![poster](https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/poster.jpg?raw=true)
