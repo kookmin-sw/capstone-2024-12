@@ -1,4 +1,4 @@
-## Team SSKAI  <img src="./.github/assets/teamlogo.png" width=100px/>
+## Team SSKAI  <img src="./.github/assets/teamlogo.png" style="background-color:none;" width=100px/>
 
 
 ### 최적의 GenAIOps 환경을 제공하는 플랫폼
