@@ -15,7 +15,7 @@ Amazon Web Service (AWS)는 컴퓨팅, 스토리지, 데이터베이스, 분석,
 
 ---
 
-### 1. 프로잭트 소개
+### 1. 프로젝트 소개
 Team SSKAI(Serverless Spot Kubernetes AI)는 최적의 클라우드 컴퓨팅 환경에서의 AI를 제공한다는 의미로 Sky에서 본따 지어졌습니다.
 
 SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`은 기존에 존재하는 MLOps/GenAIOps Solution의 단점과 불편한 점을 보완하여 사용자가 손쉽게 머신러닝 모델을 개발하고 배포할 수 있도록 하는 것을 목표로 합니다.
@@ -29,6 +29,12 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
     - 사용자는 이를 통해 90% 저렴한 비용으로 머신러닝 훈련을 작업하거나, 동일한 비용으로 최대 2배 가량 빠르게 작업을 완료할 수 있다.
 3. 지속적 Monitoring 및 CI/CD 환경 제공
     - 훈련, Fine-tuning과 추론 서비스 배포로 운영 중 지속적인 Monitoring을 통해 사용자는 GenAIOps Workflow를 이용하여 CI/CD를 달성할 수 있다.
+
+
+#### 사용 기술 스택
+<img src='https://github.com/kookmin-sw/capstone-2024-12/blob/master/.github/assets/tech_stack.png?raw=true' width=640px/>
+
+
 
 ### 2. 팀 소개
 
