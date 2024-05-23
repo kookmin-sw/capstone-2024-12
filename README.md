@@ -15,21 +15,24 @@ Team SSKAI(Serverless Spot Kubernetes AI)는 최적의 클라우드 컴퓨팅 �
 SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`은 기존에 존재하는 MLOps/GenAIOps Solution의 단점과 불편한 점을 보완하여 사용자가 손쉽게 머신러닝 모델을 개발하고 배포할 수 있도록 하는 것을 목표로 합니다.
 
 #### 주요 기능
+![goals](./.github/assets/goals.png)
 1. 이용이 편리한 GenAIOps Pipeline 제공
-    - 웹 서비스에 접근하여 학습용 데이터셋을 업로드하고, Foundation Model을 선택하거나 본인이 설계한 ML 모델을 업로드 하는 것을 통해 Fine-tuning, Training, Deploy, Monitoring을 손쉽게 이용할 수 있게 된다.
+    - 사용자는 플랫폼을 이용할 수 있는 웹 서비스에 접근하여 학습용 데이터셋을 업로드하고, Foundation Model을 선택하거나 본인이 설계한 ML 모델을 업로드 하는 것을 통해 Fine-tuning, Training, Deploy, Monitoring을 손쉽게 이용할 수 있다.
 2. 최적의 비용 및 성능 인프라 제공
-    - 모델의 크기, 연산자 수, 필요 성능 등을 종합적으로 판단하여 최적의 비용 및 성능을 가진 인프라를 통해 서비스를 제공한다.
-    - 사용자는 이를 통해 90% 저렴한 비용으로 머신러닝 훈련을 작업하거나, 동일한 비용으로 최대 2배 가량 빠르게 작업을 완료할 수 있다.
+    -  모델의 크기, 모델의 연산자 수, 모델에 필요한 성능 등을 종합적으로 판단해 최적의 인프라를 선정하는 알고리즘을 개발하여 해당 모델에 맞는 최적의 비용 및 성능을 가진 인프라를 제공한다. 따라서 사용자는 비용 및 성능을 최적화 하기위해 별도로 고려하지 않아도 된다.
+    -  이 때, 최적의 인프라 선정 결과에 따라 유지비용이 전혀 들지 않는 서버리스 컴퓨팅 환경에서 추론 환경이 지속적으로 가동되도록 하거나, 학습이나 Fine-Tuning 시에는 스팟 과금 정책을 활용하여 사용자는 최대 90% 저렴한 환경에서 작업을 수행하거나, 동일한 가격 대비 더 뛰어난 성능의 컴퓨팅 자원에서 작업을 수행하도록 할 수 있다.
+  
 3. 지속적 Monitoring 및 CI/CD 환경 제공
-    - 훈련, Fine-tuning과 추론 서비스 배포로 운영 중 지속적인 Monitoring을 통해 사용자는 GenAIOps Workflow를 이용하여 CI/CD를 달성할 수 있다.
-<!-- 
+    - 학습, Fine-tuning과 추론 서비스 배포 후 운영 중 지속적인 비용 Monitoring을 통해 사용자는 실시간으로 사용한 비용을 확인할 수 있다.
+    - 이를 통해 사용자는 과금이 많이 발생할 경우, 현재 운영중인 인프라의 배포 수준을 재검토할 수 있게된다. 또한,모델을 지속적으로 학습 후 배포하여 모델 개발 및 운영의 안정성, 지속성을 손쉽게 확보할 수 있다.
+ 
 ### 2. 소개 영상
+<iframe width="560" height="315" src="https://www.youtube.com/embed/KEHOGjD0qaQ?si=_F6H0m8v_3_2KZqM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-추후 추가 예정. -->
 #### 사용 기술 스택
 <img src="./.github/assets/tech_stack.png" width=640px/>
 
-### 2. 팀 소개
+### 3. 팀 소개
 
 | 송무현 | 김규민 | 김유림 |
 |:------:|:------:|:------:|
@@ -47,7 +50,7 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
 |기능 배포 자동화 구현|프론트엔드/백엔드|최적의 비용 아키텍처 선출 알고리즘 제작|
 |[@jhM00n](https://github.com/jhM00n)|[@j-myeong](https://github.com/j-myeong)|[@seungwoo1124](https://github.com/seungwoo1124)|
 
-### 3. 배포 방법
+### 4. 배포 방법
 
 사용자는 이 오픈 소스를 사용하여 본인의 클라우드 계정에 직접 플랫폼을 구축하여 최적의 가격의 머신러닝 환경을 사용할 수 있다.
 
@@ -99,9 +102,9 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
     terraform destroy --auto-approve
     ```
 
-### 4. 사용법
-
-사용자는 웹 브라우저를 통해 플랫폼에 접근할 수 있다.
-![webpage-overview](./.github/assets/webpage-overview.png)
+### 5. 결과물 예시
+![webpage-dashboard](./.github/assets/webpage-dashboard.png)
+![webpage-model](./.github/assets/webpage-model.png)
+![webpage-data](./.github/assets/webpage-data.png)
 ![webpage-train](./.github/assets/webpage-train.png)
 ![webpage-inference](./.github/assets/webpage-inference.png)
