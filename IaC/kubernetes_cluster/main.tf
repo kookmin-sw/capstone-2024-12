@@ -28,7 +28,7 @@ module "vpc" {
   source               = "./vpc"
   vpc_name             = "${var.main_suffix}-k8s-vpc"
   vpc_cidr             = var.vpc_cidr
-  current_region       = data.aws_region.current_region.id
+  current_region       = data.aws_region.current_region.name
   region_azs           = data.aws_availability_zones.region_azs.names
   public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs

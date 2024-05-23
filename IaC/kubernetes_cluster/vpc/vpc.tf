@@ -107,3 +107,63 @@ resource "aws_route_table_association" "private_subnet_route_associations" {
   subnet_id = aws_subnet.private_subnets[count.index].id
   route_table_id = aws_route_table.private_route_tables[count.index].id
 }
+
+### vpc endpoint
+resource "aws_security_group" "vpc_endpoint_sg" {
+  ingress = [{
+    cidr_blocks      = [aws_vpc.vpc.cidr_block]
+    description      = "same vpc allow"
+    from_port        = 443
+    to_port          = 443
+    protocol         = "tcp"
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    security_groups  = []
+    self             = false
+    }]
+
+  egress = [{
+    cidr_blocks      = ["0.0.0.0/0"]
+    description      = "alow all outbound"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    security_groups  = []
+    self             = false
+  }]
+  vpc_id = aws_vpc.vpc.id
+
+  tags = {
+    "Name" = "${var.vpc_name}-vpc-endpoint-sg"
+  }
+}
+
+resource "aws_vpc_endpoint" "ecr-api" {
+  vpc_id            = aws_vpc.vpc.id
+  service_name      = "com.amazonaws.${var.current_region}.ecr.api"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint_sg.id,
+  ]
+
+  subnet_ids = tolist(aws_subnet.private_subnets[*].id)
+
+  private_dns_enabled = true
+}
+
+resource "aws_vpc_endpoint" "ecr-dkr" {
+  vpc_id            = aws_vpc.vpc.id
+  service_name      = "com.amazonaws.${var.current_region}.ecr.dkr"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint_sg.id,
+  ]
+
+  subnet_ids = tolist(aws_subnet.private_subnets[*].id)
+
+  private_dns_enabled = true
+}
