@@ -84,12 +84,14 @@ while True:
             # Container build
             container_create_command = f"./container_build.sh {ecr_uri} {region} {awscli_profile}"
             print("Building and Deploying in progress.")
+            print("It takes about 15 minutes.")
             subprocess.run(container_create_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Complete.")
             break
         elif build_type == "delete":
             container_delete_command = f"./delete_container.sh {ecr_uri} {region} {awscli_profile}"
-            print("Deleting in progress")
+            print("Deleting in progress.")
+            print("It takes about 5 minutes.")
             subprocess.run(container_delete_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Complete.")
             break
