@@ -85,6 +85,7 @@ while True:
             container_create_command = f"./container_build.sh {ecr_uri} {region} {awscli_profile}"
             print("Building and Deploying in progress.")
             print("It takes about 15 minutes.")
+            print("Processing...\n")
             subprocess.run(container_create_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Complete.")
             break
@@ -92,6 +93,7 @@ while True:
             container_delete_command = f"./delete_container.sh {ecr_uri} {region} {awscli_profile}"
             print("Deleting in progress.")
             print("It takes about 5 minutes.")
+            print("Processing...\n")
             subprocess.run(container_delete_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Complete.")
             break
@@ -106,6 +108,7 @@ while True:
             # Terraform apply 명령 실행
             terraform_apply_command = f"terraform apply --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
             print("It takes about 20 minutes to create.")
+            print("Processing...\n")
             subprocess.run(terraform_apply_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Complete.")
             break
@@ -115,7 +118,8 @@ while True:
             subprocess.run(terraform_init_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # Terraform destroy 명령 실행
             terraform_destroy_command = f"terraform destroy --auto-approve --var region={region} --var awscli_profile={awscli_profile} --var container_registry={ecr_uri} --var main_suffix={main_suffix}"
-            print("It takes about 20 minutes to delete.")            
+            print("It takes about 20 minutes to delete.") 
+            print("Processing...\n")           
             subprocess.run(terraform_destroy_command, check=True, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Complete.")
             break
