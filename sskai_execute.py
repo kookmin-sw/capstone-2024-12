@@ -118,6 +118,7 @@ while True:
         elif terraform_type == "delete":
             print("It takes about 20 minutes to delete.") 
             print("Processing...\n")          
+            time.sleep(5)
             # Terraform init 명령 실행
             subprocess.run([terraform_path, "init"])
             # Terraform destroy 명령 실행
