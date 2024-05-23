@@ -26,13 +26,13 @@ def create_setup():
             print("Invalid REGION format. Please enter a region in the format a-b-c (e.g., ap-northeast-2).")
 
     while True:
-        awscli_profile = input("Enter AWSCLI_PROFILE: ")
+        awscli_profile = input("Enter AWSCLI PROFILE: ")
         if is_valid_aws_profile(awscli_profile):
             break
         else:
             print("Invalid AWSCLI_PROFILE. Please enter a valid AWS CLI profile name.")
     
-    main_suffix = input("Enter MAIN_SUFFIX: ")
+    main_suffix = input("Enter MAIN SUFFIX: ")
 
     # ecr_uri 생성
     account_id_command = f"aws sts get-caller-identity --query Account --output text --profile {awscli_profile}"
@@ -74,12 +74,12 @@ print("0. Exit this operation.")
 print("1. Build and Deploy container image.")
 print("2. Deploy SSKAI infrastructure.")
 while True:
-    job = input("Enter the number.: ").strip()
+    job = input("Enter the number: ").strip()
     if job == "0":
         break
     if job == "1":
         print("You can build only with x86/64 architecture and Unix kernel (Mac/Linux).\n")
-        build_type = input("Enter the type of operation. (create/delete): ").strip().lower()
+        build_type = input("Enter the type of operation (create/delete): ").strip().lower()
         if build_type == "create":
             # Container build
             container_create_command = f"./container_build.sh {ecr_uri} {region} {awscli_profile}"
@@ -98,7 +98,7 @@ while True:
         else:
             print("Invalid operation type.")
     elif job == "2":
-        terraform_type = input("Enter the type of operation. (create/delete): ").strip().lower()
+        terraform_type = input("Enter the type of operation (create/delete): ").strip().lower()
         if terraform_type == "create":
             # Terraform init 명령 실행
             terraform_init_command = f"terraform init"
