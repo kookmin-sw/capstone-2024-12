@@ -8,12 +8,11 @@ x = torch.randn(1,1)
 print(f"X Value is : {x}")
 serialized_tensor = pickle.dumps(x)
 
-url = 'http://localhost:8080/'
+url = 'https://kzpqf6ivsdftrzqsnxi233axvq0zgujq.lambda-url.us-east-1.on.aws/'
 
 request_body = {
     "body": base64.b64encode(serialized_tensor).decode('utf-8')
 }
-# print(request_body)
 
 end_to_end_latency_time_start = time.time()
 response = requests.post(url, json=request_body).json()
