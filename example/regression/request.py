@@ -13,6 +13,7 @@ url = 'http://localhost:8080/'
 request_body = {
     "body": base64.b64encode(serialized_tensor).decode('utf-8')
 }
+# print(request_body)
 
 end_to_end_latency_time_start = time.time()
 response = requests.post(url, json=request_body).json()
