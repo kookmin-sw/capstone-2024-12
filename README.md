@@ -90,16 +90,63 @@ SSKAI에서 제작하는 `최적의 GenAIOps 환경을 제공하는 플랫폼`�
     ```bash
     git clone https://github.com/kookmin-sw/capstone-2024-12.git
     cd ./capstone-2024-12
-    terraform init
-    # 약 15분 가량 소요됩니다.
-    terraform apply --auto-approve
-    # 배포 완료 후, Terraform output에 플랫폼에 접속할 수 있는 경로가 삭제됩니다.
+    # 약 40분 가량 소요됩니다.
+    python3 sskai_execute.py
+
+    Enter REGION: us-east-1
+    Enter AWSCLI PROFILE: default
+    Enter MAIN SUFFIX: SSKAI
+    0. Exit this operation.
+    1. Build and Deploy container image.
+    2. Deploy SSKAI Infrastructure.
+    Enter the number: 1
+    You can build only with x86/64 architecture and Unix kernel (Mac/Linux).
+
+    Enter the type of operation (create/delete): create
+    Building and Deploying in progress.
+    It takes about 15 minutes.
+    Processing...
+
+    Complete
+
+    python3 sskai_execute.py
+    0. Exit this operation.
+    1. Build and Deploy container image.
+    2. Deploy SSKAI Infrastructure.
+    Enter the number: 2
+    Enter the type of operation (create/delete): create
+    It takes about 20 minutes.
+    Processing...
+
+    Complete
     ```
 4. 배포된 플랫폼 제거
     ```bash
     cd ./capstone-2024-12
-    # 약 20분 가량 소요됩니다.
-    terraform destroy --auto-approve
+    # 약 25분 가량 소요됩니다.
+    python3 sskai_execute.py
+
+    0. Exit this operation.
+    1. Build and Deploy container image.
+    2. Deploy SSKAI Infrastructure.
+    Enter the number: 2
+    Enter the type of operation (create/delete): delete
+    It takes about 20 minutes.
+    Processing...
+
+    Complete
+
+    python3 sskai_execute.py
+
+    0. Exit this operation.
+    1. Build and Deploy container image.
+    2. Deploy SSKAI Infrastructure.
+    Enter the number: 1
+    Enter the type of operation (create/delete): delete
+    It takes about 5 minutes.
+    Processing...
+
+    Complete
     ```
 
 ### 5. 결과물 예시

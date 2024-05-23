@@ -1,11 +1,11 @@
 ### 최적의 GenAIOps 환경을 제공하는 플랫폼
 
 ---
-### 중간 발표 자료
-<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vT99WEy4Nt4D5rmQM1xj_0pN0unXcnF7Hd4eeBgMgB3yYG7RxPiEiOe_pNORc6N1Q/embed?start=false&loop=false&delayms=3000" frameborder="0" width="1050" height="659" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+### 최종 발표자료
+https://docs.google.com/presentation/d/1ETs9I7u6Vvl6uC1YgkyVSpkHVTacSOPC/edit?usp=sharing&ouid=110354635145523913913&rtpof=true&sd=true
 
-### 중간 보고서
-<iframe src="https://docs.google.com/document/d/e/2PACX-1vTk_gugjo6Kn975mTg9XLlMn2Dpp0LPXB85gjErZPZbkqU_GyHuFEugzOikWw4jJg/pub?embedded=true" width="600" height="900"></iframe>
+### 수행결과보고서
+https://docs.google.com/document/d/181B-_Gd2sWzUxvU5rz0etcdNCgc9jKtf/edit?usp=sharing&ouid=110354635145523913913&rtpof=true&sd=true
 ---
 
 ### 산학 협력 기업
